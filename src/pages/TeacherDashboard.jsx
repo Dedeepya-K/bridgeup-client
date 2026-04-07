@@ -105,6 +105,7 @@ export default function TeacherDashboard({ supabase, profile }) {
   const [naplanLoading, setNaplanLoading] = useState(false)
   const [naplanSubject, setNaplanSubject] = useState('English')
   const [naplanYear, setNaplanYear] = useState('8')
+  const [emojiInsights, setEmojiInsights] = useState([])
 
   useEffect(() => {
     fetchMessages()
@@ -128,6 +129,8 @@ export default function TeacherDashboard({ supabase, profile }) {
     if (res4.data.success) setFrictionData(res4.data.data)
     const res5 = await axios.get(`${API}/api/family-feed/${profile.id}`)
     if (res5.data.success) { setFamilyFeed(res5.data.data); setFeedAverage(res5.data.classAverage || 0) }
+    const res6 = await axios.get(`${API}/api/emoji-insights/${profile.id}`)
+if (res6.data.success) setEmojiInsights(res6.data.data)
   }
 
   const handleTransform = async () => {
@@ -703,6 +706,32 @@ export default function TeacherDashboard({ supabase, profile }) {
                     </div>
                   )}
                 </div>
+                {emojiInsights.length > 0 && (
+  <div className="bg-white rounded-xl shadow p-5 space-y-3">
+    <p className="text-sm font-bold text-gray-800">😊 Parent Feedback Insights</p>
+    <p className="text-xs text-gray-500">Auto-generated from parent emoji responses via CurricuLLM</p>
+    <div className="space-y-2">
+      {emojiInsights.map((e, i) => (
+        <div key={i} className="bg-gray-50 rounded-lg p-3 space-y-1">
+          <div className="flex justify-between items-center">
+            <span className="text-xs font-semibold text-gray-700">{e.subject}</span>
+            <div className="flex gap-2">
+              <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">✅ {e.tried} tried</span>
+              <span className="text-xs bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full">😕 {e.struggled} struggled</span>
+            </div>
+          </div>
+          <div className="w-full bg-gray-200 rounded-full h-2">
+            <div className="bg-green-500 h-2 rounded-full" style={{ width: `${e.pct}%` }}/>
+          </div>
+          <p className="text-xs text-teal-700 italic">💡 {e.insight}</p>
+        </div>
+      ))}
+    </div>
+  </div>
+)}
+
+{/* THIS LINE BELOW ALREADY EXISTS — DON'T ADD IT AGAIN */}
+{/* <div className="bg-gray-50 rounded-xl p-4 text-xs text-gray-500"> */}
 
                 <div className="bg-gray-50 rounded-xl p-4 text-xs text-gray-500">
                   <p className="font-semibold mb-1">⚡ Powered by CurricuLLM AI Analysis</p>

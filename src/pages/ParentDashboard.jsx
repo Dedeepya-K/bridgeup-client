@@ -439,6 +439,43 @@ function GrowthMindsetPrompt({ tip, childName, subject, language }) {
   )
 }
 
+function CommunityStats({ profile }) {
+  const [stats, setStats] = useState(null)
+
+  useEffect(() => {
+    axios.get(`${API}/api/community-stats`)
+      .then(r => { if (r.data.success) setStats(r.data.data) })
+      .catch(() => {})
+  }, [])
+
+  if (!stats) return null
+
+  return (
+    <div className="bg-gradient-to-r from-blue-600 to-teal-600 rounded-xl p-4 text-white space-y-3">
+      <p className="text-xs font-semibold opacity-75 uppercase tracking-wide">🌏 This Week's Community Impact</p>
+      <div className="grid grid-cols-2 gap-2">
+        <div className="bg-white bg-opacity-20 rounded-lg p-2 text-center">
+          <p className="text-xl font-bold">{stats.totalActivities}</p>
+          <p className="text-xs opacity-80">Activities completed</p>
+        </div>
+        <div className="bg-white bg-opacity-20 rounded-lg p-2 text-center">
+          <p className="text-xl font-bold">{stats.totalFamilies}</p>
+          <p className="text-xs opacity-80">Families engaged</p>
+        </div>
+        <div className="bg-white bg-opacity-20 rounded-lg p-2 text-center">
+          <p className="text-xl font-bold">{stats.totalLanguages}</p>
+          <p className="text-xs opacity-80">Languages supported</p>
+        </div>
+        <div className="bg-white bg-opacity-20 rounded-lg p-2 text-center">
+          <p className="text-xl font-bold">{stats.topSubject}</p>
+          <p className="text-xs opacity-80">Most active subject</p>
+        </div>
+      </div>
+      <p className="text-xs opacity-60 text-center">Powered by CurricuLLM 🎓</p>
+    </div>
+  )
+}
+
 export default function ParentDashboard({ supabase, profile }) {
   const [tab, setTab] = useState('updates')
   const [messages, setMessages] = useState([])
@@ -633,6 +670,7 @@ export default function ParentDashboard({ supabase, profile }) {
         {tab === 'updates' && (
           <>
             <WelcomeBanner profile={profile} currentChild={currentChild} language={profile.language} />
+            <CommunityStats profile={profile} />
 
             {(() => {
               const allTodos = []
