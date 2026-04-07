@@ -553,15 +553,14 @@ export default function ParentDashboard({ supabase, profile }) {
   const handleFlag = (messageId) => setFlagged(f => ({ ...f, [messageId]: true }))
 
   const handleReply = async (messageId) => {
-    const text = replyText[messageId]
-    if (!text?.trim()) return
-    setSending(s => ({ ...s, [messageId]: true }))
-    await axios.post(`${API}/api/reply`, { messageId, parentId: profile.id, parentName: profile.name, content: text })
-    setSentReplies(s => ({ ...s, [messageId]: true }))
-    setReplyText(r => ({ ...r, [messageId]: '' }))
-    setSending(s => ({ ...s, [messageId]: false }))
-    setTimeout(() => setSentReplies(s => ({ ...s, [messageId]: false })), 3000)
-  }
+  const text = replyText[messageId]
+  if (!text?.trim()) return
+  setSending(s => ({ ...s, [messageId]: true }))
+  await axios.post(`${API}/api/reply`, { messageId, parentId: profile.id, parentName: profile.name, content: text })
+  setSentReplies(s => ({ ...s, [messageId]: true }))
+  setReplyText(r => ({ ...r, [messageId]: '' }))
+  setSending(s => ({ ...s, [messageId]: false }))
+}
 
   const handleChat = async () => {
     if (!chatInput.trim() || chatLoading) return
@@ -870,13 +869,14 @@ export default function ParentDashboard({ supabase, profile }) {
                                   className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
                                   placeholder="Write in any language — translated automatically for your teacher..."/>
                                 {sentReplies[item.message_id] ? (
-                                  <p className="text-green-600 text-sm font-medium">✅ Reply sent!</p>
-                                ) : (
-                                  <button onClick={() => handleReply(item.message_id)} disabled={sending[item.message_id]}
-                                    className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition disabled:opacity-50">
-                                    {sending[item.message_id] ? 'Sending...' : 'Send Reply'}
-                                  </button>
-                                )}
+  <p className="text-green-600 text-sm font-medium">✅ Reply sent!</p>
+) : (
+  <button onClick={() => handleReply(item.message_id)} disabled={sending[item.message_id]}
+    className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition disabled:opacity-50">
+    {sending[item.message_id] ? 'Sending...' : 'Send Reply'}
+  </button>
+)}
+<p className="text-xs text-gray-400 mt-1">You can send multiple replies to your teacher.</p>
                               </div>
                             </div>
                           )
