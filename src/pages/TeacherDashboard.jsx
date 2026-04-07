@@ -747,7 +747,7 @@ export default function TeacherDashboard({ supabase, profile }) {
                   <label className="block text-sm font-medium text-gray-700 mb-1">Year Level</label>
                   <select value={naplanYear} onChange={e => setNaplanYear(e.target.value)}
                     className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400">
-                    {['3','5','7','9'].map(y => <option key={y}>{y}</option>)}
+                    {['3','5','7','8','9','10'].map(y => <option key={y}>{y}</option>)}
                   </select>
                 </div>
               </div>

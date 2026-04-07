@@ -331,42 +331,31 @@ function WeekendSpark({ item, profile, children, selectedChildIdx }) {
   )
 }
 
-function AudioPlayer({ text, language }) {
-  const [loading, setLoading] = useState(false)
-  const [playing, setPlaying] = useState(false)
-  const audioRef = useRef(null)
 
-  const handlePlay = async () => {
-    if (playing) { audioRef.current?.pause(); setPlaying(false); return; }
-    setLoading(true)
-    try {
-      const res = await fetch(`${API}/api/text-to-speech`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text: text.slice(0, 400), language })
-      })
-      if (!res.ok) throw new Error('TTS failed')
-      const blob = await res.blob()
-      const url = URL.createObjectURL(blob)
-      const audio = new Audio(url)
-      audioRef.current = audio
-      audio.onended = () => setPlaying(false)
-      audio.play()
-      setPlaying(true)
-    } catch(e) {
-      console.log('TTS not available')
-    }
-    setLoading(false)
+function AudioPlayer({ text, language }) {
+  const [playing, setPlaying] = useState(false)
+
+  const handlePlay = () => {
+    if (playing) { window.speechSynthesis.cancel(); setPlaying(false); return; }
+    const utterance = new SpeechSynthesisUtterance(text.slice(0, 400))
+    const langMap = { 'hi': 'hi-IN', 'zh-Hans': 'zh-CN', 'en': 'en-AU', 'te': 'te-IN', 'ar': 'ar-SA', 'vi': 'vi-VN' }
+    utterance.lang = langMap[language] || 'en-AU'
+    utterance.rate = 0.9
+    utterance.onend = () => setPlaying(false)
+    utterance.onerror = () => setPlaying(false)
+    window.speechSynthesis.speak(utterance)
+    setPlaying(true)
   }
 
   return (
-    <button onClick={handlePlay} disabled={loading}
-      className={`flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full border transition ${playing ? 'bg-teal-600 text-white border-teal-600' : 'bg-white text-teal-700 border-teal-300 hover:bg-teal-50'} disabled:opacity-50`}>
-      {loading ? '⏳' : playing ? '⏹ Stop' : '🔊 Listen'}
-      <span>{loading ? 'Loading...' : playing ? 'Playing...' : 'Hear this'}</span>
+    <button onClick={handlePlay}
+      className={`flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full border transition ${playing ? 'bg-teal-600 text-white border-teal-600' : 'bg-white text-teal-700 border-teal-300 hover:bg-teal-50'}`}>
+      {playing ? '⏹ Stop' : '🔊 Listen'}
+      <span>{playing ? 'Playing...' : 'Hear this'}</span>
     </button>
   )
 }
+
 
 function ConfidenceBadge({ tip, subject, yearLevel }) {
   const [data, setData] = useState(null)
