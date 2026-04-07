@@ -175,6 +175,7 @@ function FAQItem({ questionEn, language }) {
     </div>
   )
 }
+
 function CustomFAQ({ language }) {
   const [question, setQuestion] = useState('')
   const [answer, setAnswer] = useState(null)
@@ -323,14 +324,13 @@ function WeekendSpark({ item, profile, children, selectedChildIdx }) {
       <div className="flex items-center gap-2">
         <span className="text-lg">🌟</span>
         <div>
-          <p className="text-sm font-semibold text-orange-700">{loading ? '✨ Generating Weekend Mission...' : 'Get this weekend\'s activity mission!'}</p>
+          <p className="text-sm font-semibold text-orange-700">{loading ? '✨ Generating Weekend Mission...' : "Get this weekend's activity mission!"}</p>
           <p className="text-xs text-orange-500">Personalised for {currentChild?.name || profile.child_name} by CurricuLLM</p>
         </div>
       </div>
     </button>
   )
 }
-
 
 function AudioPlayer({ text, language }) {
   const [playing, setPlaying] = useState(false)
@@ -355,7 +355,6 @@ function AudioPlayer({ text, language }) {
     </button>
   )
 }
-
 
 function ConfidenceBadge({ tip, subject, yearLevel }) {
   const [data, setData] = useState(null)
@@ -410,9 +409,7 @@ function GrowthMindsetPrompt({ tip, childName, subject, language }) {
     if (prompt) { setShow(!show); return; }
     setLoading(true)
     try {
-      const res = await axios.post(`${API}/api/growth-mindset-prompt`, {
-        tip, childName, subject, language
-      })
+      const res = await axios.post(`${API}/api/growth-mindset-prompt`, { tip, childName, subject, language })
       setPrompt(res.data.prompt)
       setShow(true)
     } catch(e) {}
@@ -439,7 +436,7 @@ function GrowthMindsetPrompt({ tip, childName, subject, language }) {
   )
 }
 
-function CommunityStats({ profile }) {
+function CommunityStats() {
   const [stats, setStats] = useState(null)
 
   useEffect(() => {
@@ -553,14 +550,14 @@ export default function ParentDashboard({ supabase, profile }) {
   const handleFlag = (messageId) => setFlagged(f => ({ ...f, [messageId]: true }))
 
   const handleReply = async (messageId) => {
-  const text = replyText[messageId]
-  if (!text?.trim()) return
-  setSending(s => ({ ...s, [messageId]: true }))
-  await axios.post(`${API}/api/reply`, { messageId, parentId: profile.id, parentName: profile.name, content: text })
-  setSentReplies(s => ({ ...s, [messageId]: true }))
-  setReplyText(r => ({ ...r, [messageId]: '' }))
-  setSending(s => ({ ...s, [messageId]: false }))
-}
+    const text = replyText[messageId]
+    if (!text?.trim()) return
+    setSending(s => ({ ...s, [messageId]: true }))
+    await axios.post(`${API}/api/reply`, { messageId, parentId: profile.id, parentName: profile.name, content: text })
+    setSentReplies(s => ({ ...s, [messageId]: true }))
+    setReplyText(r => ({ ...r, [messageId]: '' }))
+    setSending(s => ({ ...s, [messageId]: false }))
+  }
 
   const handleChat = async () => {
     if (!chatInput.trim() || chatLoading) return
@@ -600,6 +597,160 @@ export default function ParentDashboard({ supabase, profile }) {
   const handleLogout = () => supabase.auth.signOut()
   const lang = LANGUAGES.find(l => l.code === profile.language) || LANGUAGES[0]
   const currentChild = children[selectedChildIdx]
+
+  // ── Shared expanded subject content renderer ──
+  const renderSubjectContent = (subject, subjectMessages) => {
+    const cfg = SUBJECT_CONFIG[subject] || SUBJECT_CONFIG['General']
+    return (
+      <div className={`rounded-xl border-2 overflow-hidden shadow-sm ${cfg.border}`}>
+        <button onClick={() => setExpandedSubject(null)}
+          className={`w-full ${cfg.header} text-white px-5 py-4 flex justify-between items-center hover:opacity-90 transition`}>
+          <div className="flex items-center gap-3">
+            <span className="text-3xl">{cfg.icon}</span>
+            <div className="text-left">
+              <p className="font-bold text-lg">{subject}</p>
+              <p className="text-xs opacity-75">{subjectMessages.length} update{subjectMessages.length !== 1 ? 's' : ''}</p>
+            </div>
+          </div>
+          <span className="text-sm bg-white bg-opacity-20 px-3 py-1 rounded-full">← All subjects</span>
+        </button>
+        <div className={`${cfg.bg} divide-y divide-gray-200`}>
+          {subjectMessages.map((item) => {
+            const originalContent = item.translated_content || item.messages?.transformed_content
+            const displayContent = simplifiedContent[item.message_id] || originalContent
+            const tips = item.translated_tips ? item.translated_tips.split(' | ') : []
+            return (
+              <div key={item.id} className="p-5 space-y-4">
+                <div className="flex justify-between items-start">
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 rounded-full bg-white border-2 border-current mt-1"/>
+                    <span className="text-sm font-medium text-gray-600">
+                      📅 {new Date(item.created_at).toLocaleDateString('en-AU', { weekday: 'long', day: 'numeric', month: 'long' })}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2 flex-wrap justify-end">
+                    {flagged[item.message_id] && <span className="text-xs bg-red-100 text-red-700 px-2 py-0.5 rounded-full">🚩 Flagged</span>}
+                    <span className="text-xs bg-teal-100 text-teal-700 px-2 py-0.5 rounded-full font-medium">🤖 AI-generated • ✅ Teacher-approved</span>
+                  </div>
+                </div>
+
+                <div className="bg-white rounded-xl p-4 shadow-sm space-y-3">
+                  <p className="text-sm font-semibold text-gray-700">📚 This week's learning</p>
+                  <p className="text-sm text-gray-700 leading-relaxed">
+                    <JargonText text={displayContent} language={profile.language} />
+                  </p>
+                  <PersonalMessageBanner item={item} profile={profile} children={children} selectedChildIdx={selectedChildIdx} />
+                  <AudioPlayer text={displayContent} language={profile.language} />
+                  <WeekendSpark item={item} profile={profile} children={children} selectedChildIdx={selectedChildIdx} />
+                  {profile.language !== 'en' && (
+                    <p className="text-xs text-gray-400 mt-2 italic">
+                      🔍 Tap highlighted terms for explanations
+                    </p>
+                  )}
+                  <div className="flex gap-2 flex-wrap pt-1">
+                    <span className="text-xs text-gray-400 self-center">Reading level:</span>
+                    {[{ key: 'simple', label: '🟢 Simpler' }, { key: 'standard', label: '🔵 Standard' }, { key: 'detailed', label: '🟣 More detail' }].map(lvl => (
+                      <button key={lvl.key} onClick={() => handleSimplify(item.message_id, originalContent, lvl.key)} disabled={simplifying[item.message_id]}
+                        className={`text-xs px-3 py-1 rounded-full border transition ${readingLevel[item.message_id] === lvl.key ? 'bg-teal-600 text-white border-teal-600' : 'bg-white text-gray-600 border-gray-300 hover:border-teal-400'}`}>
+                        {simplifying[item.message_id] ? '...' : lvl.label}
+                      </button>
+                    ))}
+                    {simplifiedContent[item.message_id] && (
+                      <button onClick={() => { setSimplifiedContent(s => ({ ...s, [item.message_id]: null })); setReadingLevel(r => ({ ...r, [item.message_id]: null })) }}
+                        className="text-xs px-3 py-1 rounded-full border bg-gray-100 text-gray-500 hover:bg-gray-200">↺ Reset</button>
+                    )}
+                  </div>
+                </div>
+
+                {tips.length > 0 && (
+                  <div className="bg-white rounded-xl p-4 shadow-sm">
+                    <p className="text-sm font-semibold text-green-800 mb-3">🏠 How you can help at home</p>
+                    <div className="space-y-3">
+                      {tips.map((tip, i) => {
+                        const tipKey = `${item.message_id}_${i}`
+                        const fb = triedTips[tipKey]
+                        return (
+                          <div key={i} className={`rounded-lg p-3 transition ${fb === 'tried' ? 'bg-green-50 border border-green-200' : fb === 'struggled' ? 'bg-orange-50 border border-orange-200' : 'bg-gray-50'}`}>
+                            <div className="flex items-start justify-between gap-2">
+                              <p className="text-sm text-gray-700 flex-1"><span className="font-bold text-green-600">{i+1}.</span> {tip}</p>
+                              <ConfidenceBadge tip={tip} subject={item.messages?.subject} yearLevel="8" />
+                            </div>
+                            <GrowthMindsetPrompt
+                              tip={tip}
+                              childName={children[selectedChildIdx]?.name || profile.child_name || 'your child'}
+                              subject={item.messages?.subject || 'General'}
+                              language={profile.language}
+                            />
+                            {!fb ? (
+                              <div className="flex gap-2 mt-2">
+                                <button onClick={() => handleTried(item.id, item.message_id, i, 'tried')} className="text-xs px-3 py-1 bg-green-100 text-green-700 rounded-full hover:bg-green-200 transition">✅ We tried this!</button>
+                                <button onClick={() => handleTried(item.id, item.message_id, i, 'struggled')} className="text-xs px-3 py-1 bg-orange-100 text-orange-700 rounded-full hover:bg-orange-200 transition">😕 We struggled</button>
+                              </div>
+                            ) : (
+                              <p className="text-xs mt-2 text-gray-500 italic">{fb === 'tried' ? '✅ Great! Your teacher can see this.' : '😕 Noted — your teacher will follow up.'}</p>
+                            )}
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                <div className="bg-white rounded-xl p-4 shadow-sm space-y-3">
+                  <div className="flex justify-between items-center">
+                    <p className="text-sm font-semibold text-gray-700">💬 Reply to teacher</p>
+                    <button onClick={() => handleFlag(item.message_id)} disabled={flagged[item.message_id]}
+                      className={`text-xs transition ${flagged[item.message_id] ? 'text-red-500' : 'text-gray-400 hover:text-red-500'}`}>
+                      🚩 {flagged[item.message_id] ? 'Flagged' : 'Flag this message'}
+                    </button>
+                  </div>
+                  <div className="bg-amber-50 rounded-lg p-2 text-xs text-amber-700">
+                    ⚠️ Not for urgent welfare issues — contact the school directly for emergencies.
+                  </div>
+                  <div className="flex gap-2 flex-wrap">
+                    <span className="text-xs text-gray-500 self-center">Quick reply:</span>
+                    {[
+                      { emoji: '👍', textEn: 'Thanks, got it!' },
+                      { emoji: '😕', textEn: "I'm not sure how to help with this" },
+                      { emoji: '❓', textEn: 'Can you explain this more simply?' },
+                      { emoji: '🌟', textEn: 'We tried the activities and it went well!' },
+                    ].map((reaction, i) => (
+                      <button key={i}
+                        onClick={async () => {
+                          let text = reaction.textEn
+                          if (profile.language !== 'en') {
+                            try {
+                              const res = await axios.post(`${API}/api/translate`, { text: reaction.textEn, targetLanguage: profile.language })
+                              text = res.data.translated
+                            } catch(e) {}
+                          }
+                          setReplyText(r => ({ ...r, [item.message_id]: text }))
+                        }}
+                        className="text-xl hover:scale-125 transition-transform">
+                        {reaction.emoji}
+                      </button>
+                    ))}
+                  </div>
+                  <textarea value={replyText[item.message_id] || ''} onChange={e => setReplyText(r => ({ ...r, [item.message_id]: e.target.value }))} rows={2}
+                    className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+                    placeholder="Write in any language — translated automatically for your teacher..."/>
+                  {sentReplies[item.message_id] ? (
+                    <p className="text-green-600 text-sm font-medium">✅ Reply sent!</p>
+                  ) : (
+                    <button onClick={() => handleReply(item.message_id)} disabled={sending[item.message_id]}
+                      className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition disabled:opacity-50">
+                      {sending[item.message_id] ? 'Sending...' : 'Send Reply'}
+                    </button>
+                  )}
+                  <p className="text-xs text-gray-400 mt-1">You can send multiple replies to your teacher.</p>
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      </div>
+    )
+  }
 
   if (!consentGiven) {
     return (
@@ -669,7 +820,7 @@ export default function ParentDashboard({ supabase, profile }) {
         {tab === 'updates' && (
           <>
             <WelcomeBanner profile={profile} currentChild={currentChild} language={profile.language} />
-            <CommunityStats profile={profile} />
+            <CommunityStats />
 
             {(() => {
               const allTodos = []
@@ -710,182 +861,47 @@ export default function ParentDashboard({ supabase, profile }) {
                 <p className="text-4xl mb-3">📬</p>
                 <p>No messages yet. Check back soon!</p>
               </div>
+            ) : expandedSubject ? (
+              renderSubjectContent(expandedSubject, groupedMessages[expandedSubject] || [])
             ) : (
-              Object.entries(groupedMessages).map(([subject, subjectMessages]) => {
-                const cfg = SUBJECT_CONFIG[subject] || SUBJECT_CONFIG['General']
-                const isExpanded = expandedSubject === subject
-                const todosRemaining = subjectMessages.filter(m => !m.tried_activity).length
-
-                return (
-                  <div key={subject} className={`rounded-xl border-2 overflow-hidden shadow-sm ${cfg.border}`}>
-                    <button onClick={() => {
-                      setExpandedSubject(isExpanded ? null : subject)
-                      if (!isExpanded) {
-                        setLastReadSubject(prev => ({ ...prev, [subject]: new Date().toISOString() }))
-                        axios.post(`${API}/api/mark-read`, { parentId: profile.id, subject }).catch(() => {})
-                      }
-                    }} className={`w-full ${cfg.header} text-white px-5 py-4 flex justify-between items-center hover:opacity-90 transition`}>
-                      <div className="flex items-center gap-3">
-                        <span className="text-3xl">{cfg.icon}</span>
-                        <div className="text-left">
-                          <p className="font-bold text-lg">{subject}</p>
-                          <p className="text-xs opacity-75">{subjectMessages.length} update{subjectMessages.length !== 1 ? 's' : ''} from Ms. your teacher</p>
+              <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
+                {Object.entries(groupedMessages).map(([subject, subjectMessages]) => {
+                  const cfg = SUBJECT_CONFIG[subject] || SUBJECT_CONFIG['General']
+                  const todosRemaining = subjectMessages.filter(m => !m.tried_activity).length
+                  const hasNew = subjectMessages.some(m => {
+                    const msgDate = new Date(m.created_at)
+                    const lastRead = lastReadSubject[subject]
+                    return !lastRead || msgDate > new Date(lastRead)
+                  })
+                  return (
+                    <button key={subject} onClick={() => {
+                      setExpandedSubject(subject)
+                      setLastReadSubject(prev => ({ ...prev, [subject]: new Date().toISOString() }))
+                      axios.post(`${API}/api/mark-read`, { parentId: profile.id, subject }).catch(() => {})
+                    }} className={`rounded-xl border-2 overflow-hidden shadow hover:shadow-md transition text-left ${cfg.border}`}>
+                      <div className={`${cfg.header} text-white px-4 py-3`}>
+                        <div className="flex justify-between items-start">
+                          <span className="text-3xl">{cfg.icon}</span>
+                          <div className="flex flex-col items-end gap-1">
+                            {hasNew && <span className="w-3 h-3 bg-red-400 rounded-full animate-pulse"/>}
+                            {todosRemaining > 0 && (
+                              <span className="bg-yellow-300 text-yellow-900 text-xs px-2 py-0.5 rounded-full font-bold">
+                                {todosRemaining} to-do
+                              </span>
+                            )}
+                          </div>
                         </div>
+                        <p className="font-bold text-lg mt-2">{subject}</p>
+                        <p className="text-xs opacity-75">{subjectMessages.length} update{subjectMessages.length !== 1 ? 's' : ''}</p>
                       </div>
-                      <div className="flex items-center gap-2">
-                        {(() => {
-                          const hasNew = subjectMessages.some(m => {
-                            const msgDate = new Date(m.created_at)
-                            const lastRead = lastReadSubject[subject]
-                            return !lastRead || msgDate > new Date(lastRead)
-                          })
-                          return hasNew && !isExpanded ? <span className="w-3 h-3 bg-red-400 rounded-full animate-pulse"/> : null
-                        })()}
-                        {todosRemaining > 0 && <span className="bg-yellow-300 text-yellow-900 text-xs px-2 py-0.5 rounded-full font-bold">{todosRemaining} to-do</span>}
-                        <span className="text-xl">{isExpanded ? '▲' : '▼'}</span>
+                      <div className="bg-white px-4 py-2">
+                        <p className="text-xs text-gray-500">{todosRemaining > 0 ? `${todosRemaining} activities to try` : 'All done! 🎉'}</p>
+                        <p className="text-xs text-blue-600 font-medium mt-0.5">Tap to view →</p>
                       </div>
                     </button>
-
-                    {isExpanded && (
-                      <div className={`${cfg.bg} divide-y divide-gray-200`}>
-                        {subjectMessages.map((item) => {
-                          const originalContent = item.translated_content || item.messages?.transformed_content
-                          const displayContent = simplifiedContent[item.message_id] || originalContent
-                          const tips = item.translated_tips ? item.translated_tips.split(' | ') : []
-
-                          return (
-                            <div key={item.id} className="p-5 space-y-4">
-                              <div className="flex justify-between items-start">
-                                <div className="flex items-center gap-2">
-                                  <div className="w-3 h-3 rounded-full bg-white border-2 border-current mt-1"/>
-                                  <span className="text-sm font-medium text-gray-600">
-                                    📅 {new Date(item.created_at).toLocaleDateString('en-AU', { weekday: 'long', day: 'numeric', month: 'long' })}
-                                  </span>
-                                </div>
-                                <div className="flex items-center gap-2 flex-wrap justify-end">
-                                  {flagged[item.message_id] && <span className="text-xs bg-red-100 text-red-700 px-2 py-0.5 rounded-full">🚩 Flagged</span>}
-                                  <span className="text-xs bg-teal-100 text-teal-700 px-2 py-0.5 rounded-full font-medium">🤖 AI-generated • ✅ Teacher-approved</span>
-                                </div>
-                              </div>
-
-                              <div className="bg-white rounded-xl p-4 shadow-sm space-y-3">
-                                <p className="text-sm font-semibold text-gray-700">📚 This week's learning</p>
-                                <p className="text-sm text-gray-700 leading-relaxed">
-                                  <JargonText text={displayContent} language={profile.language} />
-                                </p>
-                                <PersonalMessageBanner item={item} profile={profile} children={children} selectedChildIdx={selectedChildIdx} />
-<AudioPlayer text={displayContent} language={profile.language} />
-<WeekendSpark item={item} profile={profile} children={children} selectedChildIdx={selectedChildIdx} />
-                                {profile.language !== 'en' && (
-                                  <p className="text-xs text-gray-400 mt-2 italic">
-                                    🔍 Tap highlighted terms for explanations: <JargonText text={item.messages?.transformed_content || ''} language={profile.language} />
-                                  </p>
-                                )}
-                                <div className="flex gap-2 flex-wrap pt-1">
-                                  <span className="text-xs text-gray-400 self-center">Reading level:</span>
-                                  {[{ key: 'simple', label: '🟢 Simpler' }, { key: 'standard', label: '🔵 Standard' }, { key: 'detailed', label: '🟣 More detail' }].map(lvl => (
-                                    <button key={lvl.key} onClick={() => handleSimplify(item.message_id, originalContent, lvl.key)} disabled={simplifying[item.message_id]}
-                                      className={`text-xs px-3 py-1 rounded-full border transition ${readingLevel[item.message_id] === lvl.key ? 'bg-teal-600 text-white border-teal-600' : 'bg-white text-gray-600 border-gray-300 hover:border-teal-400'}`}>
-                                      {simplifying[item.message_id] ? '...' : lvl.label}
-                                    </button>
-                                  ))}
-                                  {simplifiedContent[item.message_id] && (
-                                    <button onClick={() => { setSimplifiedContent(s => ({ ...s, [item.message_id]: null })); setReadingLevel(r => ({ ...r, [item.message_id]: null })) }}
-                                      className="text-xs px-3 py-1 rounded-full border bg-gray-100 text-gray-500 hover:bg-gray-200">↺ Reset</button>
-                                  )}
-                                </div>
-                              </div>
-
-                              {tips.length > 0 && (
-                                <div className="bg-white rounded-xl p-4 shadow-sm">
-                                  <p className="text-sm font-semibold text-green-800 mb-3">🏠 How you can help at home</p>
-                                  <div className="space-y-3">
-                                    {tips.map((tip, i) => {
-                                      const tipKey = `${item.message_id}_${i}`
-                                      const fb = triedTips[tipKey]
-                                      return (
-                                        <div key={i} className={`rounded-lg p-3 transition ${fb === 'tried' ? 'bg-green-50 border border-green-200' : fb === 'struggled' ? 'bg-orange-50 border border-orange-200' : 'bg-gray-50'}`}>
-                                          <div className="flex items-start justify-between gap-2">
-  <p className="text-sm text-gray-700 flex-1"><span className="font-bold text-green-600">{i+1}.</span> {tip}</p>
-  <ConfidenceBadge tip={tip} subject={item.messages?.subject} yearLevel="8" />
-</div>
-                                          <GrowthMindsetPrompt
-  tip={tip}
-  childName={children[selectedChildIdx]?.name || profile.child_name || 'your child'}
-  subject={item.messages?.subject || 'General'}
-  language={profile.language}
-/>
-{!fb ? (
-  <div className="flex gap-2 mt-2">
-    <button onClick={() => handleTried(item.id, item.message_id, i, 'tried')} className="text-xs px-3 py-1 bg-green-100 text-green-700 rounded-full hover:bg-green-200 transition">✅ We tried this!</button>
-    <button onClick={() => handleTried(item.id, item.message_id, i, 'struggled')} className="text-xs px-3 py-1 bg-orange-100 text-orange-700 rounded-full hover:bg-orange-200 transition">😕 We struggled</button>
-  </div>
-) : (
-                                            <p className="text-xs mt-2 text-gray-500 italic">{fb === 'tried' ? '✅ Great! Your teacher can see this.' : '😕 Noted — your teacher will follow up.'}</p>
-                                          )}
-                                        </div>
-                                      )
-                                    })}
-                                  </div>
-                                </div>
-                              )}
-
-                              <div className="bg-white rounded-xl p-4 shadow-sm space-y-3">
-                                <div className="flex justify-between items-center">
-                                  <p className="text-sm font-semibold text-gray-700">💬 Reply to teacher</p>
-                                  <button onClick={() => handleFlag(item.message_id)} disabled={flagged[item.message_id]}
-                                    className={`text-xs transition ${flagged[item.message_id] ? 'text-red-500' : 'text-gray-400 hover:text-red-500'}`}>
-                                    🚩 {flagged[item.message_id] ? 'Flagged' : 'Flag this message'}
-                                  </button>
-                                </div>
-                                <div className="bg-amber-50 rounded-lg p-2 text-xs text-amber-700">
-                                  ⚠️ Not for urgent welfare issues — contact the school directly for emergencies.
-                                </div>
-                                <div className="flex gap-2 flex-wrap">
-                                  <span className="text-xs text-gray-500 self-center">Quick reply:</span>
-                                  {[
-                                    { emoji: '👍', textEn: 'Thanks, got it!' },
-                                    { emoji: '😕', textEn: "I'm not sure how to help with this" },
-                                    { emoji: '❓', textEn: 'Can you explain this more simply?' },
-                                    { emoji: '🌟', textEn: 'We tried the activities and it went well!' },
-                                  ].map((reaction, i) => (
-                                    <button key={i}
-                                      onClick={async () => {
-                                        let text = reaction.textEn
-                                        if (profile.language !== 'en') {
-                                          try {
-                                            const res = await axios.post(`${API}/api/translate`, { text: reaction.textEn, targetLanguage: profile.language })
-                                            text = res.data.translated
-                                          } catch(e) {}
-                                        }
-                                        setReplyText(r => ({ ...r, [item.message_id]: text }))
-                                      }}
-                                      className="text-xl hover:scale-125 transition-transform">
-                                      {reaction.emoji}
-                                    </button>
-                                  ))}
-                                </div>
-                                <textarea value={replyText[item.message_id] || ''} onChange={e => setReplyText(r => ({ ...r, [item.message_id]: e.target.value }))} rows={2}
-                                  className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
-                                  placeholder="Write in any language — translated automatically for your teacher..."/>
-                                {sentReplies[item.message_id] ? (
-  <p className="text-green-600 text-sm font-medium">✅ Reply sent!</p>
-) : (
-  <button onClick={() => handleReply(item.message_id)} disabled={sending[item.message_id]}
-    className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition disabled:opacity-50">
-    {sending[item.message_id] ? 'Sending...' : 'Send Reply'}
-  </button>
-)}
-<p className="text-xs text-gray-400 mt-1">You can send multiple replies to your teacher.</p>
-                              </div>
-                            </div>
-                          )
-                        })}
-                      </div>
-                    )}
-                  </div>
-                )
-              })
+                  )
+                })}
+              </div>
             )}
           </>
         )}
@@ -991,7 +1007,6 @@ export default function ParentDashboard({ supabase, profile }) {
               )}
             </div>
 
-            {/* PTM Request */}
             <div className="bg-white rounded-xl shadow p-5 space-y-4">
               <h3 className="text-base font-semibold text-gray-800">📅 Request a Parent-Teacher Meeting</h3>
               <PTMRequest profile={profile} currentChild={currentChild} />
