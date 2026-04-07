@@ -216,19 +216,24 @@ function CustomFAQ({ language }) {
 }
 
 function PTMRequest({ profile, currentChild }) {
+  const [preferredDate, setPreferredDate] = useState('')
   const [preferredTime, setPreferredTime] = useState('')
   const [reason, setReason] = useState('')
   const [sending, setSending] = useState(false)
   const [sent, setSent] = useState(false)
 
+  const TEACHER_ID = '83e0135e-9d7b-43af-aa81-4bce2c025208'
+
   const handleSubmit = async () => {
-    if (!preferredTime) return
+    if (!preferredDate || !preferredTime) return
     setSending(true)
     try {
-      await axios.post(`${API}/api/request-ptm`, {
+      await axios.post(`${API}/api/book-appointment`, {
         parentId: profile.id, parentName: profile.name,
         childName: currentChild?.name || profile.child_name,
-        preferredTime, reason
+        teacherId: TEACHER_ID,
+        appointmentType: 'Parent-Teacher Meeting',
+        preferredDate, preferredTime, note: reason
       })
       setSent(true)
     } catch(e) {}
@@ -237,18 +242,24 @@ function PTMRequest({ profile, currentChild }) {
 
   if (sent) return (
     <div className="bg-green-100 text-green-800 text-center py-3 rounded-lg font-semibold">
-      ✅ Meeting request sent! Your teacher will be in touch.
+      ✅ Meeting request sent! Your teacher will confirm shortly.
     </div>
   )
 
   return (
     <div className="space-y-3">
       <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">Preferred date</label>
+        <input type="date" value={preferredDate} onChange={e => setPreferredDate(e.target.value)}
+          min={new Date().toISOString().split('T')[0]}
+          className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400"/>
+      </div>
+      <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">Preferred time</label>
-        <div className="grid grid-cols-2 gap-2">
-          {['Morning (9am-12pm)', 'Afternoon (12pm-3pm)', 'After school (3pm-6pm)', 'Online/Phone call'].map(t => (
+        <div className="grid grid-cols-3 gap-2">
+          {['8:00 AM','9:00 AM','10:00 AM','11:00 AM','1:00 PM','2:00 PM','3:00 PM','After school','Phone call'].map(t => (
             <button key={t} onClick={() => setPreferredTime(t)}
-              className={`px-3 py-2 rounded-lg text-xs border transition text-left ${preferredTime === t ? 'bg-teal-600 text-white border-teal-600' : 'bg-white text-gray-700 border-gray-300 hover:border-teal-400'}`}>
+              className={`px-2 py-2 rounded-lg text-xs border transition ${preferredTime === t ? 'bg-teal-600 text-white border-teal-600' : 'bg-white text-gray-700 border-gray-300 hover:border-teal-400'}`}>
               {t}
             </button>
           ))}
@@ -260,14 +271,13 @@ function PTMRequest({ profile, currentChild }) {
           className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400"
           placeholder="e.g. I'd like to discuss my child's progress in maths..."/>
       </div>
-      <button onClick={handleSubmit} disabled={sending || !preferredTime}
+      <button onClick={handleSubmit} disabled={sending || !preferredDate || !preferredTime}
         className="w-full bg-teal-600 text-white py-2 rounded-lg text-sm font-semibold hover:bg-teal-700 transition disabled:opacity-50">
         {sending ? 'Sending...' : '📅 Request Meeting'}
       </button>
     </div>
   )
 }
-
 const LANGUAGES = [
   { code: 'en', label: '🇦🇺 English' },
   { code: 'hi', label: '🇮🇳 Hindi' },
