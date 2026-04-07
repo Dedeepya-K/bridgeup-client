@@ -401,6 +401,44 @@ function ConfidenceBadge({ tip, subject, yearLevel }) {
   )
 }
 
+function GrowthMindsetPrompt({ tip, childName, subject, language }) {
+  const [prompt, setPrompt] = useState(null)
+  const [loading, setLoading] = useState(false)
+  const [show, setShow] = useState(false)
+
+  const generate = async () => {
+    if (prompt) { setShow(!show); return; }
+    setLoading(true)
+    try {
+      const res = await axios.post(`${API}/api/growth-mindset-prompt`, {
+        tip, childName, subject, language
+      })
+      setPrompt(res.data.prompt)
+      setShow(true)
+    } catch(e) {}
+    setLoading(false)
+  }
+
+  return (
+    <div className="mt-2">
+      <button onClick={generate} disabled={loading}
+        className="text-xs text-purple-600 hover:text-purple-800 flex items-center gap-1 disabled:opacity-50">
+        {loading ? '✨ Generating...' : show ? '▲ Hide mindset script' : '🧠 What to say if they get stuck?'}
+      </button>
+      {show && prompt && (
+        <div className="mt-2 bg-purple-50 border border-purple-200 rounded-lg p-3 space-y-1">
+          {prompt.split('\n').map((line, i) => (
+            <p key={i} className={`text-xs ${line.toLowerCase().includes('instead') ? 'text-red-600' : 'text-purple-800 font-medium'}`}>
+              {line}
+            </p>
+          ))}
+          <p className="text-xs text-purple-400 mt-1">🧠 Dweck Growth Mindset • Powered by CurricuLLM</p>
+        </div>
+      )}
+    </div>
+  )
+}
+
 export default function ParentDashboard({ supabase, profile }) {
   const [tab, setTab] = useState('updates')
   const [messages, setMessages] = useState([])
@@ -734,12 +772,18 @@ export default function ParentDashboard({ supabase, profile }) {
   <p className="text-sm text-gray-700 flex-1"><span className="font-bold text-green-600">{i+1}.</span> {tip}</p>
   <ConfidenceBadge tip={tip} subject={item.messages?.subject} yearLevel="8" />
 </div>
-                                          {!fb ? (
-                                            <div className="flex gap-2 mt-2">
-                                              <button onClick={() => handleTried(item.id, item.message_id, i, 'tried')} className="text-xs px-3 py-1 bg-green-100 text-green-700 rounded-full hover:bg-green-200 transition">✅ We tried this!</button>
-                                              <button onClick={() => handleTried(item.id, item.message_id, i, 'struggled')} className="text-xs px-3 py-1 bg-orange-100 text-orange-700 rounded-full hover:bg-orange-200 transition">😕 We struggled</button>
-                                            </div>
-                                          ) : (
+                                          <GrowthMindsetPrompt
+  tip={tip}
+  childName={children[selectedChildIdx]?.name || profile.child_name || 'your child'}
+  subject={item.messages?.subject || 'General'}
+  language={profile.language}
+/>
+{!fb ? (
+  <div className="flex gap-2 mt-2">
+    <button onClick={() => handleTried(item.id, item.message_id, i, 'tried')} className="text-xs px-3 py-1 bg-green-100 text-green-700 rounded-full hover:bg-green-200 transition">✅ We tried this!</button>
+    <button onClick={() => handleTried(item.id, item.message_id, i, 'struggled')} className="text-xs px-3 py-1 bg-orange-100 text-orange-700 rounded-full hover:bg-orange-200 transition">😕 We struggled</button>
+  </div>
+) : (
                                             <p className="text-xs mt-2 text-gray-500 italic">{fb === 'tried' ? '✅ Great! Your teacher can see this.' : '😕 Noted — your teacher will follow up.'}</p>
                                           )}
                                         </div>
