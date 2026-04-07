@@ -32,9 +32,7 @@ function TeacherReplyBox({ replyId, messageId, parentId, teacherName, suggestedR
     if (!text.trim()) return
     setSending(true)
     try {
-      await axios.post(`${import.meta.env.VITE_API_URL}/api/teacher-reply`, {
-        parentId, teacherName, content: text, messageId
-      })
+      await axios.post(`${API}/api/teacher-reply`, { parentId, teacherName, content: text, messageId })
       setSent(true)
       setText('')
       setTimeout(() => { setSent(false); setOpen(false) }, 2000)
@@ -88,19 +86,33 @@ export default function TeacherDashboard({ supabase, profile }) {
   const [expandedReplies, setExpandedReplies] = useState({})
   const [expandedSubjectTeacher, setExpandedSubjectTeacher] = useState(null)
   const [unengaged, setUnengaged] = useState([])
-  useEffect(() => { fetchMessages(); fetchEngagement(); }, [])
+  const [ptmRequests, setPtmRequests] = useState([])
+  const [allParents, setAllParents] = useState([])
+  const [dmParentId, setDmParentId] = useState('')
+  const [dmSubject, setDmSubject] = useState('')
+  const [dmContent, setDmContent] = useState('')
+  const [dmSending, setDmSending] = useState(false)
+  const [dmSent, setDmSent] = useState(false)
+
+  useEffect(() => {
+    fetchMessages()
+    fetchEngagement()
+    axios.get(`${API}/api/all-parents`).then(r => setAllParents(r.data.data || [])).catch(() => {})
+  }, [])
 
   const fetchMessages = async () => {
     const res = await axios.get(`${API}/api/teacher-messages/${profile.id}`)
     setMessages(res.data.data || [])
   }
 
-const fetchEngagement = async () => {
-  const res = await axios.get(`${API}/api/engagement/${profile.id}`)
-  if (res.data.success) setEngagement(res.data.data)
-  const res2 = await axios.get(`${API}/api/unengaged/${profile.id}`)
-  if (res2.data.success) setUnengaged(res2.data.data)
-}
+  const fetchEngagement = async () => {
+    const res = await axios.get(`${API}/api/engagement/${profile.id}`)
+    if (res.data.success) setEngagement(res.data.data)
+    const res2 = await axios.get(`${API}/api/unengaged/${profile.id}`)
+    if (res2.data.success) setUnengaged(res2.data.data)
+    const res3 = await axios.get(`${API}/api/ptm-requests/${profile.id}`)
+    if (res3.data.success) setPtmRequests(res3.data.data)
+  }
 
   const handleTransform = async () => {
     if (!rawContent.trim()) return
@@ -128,6 +140,21 @@ const fetchEngagement = async () => {
     setSending(false)
   }
 
+  const handleDmSend = async () => {
+    if (!dmParentId || !dmContent.trim()) return
+    setDmSending(true)
+    try {
+      await axios.post(`${API}/api/direct-message`, {
+        teacherId: profile.id, teacherName: profile.name,
+        parentId: dmParentId, subject: dmSubject || 'Message from Teacher', content: dmContent
+      })
+      setDmSent(true)
+      setDmContent(''); setDmSubject(''); setDmParentId('')
+      setTimeout(() => setDmSent(false), 3000)
+    } catch(e) { alert('Failed to send: ' + e.message) }
+    setDmSending(false)
+  }
+
   const handleLogout = () => supabase.auth.signOut()
   const toggleReplies = (msgId) => setExpandedReplies(prev => ({ ...prev, [msgId]: !prev[msgId] }))
 
@@ -147,11 +174,11 @@ const fetchEngagement = async () => {
         </div>
       </header>
 
-      <div className="bg-white border-b px-6 flex gap-6">
-        {['compose', 'inbox', 'insights'].map(t => (
+      <div className="bg-white border-b px-6 flex gap-6 overflow-x-auto">
+        {['compose', 'inbox', 'insights', 'direct'].map(t => (
           <button key={t} onClick={() => { setTab(t); if(t==='inbox') fetchMessages(); if(t==='insights') fetchEngagement(); }}
-            className={`py-4 text-sm font-medium border-b-2 transition ${tab===t ? 'border-teal-600 text-teal-700' : 'border-transparent text-gray-500 hover:text-gray-700'}`}>
-            {t==='compose' ? '✏️ New Update' : t==='inbox' ? `📬 Sent Messages (${messages.length})` : '📊 Insights'}
+            className={`py-4 text-sm font-medium border-b-2 transition whitespace-nowrap ${tab===t ? 'border-teal-600 text-teal-700' : 'border-transparent text-gray-500 hover:text-gray-700'}`}>
+            {t==='compose' ? '✏️ New Update' : t==='inbox' ? `📬 Sent Messages (${messages.length})` : t==='insights' ? '📊 Insights' : '✉️ Direct Message'}
           </button>
         ))}
       </div>
@@ -167,7 +194,6 @@ const fetchEngagement = async () => {
 
             <div className="bg-white rounded-xl shadow p-6 space-y-4">
               <h2 className="text-lg font-semibold text-gray-800">📝 This Week's Learning Update</h2>
-
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Subject</label>
@@ -184,8 +210,6 @@ const fetchEngagement = async () => {
                   </select>
                 </div>
               </div>
-
-              {/* Tone selector */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Communication tone</label>
                 <div className="flex gap-2 flex-wrap">
@@ -197,14 +221,12 @@ const fetchEngagement = async () => {
                   ))}
                 </div>
               </div>
-
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Your lesson notes (write naturally)</label>
                 <textarea value={rawContent} onChange={e => setRawContent(e.target.value)} rows={5}
                   className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400"
                   placeholder="e.g. This week Year 8 Science covered bioprinting — how scientists use 3D printers to create human tissue..."/>
               </div>
-
               <button onClick={handleTransform} disabled={loading || !rawContent.trim()}
                 className="w-full bg-teal-600 text-white py-3 rounded-lg font-semibold hover:bg-teal-700 transition disabled:opacity-50">
                 {loading ? '✨ Transforming with CurricuLLM...' : '✨ Transform for Parents'}
@@ -223,8 +245,6 @@ const fetchEngagement = async () => {
                     <span className="text-xs bg-teal-100 text-teal-700 px-2 py-1 rounded-full">⚡ Powered by CurricuLLM</span>
                   </div>
                 </div>
-
-                {/* Before / After toggle */}
                 {showRaw ? (
                   <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
                     <p className="text-xs font-semibold text-gray-500 mb-2">📝 BEFORE — Teacher's raw notes:</p>
@@ -232,24 +252,20 @@ const fetchEngagement = async () => {
                   </div>
                 ) : (
                   <>
-                    {/* Curriculum alignment label */}
                     {preview.curriculumLabel && (
                       <div className="bg-indigo-50 border border-indigo-200 rounded-lg px-4 py-2 flex items-center gap-2">
                         <span className="text-indigo-600">🎓</span>
                         <p className="text-xs text-indigo-700 font-medium">{preview.curriculumLabel}</p>
                       </div>
                     )}
-
                     <div className="bg-teal-50 rounded-lg p-4">
                       <p className="text-sm font-semibold text-teal-800 mb-1">📚 What your child is learning</p>
                       <p className="text-sm text-gray-700">{preview.parentSummary}</p>
                     </div>
-
                     <div className="bg-amber-50 rounded-lg p-4">
                       <p className="text-sm font-semibold text-amber-800 mb-1">💡 Why it matters</p>
                       <p className="text-sm text-gray-700">{preview.whyItMatters}</p>
                     </div>
-
                     <div className="bg-green-50 rounded-lg p-4">
                       <p className="text-sm font-semibold text-green-800 mb-2">🏠 What parents can do at home</p>
                       <ul className="space-y-1">
@@ -260,25 +276,20 @@ const fetchEngagement = async () => {
                         ))}
                       </ul>
                     </div>
-
                     <div className="bg-gray-50 rounded-lg p-4">
                       <p className="text-sm font-semibold text-gray-700 mb-1">✉️ Teacher's message</p>
                       <p className="text-sm text-gray-600 italic">"{preview.teacherMessage}"</p>
                     </div>
-
-                    {/* Pedagogy note — teacher only */}
                     {preview.pedagogyNote && (
                       <div className="bg-purple-50 border border-purple-200 rounded-lg px-4 py-2">
                         <p className="text-xs text-purple-600"><strong>🧠 Educational theory (visible to teacher only):</strong> {preview.pedagogyNote}</p>
                       </div>
                     )}
-
                     <div className="bg-blue-50 rounded-lg p-3 text-xs text-blue-700">
                       🌍 Will be automatically translated into each parent's preferred language. Tips personalised per child's interest profile.
                     </div>
                   </>
                 )}
-
                 {sent ? (
                   <div className="bg-green-100 text-green-800 text-center py-3 rounded-lg font-semibold">✅ Message sent to all parents!</div>
                 ) : (
@@ -294,172 +305,155 @@ const fetchEngagement = async () => {
 
         {/* ── INBOX ── */}
         {tab === 'inbox' && (
-  <div className="space-y-4">
-    <div className="flex justify-between items-center">
-      <h2 className="text-lg font-semibold text-gray-800">Sent Messages & Parent Replies</h2>
-      <button onClick={() => { fetchMessages(); fetchEngagement(); }} className="text-sm text-teal-600 hover:text-teal-800">🔄 Refresh</button>
-    </div>
-
-    {messages.length === 0 ? (
-      <div className="text-center py-12 text-gray-400">
-        <p className="text-4xl mb-3">📭</p>
-        <p>No messages sent yet.</p>
-      </div>
-    ) : (
-      <>
-        {/* Subject cards grid */}
-        {(() => {
-          const grouped = messages.reduce((acc, msg) => {
-            const subj = msg.subject || 'General'
-            if (!acc[subj]) acc[subj] = []
-            acc[subj].push(msg)
-            return acc
-          }, {})
-
-          const SUBJ_CFG = {
-            'Science':     { icon: '🔬', header: 'bg-green-700',  border: 'border-green-300' },
-            'English':     { icon: '📖', header: 'bg-blue-700',   border: 'border-blue-300' },
-            'Mathematics': { icon: '🔢', header: 'bg-purple-700', border: 'border-purple-300' },
-            'History':     { icon: '🏛️', header: 'bg-amber-700',  border: 'border-amber-300' },
-            'Geography':   { icon: '🌍', header: 'bg-teal-700',   border: 'border-teal-300' },
-            'PDHPE':       { icon: '⚽', header: 'bg-red-700',    border: 'border-red-300' },
-            'General':     { icon: '📚', header: 'bg-gray-700',   border: 'border-gray-300' },
-          }
-
-          return (
-            <>
-              {/* Subject card grid — collapsed view */}
-              {!expandedSubjectTeacher && (
-                <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
-                  {Object.entries(grouped).map(([subject, subjectMsgs]) => {
-                    const cfg = SUBJ_CFG[subject] || SUBJ_CFG['General']
-                    const totalReplies = subjectMsgs.reduce((sum, m) => sum + (m.replies?.length || 0), 0)
-                    const unrepliedConcerns = subjectMsgs.reduce((sum, m) => 
-                      sum + (m.replies?.filter(r => r.sentiment === 'concern' || r.urgency === 'high').length || 0), 0)
-                    const hasUnread = totalReplies > 0
-
-                    return (
-                      <button key={subject} onClick={() => setExpandedSubjectTeacher(subject)}
-                        className={`rounded-xl border-2 overflow-hidden shadow hover:shadow-md transition text-left ${cfg.border}`}>
-                        <div className={`${cfg.header} text-white px-4 py-3`}>
-                          <div className="flex justify-between items-start">
-                            <span className="text-2xl">{cfg.icon}</span>
-                            <div className="flex flex-col items-end gap-1">
-                              {unrepliedConcerns > 0 && (
-                                <span className="bg-red-400 text-white text-xs px-2 py-0.5 rounded-full animate-pulse">
-                                  ⚠️ {unrepliedConcerns} concern{unrepliedConcerns > 1 ? 's' : ''}
-                                </span>
-                              )}
-                              {hasUnread && unrepliedConcerns === 0 && (
-                                <span className="bg-yellow-300 text-yellow-900 text-xs px-2 py-0.5 rounded-full">
-                                  💬 {totalReplies} repl{totalReplies > 1 ? 'ies' : 'y'}
-                                </span>
-                              )}
-                            </div>
-                          </div>
-                          <p className="font-bold mt-2">{subject}</p>
-                          <p className="text-xs opacity-75">{subjectMsgs.length} update{subjectMsgs.length > 1 ? 's' : ''} sent</p>
-                        </div>
-                        <div className="bg-white px-4 py-2">
-                          <p className="text-xs text-gray-500">
-                            {totalReplies > 0 ? `${totalReplies} parent repl${totalReplies > 1 ? 'ies' : 'y'}` : 'No replies yet'}
-                          </p>
-                          <p className="text-xs text-teal-600 font-medium mt-0.5">Tap to view →</p>
-                        </div>
-                      </button>
-                    )
-                  })}
-                </div>
-              )}
-
-              {/* Expanded subject view */}
-              {expandedSubjectTeacher && (() => {
-                const cfg = SUBJ_CFG[expandedSubjectTeacher] || SUBJ_CFG['General']
-                const subjectMsgs = grouped[expandedSubjectTeacher] || []
-                return (
-                  <div className={`rounded-xl border-2 overflow-hidden ${cfg.border}`}>
-                    <div className={`${cfg.header} text-white px-5 py-3 flex justify-between items-center`}>
-                      <div className="flex items-center gap-3">
-                        <span className="text-2xl">{cfg.icon}</span>
-                        <div>
-                          <p className="font-bold text-lg">{expandedSubjectTeacher}</p>
-                          <p className="text-xs opacity-75">{subjectMsgs.length} update{subjectMsgs.length > 1 ? 's' : ''}</p>
-                        </div>
-                      </div>
-                      <button onClick={() => setExpandedSubjectTeacher(null)}
-                        className="text-white opacity-75 hover:opacity-100 text-sm bg-white bg-opacity-20 px-3 py-1 rounded-full">
-                        ← All subjects
-                      </button>
-                    </div>
-
-                    <div className="bg-white divide-y">
-                      {subjectMsgs.map(message => (
-                        <div key={message.id} className="p-5 space-y-3">
-                          <div className="flex justify-between items-start">
-                            <div className="flex-1 space-y-1">
-                              <div className="flex items-center gap-2">
-                                <span className="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full">⚡ CurricuLLM</span>
-                                <span className="text-xs text-gray-400">{new Date(message.created_at).toLocaleDateString('en-AU', { weekday: 'short', day: 'numeric', month: 'short' })}</span>
-                              </div>
-                              <p className="text-sm text-gray-700">{message.transformed_content}</p>
-                            </div>
-                          </div>
-
-                          {message.replies?.length > 0 && (
-                            <div className="border-t pt-3 space-y-2">
-                              <button onClick={() => toggleReplies(message.id)} className="text-xs font-semibold text-teal-700 hover:text-teal-900"
-                              ref={el => { if (el && !expandedReplies[message.id] && message.replies?.length > 0) toggleReplies(message.id) }}>
-                                💬 {message.replies.length} Parent {message.replies.length===1?'Reply':'Replies'} {expandedReplies[message.id]?'▲':'▼'}
-                              </button>
-                              {expandedReplies[message.id] && message.replies.map(r => {
-                                const s = SENTIMENT_CONFIG[r.sentiment] || SENTIMENT_CONFIG.positive
-                                const u = URGENCY_CONFIG[r.urgency] || URGENCY_CONFIG.low
-                                return (
-                                  <div key={r.id} className={`rounded-lg p-3 border space-y-2 ${s.color}`}>
-                                    <div className="flex justify-between items-center flex-wrap gap-1">
-                                      <p className="text-xs font-semibold">{r.parent_name}</p>
-                                      <div className="flex gap-2 items-center">
-                                        <span className="text-xs px-2 py-0.5 rounded-full bg-white bg-opacity-60">{s.emoji} {s.label}</span>
-                                        <span className={`text-xs ${u.color}`}>Urgency: {u.label}</span>
-                                      </div>
+          <div className="space-y-4">
+            <div className="flex justify-between items-center">
+              <h2 className="text-lg font-semibold text-gray-800">Sent Messages & Parent Replies</h2>
+              <button onClick={() => { fetchMessages(); fetchEngagement(); }} className="text-sm text-teal-600 hover:text-teal-800">🔄 Refresh</button>
+            </div>
+            {messages.length === 0 ? (
+              <div className="text-center py-12 text-gray-400">
+                <p className="text-4xl mb-3">📭</p>
+                <p>No messages sent yet.</p>
+              </div>
+            ) : (
+              <>
+                {(() => {
+                  const grouped = messages.reduce((acc, msg) => {
+                    const subj = msg.subject || 'General'
+                    if (!acc[subj]) acc[subj] = []
+                    acc[subj].push(msg)
+                    return acc
+                  }, {})
+                  const SUBJ_CFG = {
+                    'Science':     { icon: '🔬', header: 'bg-green-700',  border: 'border-green-300' },
+                    'English':     { icon: '📖', header: 'bg-blue-700',   border: 'border-blue-300' },
+                    'Mathematics': { icon: '🔢', header: 'bg-purple-700', border: 'border-purple-300' },
+                    'History':     { icon: '🏛️', header: 'bg-amber-700',  border: 'border-amber-300' },
+                    'Geography':   { icon: '🌍', header: 'bg-teal-700',   border: 'border-teal-300' },
+                    'PDHPE':       { icon: '⚽', header: 'bg-red-700',    border: 'border-red-300' },
+                    'General':     { icon: '📚', header: 'bg-gray-700',   border: 'border-gray-300' },
+                  }
+                  return (
+                    <>
+                      {!expandedSubjectTeacher && (
+                        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
+                          {Object.entries(grouped).map(([subject, subjectMsgs]) => {
+                            const cfg = SUBJ_CFG[subject] || SUBJ_CFG['General']
+                            const totalReplies = subjectMsgs.reduce((sum, m) => sum + (m.replies?.length || 0), 0)
+                            const unrepliedConcerns = subjectMsgs.reduce((sum, m) =>
+                              sum + (m.replies?.filter(r => r.sentiment === 'concern' || r.urgency === 'high').length || 0), 0)
+                            return (
+                              <button key={subject} onClick={() => setExpandedSubjectTeacher(subject)}
+                                className={`rounded-xl border-2 overflow-hidden shadow hover:shadow-md transition text-left ${cfg.border}`}>
+                                <div className={`${cfg.header} text-white px-4 py-3`}>
+                                  <div className="flex justify-between items-start">
+                                    <span className="text-2xl">{cfg.icon}</span>
+                                    <div className="flex flex-col items-end gap-1">
+                                      {unrepliedConcerns > 0 && (
+                                        <span className="bg-red-400 text-white text-xs px-2 py-0.5 rounded-full animate-pulse">
+                                          ⚠️ {unrepliedConcerns} concern{unrepliedConcerns > 1 ? 's' : ''}
+                                        </span>
+                                      )}
+                                      {totalReplies > 0 && unrepliedConcerns === 0 && (
+                                        <span className="bg-yellow-300 text-yellow-900 text-xs px-2 py-0.5 rounded-full">
+                                          💬 {totalReplies} repl{totalReplies > 1 ? 'ies' : 'y'}
+                                        </span>
+                                      )}
                                     </div>
-                                    <p className="text-sm font-medium">🌐 {r.translated_content || r.content}</p>
-                                    {r.translated_content && r.translated_content !== r.content && (
-                                      <p className="text-xs opacity-70 italic">Original: "{r.content}"</p>
-                                    )}
-                                    {r.suggested_response && (
-                                      <div className="bg-white bg-opacity-60 rounded p-2">
-                                        <p className="text-xs font-semibold mb-0.5">💡 Suggested reply:</p>
-                                        <p className="text-xs italic">"{r.suggested_response}"</p>
-                                      </div>
-                                    )}
-                                    {!r.parent_name?.includes('(Teacher)') && (
-                                          <TeacherReplyBox
-                                            replyId={r.id}
-                                            messageId={r.message_id}
-                                            parentId={r.parent_id}
-                                            teacherName={profile.name}
-                                            suggestedResponse={r.suggested_response}
-                                          />
-                                        )}
                                   </div>
-                                )
-                              })}
-                            </div>
-                          )}
+                                  <p className="font-bold mt-2">{subject}</p>
+                                  <p className="text-xs opacity-75">{subjectMsgs.length} update{subjectMsgs.length > 1 ? 's' : ''} sent</p>
+                                </div>
+                                <div className="bg-white px-4 py-2">
+                                  <p className="text-xs text-gray-500">{totalReplies > 0 ? `${totalReplies} parent repl${totalReplies > 1 ? 'ies' : 'y'}` : 'No replies yet'}</p>
+                                  <p className="text-xs text-teal-600 font-medium mt-0.5">Tap to view →</p>
+                                </div>
+                              </button>
+                            )
+                          })}
                         </div>
-                      ))}
-                    </div>
-                  </div>
-                )
-              })()}
-            </>
-          )
-        })()}
-      </>
-    )}
-  </div>
-)}
+                      )}
+                      {expandedSubjectTeacher && (() => {
+                        const cfg = SUBJ_CFG[expandedSubjectTeacher] || SUBJ_CFG['General']
+                        const subjectMsgs = grouped[expandedSubjectTeacher] || []
+                        return (
+                          <div className={`rounded-xl border-2 overflow-hidden ${cfg.border}`}>
+                            <div className={`${cfg.header} text-white px-5 py-3 flex justify-between items-center`}>
+                              <div className="flex items-center gap-3">
+                                <span className="text-2xl">{cfg.icon}</span>
+                                <div>
+                                  <p className="font-bold text-lg">{expandedSubjectTeacher}</p>
+                                  <p className="text-xs opacity-75">{subjectMsgs.length} update{subjectMsgs.length > 1 ? 's' : ''}</p>
+                                </div>
+                              </div>
+                              <button onClick={() => setExpandedSubjectTeacher(null)}
+                                className="text-white opacity-75 hover:opacity-100 text-sm bg-white bg-opacity-20 px-3 py-1 rounded-full">
+                                ← All subjects
+                              </button>
+                            </div>
+                            <div className="bg-white divide-y">
+                              {subjectMsgs.map(message => (
+                                <div key={message.id} className="p-5 space-y-3">
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full">⚡ CurricuLLM</span>
+                                    <span className="text-xs text-gray-400">{new Date(message.created_at).toLocaleDateString('en-AU', { weekday: 'short', day: 'numeric', month: 'short' })}</span>
+                                  </div>
+                                  <p className="text-sm text-gray-700">{message.transformed_content}</p>
+                                  {message.replies?.length > 0 && (
+                                    <div className="border-t pt-3 space-y-2">
+                                      <button onClick={() => toggleReplies(message.id)}
+                                        className="text-xs font-semibold text-teal-700 hover:text-teal-900"
+                                        ref={el => { if (el && !expandedReplies[message.id] && message.replies?.length > 0) toggleReplies(message.id) }}>
+                                        💬 {message.replies.length} Parent {message.replies.length===1?'Reply':'Replies'} {expandedReplies[message.id]?'▲':'▼'}
+                                      </button>
+                                      {expandedReplies[message.id] && message.replies.map(r => {
+                                        const s = SENTIMENT_CONFIG[r.sentiment] || SENTIMENT_CONFIG.positive
+                                        const u = URGENCY_CONFIG[r.urgency] || URGENCY_CONFIG.low
+                                        return (
+                                          <div key={r.id} className={`rounded-lg p-3 border space-y-2 ${s.color}`}>
+                                            <div className="flex justify-between items-center flex-wrap gap-1">
+                                              <p className="text-xs font-semibold">{r.parent_name}</p>
+                                              <div className="flex gap-2 items-center">
+                                                <span className="text-xs px-2 py-0.5 rounded-full bg-white bg-opacity-60">{s.emoji} {s.label}</span>
+                                                <span className={`text-xs ${u.color}`}>Urgency: {u.label}</span>
+                                              </div>
+                                            </div>
+                                            <p className="text-sm font-medium">🌐 {r.translated_content || r.content}</p>
+                                            {r.translated_content && r.translated_content !== r.content && (
+                                              <p className="text-xs opacity-70 italic">Original: "{r.content}"</p>
+                                            )}
+                                            {r.suggested_response && (
+                                              <div className="bg-white bg-opacity-60 rounded p-2">
+                                                <p className="text-xs font-semibold mb-0.5">💡 Suggested reply:</p>
+                                                <p className="text-xs italic">"{r.suggested_response}"</p>
+                                              </div>
+                                            )}
+                                            {!r.parent_name?.includes('(Teacher)') && (
+                                              <TeacherReplyBox
+                                                replyId={r.id} messageId={r.message_id}
+                                                parentId={r.parent_id} teacherName={profile.name}
+                                                suggestedResponse={r.suggested_response}
+                                              />
+                                            )}
+                                          </div>
+                                        )
+                                      })}
+                                    </div>
+                                  )}
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )
+                      })()}
+                    </>
+                  )
+                })()}
+              </>
+            )}
+          </div>
+        )}
+
         {/* ── INSIGHTS ── */}
         {tab === 'insights' && (
           <div className="space-y-5">
@@ -468,10 +462,10 @@ const fetchEngagement = async () => {
               <>
                 <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
                   {[
-                    { label: 'Messages Sent',    value: engagement.totalMessages,  emoji: '📤', color: 'bg-teal-50 border-teal-200' },
-                    { label: 'Parent Replies',    value: engagement.totalReplies,   emoji: '💬', color: 'bg-blue-50 border-blue-200' },
-                    { label: 'Families Reached',  value: engagement.totalParents,   emoji: '👨‍👩‍👧', color: 'bg-purple-50 border-purple-200' },
-                    { label: 'Activities Tried',  value: engagement.triedActivity || 0, emoji: '✅', color: 'bg-green-50 border-green-200' },
+                    { label: 'Messages Sent',   value: engagement.totalMessages,      emoji: '📤', color: 'bg-teal-50 border-teal-200' },
+                    { label: 'Parent Replies',   value: engagement.totalReplies,       emoji: '💬', color: 'bg-blue-50 border-blue-200' },
+                    { label: 'Families Reached', value: engagement.totalParents,       emoji: '👨‍👩‍👧', color: 'bg-purple-50 border-purple-200' },
+                    { label: 'Activities Tried', value: engagement.triedActivity || 0, emoji: '✅', color: 'bg-green-50 border-green-200' },
                   ].map(card => (
                     <div key={card.label} className={`rounded-xl border p-4 text-center ${card.color}`}>
                       <p className="text-2xl">{card.emoji}</p>
@@ -522,26 +516,45 @@ const fetchEngagement = async () => {
                     <p className="mt-1">Check inbox — a parent may need immediate attention.</p>
                   </div>
                 )}
+
                 {unengaged.length > 0 && (
-  <div className="bg-orange-50 border border-orange-200 rounded-xl p-4 space-y-3">
-    <p className="text-sm font-bold text-orange-800">
-      📭 {unengaged.length} {unengaged.length === 1 ? 'family has' : 'families have'} not yet engaged
-    </p>
-    <p className="text-xs text-orange-600">These parents have received messages but haven't replied yet. Consider a follow-up.</p>
-    <div className="space-y-1">
-      {unengaged.map((p, i) => (
-        <div key={i} className="flex items-center gap-2 bg-white rounded-lg px-3 py-2">
-          <span className="text-sm">👤</span>
-          <span className="text-sm text-gray-700">{p.name}</span>
-          {p.childName && <span className="text-xs text-gray-400">({p.childName})</span>}
-          <span className="text-xs bg-orange-100 text-orange-600 px-2 py-0.5 rounded-full ml-auto">
-            {p.language === 'hi' ? '🇮🇳 Hindi' : p.language === 'zh-Hans' ? '🇨🇳 Mandarin' : '🇦🇺 English'}
-          </span>
-        </div>
-      ))}
-    </div>
-  </div>
-)}
+                  <div className="bg-orange-50 border border-orange-200 rounded-xl p-4 space-y-3">
+                    <p className="text-sm font-bold text-orange-800">
+                      📭 {unengaged.length} {unengaged.length === 1 ? 'family has' : 'families have'} not yet engaged
+                    </p>
+                    <p className="text-xs text-orange-600">These parents have received messages but haven't replied yet. Consider a follow-up.</p>
+                    <div className="space-y-1">
+                      {unengaged.map((p, i) => (
+                        <div key={i} className="flex items-center gap-2 bg-white rounded-lg px-3 py-2">
+                          <span className="text-sm">👤</span>
+                          <span className="text-sm text-gray-700">{p.name}</span>
+                          {p.childName && <span className="text-xs text-gray-400">({p.childName})</span>}
+                          <span className="text-xs bg-orange-100 text-orange-600 px-2 py-0.5 rounded-full ml-auto">
+                            {p.language === 'hi' ? '🇮🇳 Hindi' : p.language === 'zh-Hans' ? '🇨🇳 Mandarin' : '🇦🇺 English'}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {ptmRequests.length > 0 && (
+                  <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 space-y-3">
+                    <p className="text-sm font-bold text-blue-800">📅 {ptmRequests.length} Meeting Request{ptmRequests.length > 1 ? 's' : ''}</p>
+                    <div className="space-y-2">
+                      {ptmRequests.map((r, i) => (
+                        <div key={i} className="bg-white rounded-lg p-3 flex justify-between items-start">
+                          <div>
+                            <p className="text-sm font-semibold text-gray-800">{r.parent_name} <span className="text-gray-400 font-normal">({r.child_name})</span></p>
+                            <p className="text-xs text-blue-600">🕐 {r.preferred_time}</p>
+                            {r.reason && <p className="text-xs text-gray-500 mt-0.5">"{r.reason}"</p>}
+                          </div>
+                          <span className="text-xs bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded-full">Pending</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
                 <div className="bg-gray-50 rounded-xl p-4 text-xs text-gray-500">
                   <p className="font-semibold mb-1">⚡ Powered by CurricuLLM AI Analysis</p>
@@ -551,6 +564,54 @@ const fetchEngagement = async () => {
             )}
           </div>
         )}
+
+        {/* ── DIRECT MESSAGE ── */}
+        {tab === 'direct' && (
+          <div className="space-y-5">
+            <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 text-sm text-blue-800">
+              <strong>✉️ Direct Message</strong> — Send a private message to a specific parent. It will be automatically translated into their language.
+            </div>
+            <div className="bg-white rounded-xl shadow p-6 space-y-4">
+              <h2 className="text-lg font-semibold text-gray-800">Send Direct Message</h2>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Select Parent</label>
+                <select value={dmParentId} onChange={e => setDmParentId(e.target.value)}
+                  className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400">
+                  <option value="">-- Select a parent --</option>
+                  {allParents.map(p => (
+                    <option key={p.id} value={p.id}>
+                      {p.name} {p.child_name ? `(${p.child_name})` : ''} — {p.language === 'hi' ? '🇮🇳 Hindi' : p.language === 'zh-Hans' ? '🇨🇳 Mandarin' : '🇦🇺 English'}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Subject</label>
+                <input value={dmSubject} onChange={e => setDmSubject(e.target.value)}
+                  className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400"
+                  placeholder="e.g. Follow-up on last week's assessment"/>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Message</label>
+                <textarea value={dmContent} onChange={e => setDmContent(e.target.value)} rows={5}
+                  className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400"
+                  placeholder="Write your message here — it will be automatically translated for the parent..."/>
+              </div>
+              <div className="bg-blue-50 rounded-lg p-3 text-xs text-blue-700">
+                🌍 This message will be automatically translated into the parent's preferred language before delivery.
+              </div>
+              {dmSent ? (
+                <div className="bg-green-100 text-green-800 text-center py-3 rounded-lg font-semibold">✅ Message sent!</div>
+              ) : (
+                <button onClick={handleDmSend} disabled={dmSending || !dmParentId || !dmContent.trim()}
+                  className="w-full bg-teal-600 text-white py-3 rounded-lg font-semibold hover:bg-teal-700 transition disabled:opacity-50">
+                  {dmSending ? 'Sending...' : '📤 Send Direct Message'}
+                </button>
+              )}
+            </div>
+          </div>
+        )}
+
       </div>
     </div>
   )

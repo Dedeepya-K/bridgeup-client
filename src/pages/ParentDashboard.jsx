@@ -55,8 +55,7 @@ function JargonText({ text, language }) {
           <span key={i}>
             {isJargon ? (
               <span onClick={(e) => handleWordClick(word, e)}
-                className="underline decoration-dotted decoration-teal-500 cursor-pointer text-teal-700 font-medium hover:bg-teal-50 rounded px-0.5"
-                title="Tap to explain">
+                className="underline decoration-dotted decoration-teal-500 cursor-pointer text-teal-700 font-medium hover:bg-teal-50 rounded px-0.5">
                 {word}
               </span>
             ) : word}
@@ -94,26 +93,7 @@ function WelcomeBanner({ profile, currentChild, language }) {
   )
 }
 
-const LANGUAGES = [
-  { code: 'en', label: '🇦🇺 English' },
-  { code: 'hi', label: '🇮🇳 Hindi' },
-  { code: 'zh-Hans', label: '🇨🇳 Mandarin' },
-  { code: 'te', label: '🇮🇳 Telugu' },
-  { code: 'ar', label: '🇸🇦 Arabic' },
-  { code: 'vi', label: '🇻🇳 Vietnamese' },
-]
-
-const SUBJECT_CONFIG = {
-  'Science':     { icon: '🔬', header: 'bg-green-700',  border: 'border-green-300',  bg: 'bg-green-50' },
-  'English':     { icon: '📖', header: 'bg-blue-700',   border: 'border-blue-300',   bg: 'bg-blue-50' },
-  'Mathematics': { icon: '🔢', header: 'bg-purple-700', border: 'border-purple-300', bg: 'bg-purple-50' },
-  'History':     { icon: '🏛️', header: 'bg-amber-700',  border: 'border-amber-300',  bg: 'bg-amber-50' },
-  'Geography':   { icon: '🌍', header: 'bg-teal-700',   border: 'border-teal-300',   bg: 'bg-teal-50' },
-  'PDHPE':       { icon: '⚽', header: 'bg-red-700',    border: 'border-red-300',    bg: 'bg-red-50' },
-  'General':     { icon: '📚', header: 'bg-gray-700',   border: 'border-gray-300',   bg: 'bg-gray-50' },
-}
-
-function PersonalMessageBanner({ item, profile, children, selectedChildIdx, API }) {
+function PersonalMessageBanner({ item, profile, children, selectedChildIdx }) {
   const [message, setMessage] = useState(null)
   const [loading, setLoading] = useState(false)
   const currentChild = children[selectedChildIdx]
@@ -133,22 +113,169 @@ function PersonalMessageBanner({ item, profile, children, selectedChildIdx, API 
     setLoading(false)
   }
 
-  if (message) {
-    return (
-      <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-3">
-        <p className="text-xs font-semibold text-indigo-700 mb-1">👤 What this means for {currentChild?.name || profile.child_name}:</p>
-        <p className="text-sm text-indigo-800">{message}</p>
-        <p className="text-xs text-indigo-400 mt-1">Powered by CurricuLLM</p>
-      </div>
-    )
-  }
+  if (message) return (
+    <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-3">
+      <p className="text-xs font-semibold text-indigo-700 mb-1">👤 What this means for {currentChild?.name || profile.child_name}:</p>
+      <p className="text-sm text-indigo-800">{message}</p>
+      <p className="text-xs text-indigo-400 mt-1">Powered by CurricuLLM</p>
+    </div>
+  )
 
   return (
-    <button onClick={generate} disabled={loading}
-      className="text-xs text-indigo-600 hover:text-indigo-800 underline disabled:opacity-50">
+    <button onClick={generate} disabled={loading} className="text-xs text-indigo-600 hover:text-indigo-800 underline disabled:opacity-50">
       {loading ? '✨ Personalising...' : `✨ What does this mean for ${currentChild?.name || profile.child_name}?`}
     </button>
   )
+}
+
+function FAQItem({ question, language }) {
+  const [answer, setAnswer] = useState(null)
+  const [loading, setLoading] = useState(false)
+  const [open, setOpen] = useState(false)
+
+  const handleClick = async () => {
+    if (open) { setOpen(false); return; }
+    setOpen(true)
+    if (answer) return
+    setLoading(true)
+    try {
+      const res = await axios.post(`${API}/api/faq`, { question, language })
+      setAnswer(res.data.answer)
+    } catch(e) { setAnswer('Could not load answer. Please try again.') }
+    setLoading(false)
+  }
+
+  return (
+    <div className="border rounded-xl overflow-hidden">
+      <button onClick={handleClick} className="w-full text-left px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50 flex justify-between items-center">
+        <span>{question}</span>
+        <span className="text-gray-400 ml-2">{open ? '▲' : '▼'}</span>
+      </button>
+      {open && (
+        <div className="px-4 pb-3 bg-blue-50">
+          {loading ? (
+            <p className="text-sm text-gray-400">⏳ Getting answer from CurricuLLM...</p>
+          ) : (
+            <>
+              <p className="text-sm text-gray-700">{answer}</p>
+              <p className="text-xs text-blue-400 mt-1">Powered by CurricuLLM 🎓</p>
+            </>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
+function CustomFAQ({ language }) {
+  const [question, setQuestion] = useState('')
+  const [answer, setAnswer] = useState(null)
+  const [loading, setLoading] = useState(false)
+
+  const handleAsk = async () => {
+    if (!question.trim()) return
+    setLoading(true)
+    setAnswer(null)
+    try {
+      const res = await axios.post(`${API}/api/faq`, { question, language })
+      setAnswer(res.data.answer)
+    } catch(e) { setAnswer('Could not load answer.') }
+    setLoading(false)
+  }
+
+  return (
+    <div className="bg-white rounded-xl shadow p-5 space-y-3">
+      <p className="text-sm font-semibold text-gray-700">Ask your own question:</p>
+      <div className="flex gap-2">
+        <input value={question} onChange={e => setQuestion(e.target.value)}
+          onKeyDown={e => e.key === 'Enter' && handleAsk()}
+          className="flex-1 border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+          placeholder="Type any question about your child's learning..."/>
+        <button onClick={handleAsk} disabled={loading || !question.trim()}
+          className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-50">
+          {loading ? '...' : 'Ask'}
+        </button>
+      </div>
+      {answer && (
+        <div className="bg-blue-50 rounded-lg p-3">
+          <p className="text-sm text-gray-700">{answer}</p>
+          <p className="text-xs text-blue-400 mt-1">Powered by CurricuLLM 🎓</p>
+        </div>
+      )}
+    </div>
+  )
+}
+
+function PTMRequest({ profile, currentChild }) {
+  const [preferredTime, setPreferredTime] = useState('')
+  const [reason, setReason] = useState('')
+  const [sending, setSending] = useState(false)
+  const [sent, setSent] = useState(false)
+
+  const handleSubmit = async () => {
+    if (!preferredTime) return
+    setSending(true)
+    try {
+      await axios.post(`${API}/api/request-ptm`, {
+        parentId: profile.id, parentName: profile.name,
+        childName: currentChild?.name || profile.child_name,
+        preferredTime, reason
+      })
+      setSent(true)
+    } catch(e) {}
+    setSending(false)
+  }
+
+  if (sent) return (
+    <div className="bg-green-100 text-green-800 text-center py-3 rounded-lg font-semibold">
+      ✅ Meeting request sent! Your teacher will be in touch.
+    </div>
+  )
+
+  return (
+    <div className="space-y-3">
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">Preferred time</label>
+        <div className="grid grid-cols-2 gap-2">
+          {['Morning (9am-12pm)', 'Afternoon (12pm-3pm)', 'After school (3pm-6pm)', 'Online/Phone call'].map(t => (
+            <button key={t} onClick={() => setPreferredTime(t)}
+              className={`px-3 py-2 rounded-lg text-xs border transition text-left ${preferredTime === t ? 'bg-teal-600 text-white border-teal-600' : 'bg-white text-gray-700 border-gray-300 hover:border-teal-400'}`}>
+              {t}
+            </button>
+          ))}
+        </div>
+      </div>
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">Reason (optional)</label>
+        <textarea value={reason} onChange={e => setReason(e.target.value)} rows={2}
+          className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400"
+          placeholder="e.g. I'd like to discuss my child's progress in maths..."/>
+      </div>
+      <button onClick={handleSubmit} disabled={sending || !preferredTime}
+        className="w-full bg-teal-600 text-white py-2 rounded-lg text-sm font-semibold hover:bg-teal-700 transition disabled:opacity-50">
+        {sending ? 'Sending...' : '📅 Request Meeting'}
+      </button>
+    </div>
+  )
+}
+
+const LANGUAGES = [
+  { code: 'en', label: '🇦🇺 English' },
+  { code: 'hi', label: '🇮🇳 Hindi' },
+  { code: 'zh-Hans', label: '🇨🇳 Mandarin' },
+  { code: 'te', label: '🇮🇳 Telugu' },
+  { code: 'ar', label: '🇸🇦 Arabic' },
+  { code: 'vi', label: '🇻🇳 Vietnamese' },
+]
+
+const SUBJECT_CONFIG = {
+  'Science':     { icon: '🔬', header: 'bg-green-700',  border: 'border-green-300',  bg: 'bg-green-50' },
+  'English':     { icon: '📖', header: 'bg-blue-700',   border: 'border-blue-300',   bg: 'bg-blue-50' },
+  'Mathematics': { icon: '🔢', header: 'bg-purple-700', border: 'border-purple-300', bg: 'bg-purple-50' },
+  'History':     { icon: '🏛️', header: 'bg-amber-700',  border: 'border-amber-300',  bg: 'bg-amber-50' },
+  'Geography':   { icon: '🌍', header: 'bg-teal-700',   border: 'border-teal-300',   bg: 'bg-teal-50' },
+  'PDHPE':       { icon: '⚽', header: 'bg-red-700',    border: 'border-red-300',    bg: 'bg-red-50' },
+  'General':     { icon: '📚', header: 'bg-gray-700',   border: 'border-gray-300',   bg: 'bg-gray-50' },
 }
 
 export default function ParentDashboard({ supabase, profile }) {
@@ -166,8 +293,6 @@ export default function ParentDashboard({ supabase, profile }) {
   const [triedTips, setTriedTips] = useState({})
   const [flagged, setFlagged] = useState({})
   const [lastReadSubject, setLastReadSubject] = useState({})
-  const [personalMessages, setPersonalMessages] = useState({})
-const [loadingPersonal, setLoadingPersonal] = useState({})
   const [chatOpen, setChatOpen] = useState(false)
   const [chatMessages, setChatMessages] = useState([])
   const [chatInit, setChatInit] = useState(false)
@@ -265,10 +390,8 @@ const [loadingPersonal, setLoadingPersonal] = useState({})
     setSavingProfile(true)
     try {
       await axios.post(`${API}/api/update-profile`, {
-        parentId: profile.id,
-        childInterests: interests,
-        childStruggles: struggles,
-        childLearningStyle: learningStyle,
+        parentId: profile.id, childInterests: interests,
+        childStruggles: struggles, childLearningStyle: learningStyle,
         confidenceLevel, availabilityWindow, activityLength
       })
       setProfileSaved(true)
@@ -334,17 +457,18 @@ const [loadingPersonal, setLoadingPersonal] = useState({})
         </div>
       )}
 
-      <div className="bg-white border-b px-6 flex gap-6">
-        {['updates', 'profile'].map(t => (
+      <div className="bg-white border-b px-6 flex gap-4 overflow-x-auto">
+        {['updates', 'faq', 'profile'].map(t => (
           <button key={t} onClick={() => setTab(t)}
-            className={`py-4 text-sm font-medium border-b-2 transition ${tab === t ? 'border-blue-600 text-blue-700' : 'border-transparent text-gray-500 hover:text-gray-700'}`}>
-            {t === 'updates' ? `📬 Learning Updates (${messages.length})` : `👤 ${currentChild?.name || profile.child_name || 'Child'}'s Profile`}
+            className={`py-4 text-sm font-medium border-b-2 transition whitespace-nowrap ${tab === t ? 'border-blue-600 text-blue-700' : 'border-transparent text-gray-500 hover:text-gray-700'}`}>
+            {t === 'updates' ? `📬 Learning Updates (${messages.length})` : t === 'faq' ? '❓ FAQ' : `👤 ${currentChild?.name || profile.child_name || 'Child'}'s Profile`}
           </button>
         ))}
       </div>
 
       <div className="max-w-3xl mx-auto p-6 space-y-4 pb-32">
 
+        {/* ── UPDATES TAB ── */}
         {tab === 'updates' && (
           <>
             <WelcomeBanner profile={profile} currentChild={currentChild} language={profile.language} />
@@ -356,9 +480,7 @@ const [loadingPersonal, setLoadingPersonal] = useState({})
                   const tips = item.translated_tips ? item.translated_tips.split(' | ') : []
                   tips.forEach((tip, i) => {
                     const key = `${item.message_id}_${i}`
-                    if (!triedTips[key]) {
-                      allTodos.push({ subject, tip, messageId: item.message_id, tipIdx: i, recipientId: item.id })
-                    }
+                    if (!triedTips[key]) allTodos.push({ subject, tip, messageId: item.message_id, tipIdx: i, recipientId: item.id })
                   })
                 })
               })
@@ -398,12 +520,13 @@ const [loadingPersonal, setLoadingPersonal] = useState({})
 
                 return (
                   <div key={subject} className={`rounded-xl border-2 overflow-hidden shadow-sm ${cfg.border}`}>
-<button onClick={() => {
-  setExpandedSubject(isExpanded ? null : subject)
-  if (!isExpanded) {
-    setLastReadSubject(prev => ({ ...prev, [subject]: new Date().toISOString() }))
-  }
-}}                      className={`w-full ${cfg.header} text-white px-5 py-4 flex justify-between items-center hover:opacity-90 transition`}>
+                    <button onClick={() => {
+                      setExpandedSubject(isExpanded ? null : subject)
+                      if (!isExpanded) {
+                        setLastReadSubject(prev => ({ ...prev, [subject]: new Date().toISOString() }))
+                        axios.post(`${API}/api/mark-read`, { parentId: profile.id, subject }).catch(() => {})
+                      }
+                    }} className={`w-full ${cfg.header} text-white px-5 py-4 flex justify-between items-center hover:opacity-90 transition`}>
                       <div className="flex items-center gap-3">
                         <span className="text-3xl">{cfg.icon}</span>
                         <div className="text-left">
@@ -412,19 +535,17 @@ const [loadingPersonal, setLoadingPersonal] = useState({})
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
-  {(() => {
-    const hasNew = subjectMessages.some(m => {
-      const msgDate = new Date(m.created_at)
-      const lastRead = lastReadSubject[subject]
-      return !lastRead || msgDate > new Date(lastRead)
-    })
-    return hasNew && !isExpanded ? (
-      <span className="w-3 h-3 bg-red-400 rounded-full animate-pulse"/>
-    ) : null
-  })()}
-  {todosRemaining > 0 && <span className="bg-yellow-300 text-yellow-900 text-xs px-2 py-0.5 rounded-full font-bold">{todosRemaining} to-do</span>}
-  <span className="text-xl">{isExpanded ? '▲' : '▼'}</span>
-</div>
+                        {(() => {
+                          const hasNew = subjectMessages.some(m => {
+                            const msgDate = new Date(m.created_at)
+                            const lastRead = lastReadSubject[subject]
+                            return !lastRead || msgDate > new Date(lastRead)
+                          })
+                          return hasNew && !isExpanded ? <span className="w-3 h-3 bg-red-400 rounded-full animate-pulse"/> : null
+                        })()}
+                        {todosRemaining > 0 && <span className="bg-yellow-300 text-yellow-900 text-xs px-2 py-0.5 rounded-full font-bold">{todosRemaining} to-do</span>}
+                        <span className="text-xl">{isExpanded ? '▲' : '▼'}</span>
+                      </div>
                     </button>
 
                     {isExpanded && (
@@ -454,18 +575,7 @@ const [loadingPersonal, setLoadingPersonal] = useState({})
                                 <p className="text-sm text-gray-700 leading-relaxed">
                                   <JargonText text={displayContent} language={profile.language} />
                                 </p>
-                                <p className="text-sm text-gray-700 leading-relaxed">
-  <JargonText text={displayContent} language={profile.language} />
-</p>
-
-{/* ADD THIS */}
-<PersonalMessageBanner 
-  item={item} 
-  profile={profile} 
-  children={children}
-  selectedChildIdx={selectedChildIdx}
-  API={API}
-/>
+                                <PersonalMessageBanner item={item} profile={profile} children={children} selectedChildIdx={selectedChildIdx} />
                                 {profile.language !== 'en' && (
                                   <p className="text-xs text-gray-400 mt-2 italic">
                                     🔍 Tap highlighted terms for explanations: <JargonText text={item.messages?.transformed_content || ''} language={profile.language} />
@@ -541,7 +651,8 @@ const [loadingPersonal, setLoadingPersonal] = useState({})
                                         }
                                         setReplyText(r => ({ ...r, [item.message_id]: text }))
                                       }}
-className="text-xl hover:scale-125 transition-transform">                                      {reaction.emoji}
+                                      className="text-xl hover:scale-125 transition-transform">
+                                      {reaction.emoji}
                                     </button>
                                   ))}
                                 </div>
@@ -569,6 +680,33 @@ className="text-xl hover:scale-125 transition-transform">                       
           </>
         )}
 
+        {/* ── FAQ TAB ── */}
+        {tab === 'faq' && (
+          <div className="space-y-4">
+            <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 text-sm text-blue-800">
+              <strong>❓ Ask anything about your child's learning</strong>
+              <p className="mt-1">Powered by CurricuLLM — curriculum-aware answers for Australian parents.</p>
+            </div>
+            <div className="bg-white rounded-xl shadow p-5 space-y-3">
+              <p className="text-sm font-semibold text-gray-700">Common questions — tap to get an answer:</p>
+              <div className="space-y-2">
+                {[
+                  'What is NAPLAN and how can I help my child prepare?',
+                  'What does "scaffolding" mean in teaching?',
+                  'How can I support reading at home?',
+                  'What is the Australian Curriculum?',
+                  'How do I help with maths homework without doing it for them?',
+                  'What is phonics and why does it matter?',
+                ].map((q, i) => (
+                  <FAQItem key={i} question={q} language={profile.language} />
+                ))}
+              </div>
+            </div>
+            <CustomFAQ language={profile.language} />
+          </div>
+        )}
+
+        {/* ── PROFILE TAB ── */}
         {tab === 'profile' && (
           <div className="space-y-5">
             <div className="bg-purple-50 border border-purple-200 rounded-xl p-4 text-sm text-purple-800">
@@ -642,6 +780,13 @@ className="text-xl hover:scale-125 transition-transform">                       
                 </button>
               )}
             </div>
+
+            {/* PTM Request */}
+            <div className="bg-white rounded-xl shadow p-5 space-y-4">
+              <h3 className="text-base font-semibold text-gray-800">📅 Request a Parent-Teacher Meeting</h3>
+              <PTMRequest profile={profile} currentChild={currentChild} />
+            </div>
+
             <div className="bg-gray-50 rounded-xl p-4 text-xs text-gray-500 space-y-1">
               <p className="font-semibold">🔐 Privacy notice</p>
               <p>Stored securely. Never shared or used for advertising. Compliant with the Australian Privacy Act 1988.</p>
@@ -650,6 +795,7 @@ className="text-xl hover:scale-125 transition-transform">                       
         )}
       </div>
 
+      {/* ── FLOATING CHAT ── */}
       <div className="fixed bottom-6 right-6 z-50">
         {chatOpen && (
           <div className="bg-white rounded-2xl shadow-2xl border border-gray-200 mb-4 w-80 flex flex-col overflow-hidden" style={{ height: '420px' }}>
