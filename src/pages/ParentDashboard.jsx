@@ -475,12 +475,6 @@ function CommunityStats() {
 
 function RemindersWidget({ profile }) {
   const [reminders, setReminders] = useState([])
-  const [adding, setAdding] = useState(false)
-  const [type, setType] = useState('exam')
-  const [title, setTitle] = useState('')
-  const [date, setDate] = useState('')
-  const [note, setNote] = useState('')
-  const [saving, setSaving] = useState(false)
 
   useEffect(() => { fetchReminders() }, [])
 
@@ -491,98 +485,50 @@ function RemindersWidget({ profile }) {
     } catch(e) {}
   }
 
-  const handleSave = async () => {
-    if (!title || !date) return
-    setSaving(true)
-    try {
-      await axios.post(`${API}/api/add-reminder`, {
-        parentId: profile.id, type, title, date, note
-      })
-      setTitle(''); setDate(''); setNote(''); setAdding(false)
-      fetchReminders()
-    } catch(e) {}
-    setSaving(false)
-  }
-
-  const handleDelete = async (id) => {
-    try {
-      await axios.delete(`${API}/api/reminders/${id}`)
-      setReminders(r => r.filter(x => x.id !== id))
-    } catch(e) {}
-  }
-
   const typeConfig = {
-    exam: { emoji: '📝', color: 'bg-red-100 text-red-700 border-red-200' },
-    absent: { emoji: '🏠', color: 'bg-orange-100 text-orange-700 border-orange-200' },
-    assessment: { emoji: '📊', color: 'bg-purple-100 text-purple-700 border-purple-200' },
-    event: { emoji: '🎉', color: 'bg-blue-100 text-blue-700 border-blue-200' },
+    exam:       { emoji: '📝', color: 'bg-red-50 border-red-200 text-red-800' },
+    absent:     { emoji: '🏠', color: 'bg-orange-50 border-orange-200 text-orange-800' },
+    assessment: { emoji: '📊', color: 'bg-purple-50 border-purple-200 text-purple-800' },
+    event:      { emoji: '🎉', color: 'bg-blue-50 border-blue-200 text-blue-800' },
   }
 
   const getDaysUntil = (dateStr) => {
     const diff = Math.ceil((new Date(dateStr) - new Date()) / (1000 * 60 * 60 * 24))
     if (diff === 0) return '🔴 Today!'
-    if (diff === 1) return '🟠 Tomorrow'
+    if (diff === 1) return '🟠 Tomorrow!'
     if (diff <= 7) return `🟡 In ${diff} days`
     return `🟢 In ${diff} days`
   }
 
+  if (reminders.length === 0) return (
+    <div className="bg-white rounded-xl shadow p-5">
+      <h3 className="text-sm font-bold text-gray-800 mb-2">🔔 Reminders from Teacher</h3>
+      <p className="text-xs text-gray-400 text-center py-3">No upcoming reminders from your teacher.</p>
+    </div>
+  )
+
   return (
-    <div className="bg-white rounded-xl shadow p-5 space-y-4">
-      <div className="flex justify-between items-center">
-        <h3 className="text-sm font-bold text-gray-800">📅 Reminders</h3>
-        <button onClick={() => setAdding(!adding)}
-          className="text-xs bg-blue-600 text-white px-3 py-1.5 rounded-lg hover:bg-blue-700 transition">
-          {adding ? '✕ Cancel' : '+ Add Reminder'}
-        </button>
-      </div>
-
-      {adding && (
-        <div className="bg-blue-50 rounded-xl p-4 space-y-3">
-          <div className="grid grid-cols-2 gap-2">
-            {Object.entries(typeConfig).map(([key, cfg]) => (
-              <button key={key} onClick={() => setType(key)}
-                className={`px-3 py-2 rounded-lg text-xs border transition ${type === key ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-700 border-gray-300'}`}>
-                {cfg.emoji} {key.charAt(0).toUpperCase() + key.slice(1)}
-              </button>
-            ))}
-          </div>
-          <input value={title} onChange={e => setTitle(e.target.value)}
-            className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
-            placeholder="e.g. Year 8 Maths Exam, Absent on Monday..."/>
-          <input type="date" value={date} onChange={e => setDate(e.target.value)}
-            className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"/>
-          <textarea value={note} onChange={e => setNote(e.target.value)} rows={2}
-            className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
-            placeholder="Additional notes (optional)..."/>
-          <button onClick={handleSave} disabled={saving || !title || !date}
-            className="w-full bg-blue-600 text-white py-2 rounded-lg text-sm font-semibold hover:bg-blue-700 disabled:opacity-50">
-            {saving ? 'Saving...' : '💾 Save Reminder'}
-          </button>
-        </div>
-      )}
-
-      {reminders.length === 0 && !adding ? (
-        <p className="text-xs text-gray-400 text-center py-2">No upcoming reminders. Add exams or absences!</p>
-      ) : (
-        <div className="space-y-2">
-          {reminders.map((r, i) => {
-            const cfg = typeConfig[r.type] || typeConfig.event
-            return (
-              <div key={i} className={`rounded-lg p-3 border flex justify-between items-start ${cfg.color}`}>
-                <div className="space-y-0.5 flex-1">
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm">{cfg.emoji}</span>
-                    <p className="text-sm font-semibold">{r.title}</p>
-                  </div>
-                  <p className="text-xs opacity-75">{new Date(r.date).toLocaleDateString('en-AU', { weekday: 'long', day: 'numeric', month: 'long' })} — {getDaysUntil(r.date)}</p>
-                  {r.note && <p className="text-xs opacity-70 italic">"{r.note}"</p>}
-                </div>
-                <button onClick={() => handleDelete(r.id)} className="text-xs opacity-50 hover:opacity-100 ml-2">✕</button>
+    <div className="bg-white rounded-xl shadow p-5 space-y-3">
+      <h3 className="text-sm font-bold text-gray-800">🔔 Reminders from Teacher</h3>
+      <div className="space-y-2">
+        {reminders.map((r, i) => {
+          const cfg = typeConfig[r.type] || typeConfig.event
+          return (
+            <div key={i} className={`rounded-xl p-3 border space-y-1 ${cfg.color}`}>
+              <div className="flex items-center gap-2">
+                <span className="text-lg">{cfg.emoji}</span>
+                <p className="text-sm font-bold">{r.title}</p>
               </div>
-            )
-          })}
-        </div>
-      )}
+              <p className="text-xs font-medium">
+                📅 {new Date(r.date).toLocaleDateString('en-AU', { weekday: 'long', day: 'numeric', month: 'long' })}
+                <span className="ml-2 font-bold">{getDaysUntil(r.date)}</span>
+              </p>
+              {r.note && <p className="text-xs italic opacity-80">"{r.note}"</p>}
+              <p className="text-xs opacity-60">From your teacher • BridgeUp</p>
+            </div>
+          )
+        })}
+      </div>
     </div>
   )
 }
@@ -626,28 +572,22 @@ function AppointmentBooking({ profile, currentChild }) {
     setSaving(false)
   }
 
-  const statusConfig = {
-    pending:  { color: 'bg-yellow-100 text-yellow-700', label: '⏳ Pending' },
-    confirmed: { color: 'bg-green-100 text-green-700',  label: '✅ Confirmed' },
-    cancelled: { color: 'bg-red-100 text-red-700',      label: '❌ Cancelled' },
-  }
-
   return (
     <div className="bg-white rounded-xl shadow p-5 space-y-4">
       <div className="flex justify-between items-center">
         <h3 className="text-sm font-bold text-gray-800">📋 Book an Appointment</h3>
         <button onClick={() => setBooking(!booking)}
           className="text-xs bg-teal-600 text-white px-3 py-1.5 rounded-lg hover:bg-teal-700 transition">
-          {booking ? '✕ Cancel' : '+ Book Appointment'}
+          {booking ? '✕ Cancel' : '+ Book'}
         </button>
       </div>
 
-      {saved && <div className="bg-green-100 text-green-800 text-center py-2 rounded-lg text-sm font-semibold">✅ Appointment request sent!</div>}
+      {saved && <div className="bg-green-100 text-green-800 text-center py-2 rounded-lg text-sm font-semibold">✅ Request sent! Teacher will confirm.</div>}
 
       {booking && (
         <div className="bg-teal-50 rounded-xl p-4 space-y-3">
           <div>
-            <label className="block text-xs font-semibold text-gray-700 mb-1">Appointment type</label>
+            <label className="block text-xs font-semibold text-gray-700 mb-1">What is this about?</label>
             <div className="grid grid-cols-2 gap-2">
               {['Academic Progress', 'Behaviour Concern', 'Learning Support', 'General Check-in'].map(t => (
                 <button key={t} onClick={() => setAppointmentType(t)}
@@ -657,28 +597,28 @@ function AppointmentBooking({ profile, currentChild }) {
               ))}
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block text-xs font-semibold text-gray-700 mb-1">Preferred date</label>
-              <input type="date" value={preferredDate} onChange={e => setPreferredDate(e.target.value)}
-                className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400"/>
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-gray-700 mb-1">Preferred time</label>
-              <select value={preferredTime} onChange={e => setPreferredTime(e.target.value)}
-                className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400">
-                <option value="">Select time</option>
-                {['8:00 AM', '9:00 AM', '10:00 AM', '11:00 AM', '12:00 PM', '1:00 PM', '2:00 PM', '3:00 PM', '4:00 PM'].map(t => (
-                  <option key={t}>{t}</option>
-                ))}
-              </select>
+          <div>
+            <label className="block text-xs font-semibold text-gray-700 mb-1">Preferred date</label>
+            <input type="date" value={preferredDate} onChange={e => setPreferredDate(e.target.value)}
+              min={new Date().toISOString().split('T')[0]}
+              className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400"/>
+          </div>
+          <div>
+            <label className="block text-xs font-semibold text-gray-700 mb-1">Preferred time</label>
+            <div className="grid grid-cols-3 gap-2">
+              {['8:00 AM','9:00 AM','10:00 AM','11:00 AM','1:00 PM','2:00 PM','3:00 PM','After school','Phone call'].map(t => (
+                <button key={t} onClick={() => setPreferredTime(t)}
+                  className={`px-2 py-2 rounded-lg text-xs border transition ${preferredTime === t ? 'bg-teal-600 text-white border-teal-600' : 'bg-white text-gray-700 border-gray-300 hover:border-teal-400'}`}>
+                  {t}
+                </button>
+              ))}
             </div>
           </div>
           <textarea value={note} onChange={e => setNote(e.target.value)} rows={2}
             className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400"
             placeholder="What would you like to discuss? (optional)"/>
           <div className="bg-amber-50 rounded-lg p-2 text-xs text-amber-700">
-            ⚠️ For urgent welfare concerns, please contact the school directly.
+            ⚠️ For urgent welfare concerns contact the school directly.
           </div>
           <button onClick={handleBook} disabled={saving || !preferredDate || !preferredTime}
             className="w-full bg-teal-600 text-white py-2 rounded-lg text-sm font-semibold hover:bg-teal-700 disabled:opacity-50">
@@ -690,27 +630,25 @@ function AppointmentBooking({ profile, currentChild }) {
       {appointments.length > 0 && (
         <div className="space-y-2">
           <p className="text-xs font-semibold text-gray-600">Your appointments:</p>
-          {appointments.map((a, i) => {
-            const cfg = statusConfig[a.status] || statusConfig.pending
-            return (
-              <div key={i} className="bg-gray-50 rounded-lg p-3 space-y-1">
-                <div className="flex justify-between items-center">
-                  <p className="text-sm font-semibold text-gray-800">{a.appointment_type}</p>
-                  <span className={`text-xs px-2 py-0.5 rounded-full ${cfg.color}`}>{cfg.label}</span>
-                </div>
-                <p className="text-xs text-gray-500">
-                  📅 {new Date(a.preferred_date).toLocaleDateString('en-AU', { weekday: 'long', day: 'numeric', month: 'long' })} at {a.preferred_time}
-                </p>
-                {a.note && <p className="text-xs text-gray-400 italic">"{a.note}"</p>}
+          {appointments.map((a, i) => (
+            <div key={i} className="bg-gray-50 rounded-lg p-3 space-y-1">
+              <div className="flex justify-between items-center">
+                <p className="text-sm font-semibold text-gray-800">{a.appointment_type}</p>
+                <span className={`text-xs px-2 py-0.5 rounded-full ${a.status === 'confirmed' ? 'bg-green-100 text-green-700' : a.status === 'cancelled' ? 'bg-red-100 text-red-700' : 'bg-yellow-100 text-yellow-700'}`}>
+                  {a.status === 'confirmed' ? '✅ Confirmed' : a.status === 'cancelled' ? '❌ Cancelled' : '⏳ Pending'}
+                </span>
               </div>
-            )
-          })}
+              <p className="text-xs text-gray-500">
+                📅 {new Date(a.preferred_date).toLocaleDateString('en-AU', { weekday: 'long', day: 'numeric', month: 'long' })} at {a.preferred_time}
+              </p>
+              {a.note && <p className="text-xs text-gray-400 italic">"{a.note}"</p>}
+            </div>
+          ))}
         </div>
       )}
     </div>
   )
 }
-
 export default function ParentDashboard({ supabase, profile }) {
   const [tab, setTab] = useState('updates')
   const [messages, setMessages] = useState([])
