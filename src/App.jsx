@@ -26,6 +26,23 @@ export default function App() {
     return () => subscription.unsubscribe()
   }, [])
 
+  useEffect(() => {
+  if (profile?.role === 'parent') {
+    const checkUnread = async () => {
+      const { data } = await supabase
+        .from('message_recipients')
+        .select('id')
+        .eq('parent_id', profile.id)
+        .eq('is_read', false)
+      const count = data?.length || 0
+      document.title = count > 0 ? `(${count}) BridgeUp` : 'BridgeUp'
+    }
+    checkUnread()
+    const interval = setInterval(checkUnread, 30000)
+    return () => clearInterval(interval)
+  }
+}, [profile])  
+
   const fetchProfile = async (userId) => {
     const { data } = await supabase.from('profiles').select('*').eq('id', userId).single()
     setProfile(data)

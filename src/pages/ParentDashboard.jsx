@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef } from 'react'
 import axios from 'axios'
 
+const API = 'https://bridgeup-server-production.up.railway.app'
+
 function JargonText({ text, language }) {
   const [tooltip, setTooltip] = useState(null)
   const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0 })
@@ -13,18 +15,23 @@ function JargonText({ text, language }) {
     'PEEL', 'persuasive', 'narrative', 'expository', 'bioprinting',
     'algebra', 'equations', 'fractions', 'decimals', 'geometry',
     'EAL', 'extension', 'intervention', 'metacognition', 'wellbeing',
-    'cross-curricular', 'explicit teaching', 'growth mindset'
+    'peel', 'phonemic', 'scaffold', 'growth mindset'
   ]
 
   const handleWordClick = async (word, e) => {
     const clean = word.toLowerCase().replace(/[^a-z\s]/g, '')
-    const matched = JARGON_TERMS.find(t => clean.includes(t.toLowerCase()))
+    const originalClean = word.replace(/[^a-zA-Z]/g, '').toLowerCase()
+    const matched = JARGON_TERMS.find(t =>
+      clean.includes(t.toLowerCase()) ||
+      originalClean === t.toLowerCase().replace(/\s/g, '') ||
+      originalClean.startsWith(t.toLowerCase().replace(/\s/g, ''))
+    )
     if (!matched) return
     setLoading(true)
     setTooltipPos({ x: e.clientX, y: e.clientY })
     setTooltip('...')
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/explain-term`, {
+      const res = await fetch(`${API}/api/explain-term`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ term: matched, language })
@@ -47,8 +54,7 @@ function JargonText({ text, language }) {
         return (
           <span key={i}>
             {isJargon ? (
-              <span
-                onClick={(e) => handleWordClick(word, e)}
+              <span onClick={(e) => handleWordClick(word, e)}
                 className="underline decoration-dotted decoration-teal-500 cursor-pointer text-teal-700 font-medium hover:bg-teal-50 rounded px-0.5"
                 title="Tap to explain">
                 {word}
@@ -59,8 +65,7 @@ function JargonText({ text, language }) {
         )
       })}
       {tooltip && (
-        <div
-          className="fixed z-50 bg-teal-800 text-white text-xs rounded-xl px-3 py-2 shadow-xl max-w-xs"
+        <div className="fixed z-50 bg-teal-800 text-white text-xs rounded-xl px-3 py-2 shadow-xl max-w-xs"
           style={{ left: Math.min(tooltipPos.x, window.innerWidth - 200), top: tooltipPos.y - 60 }}>
           <div className="flex justify-between items-start gap-2">
             <span>{loading ? '⏳ Explaining...' : `💡 ${tooltip}`}</span>
@@ -73,7 +78,21 @@ function JargonText({ text, language }) {
   )
 }
 
-const API = 'https://bridgeup-server-production.up.railway.app'
+function WelcomeBanner({ profile, currentChild, language }) {
+  const [text, setText] = useState(null)
+  useEffect(() => {
+    const english = `Hi ${profile.name}! Here are ${currentChild?.name || profile.child_name || "your child"}'s latest updates, organised by subject. Tap any subject to see updates and personalised tips.`
+    if (language === 'en') { setText(english); return; }
+    axios.post(`${API}/api/translate`, { text: english, targetLanguage: language })
+      .then(r => setText(r.data.translated))
+      .catch(() => setText(english))
+  }, [currentChild])
+  return (
+    <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 text-sm text-blue-800">
+      {text || `Hi ${profile.name}!`}
+    </div>
+  )
+}
 
 const LANGUAGES = [
   { code: 'en', label: '🇦🇺 English' },
@@ -94,19 +113,41 @@ const SUBJECT_CONFIG = {
   'General':     { icon: '📚', header: 'bg-gray-700',   border: 'border-gray-300',   bg: 'bg-gray-50' },
 }
 
-function WelcomeBanner({ profile, currentChild, language }) {
-  const [text, setText] = useState(null)
-  useEffect(() => {
-    const english = `Hi ${profile.name}! Here are ${currentChild?.name || profile.child_name || "your child"}'s latest updates, organised by subject. Tap any subject to see updates and personalised tips.`
-    if (language === 'en') { setText(english); return; }
-    axios.post(`${import.meta.env.VITE_API_URL}/api/translate`, { text: english, targetLanguage: language })
-      .then(r => setText(r.data.translated))
-      .catch(() => setText(english))
-  }, [currentChild])
+function PersonalMessageBanner({ item, profile, children, selectedChildIdx, API }) {
+  const [message, setMessage] = useState(null)
+  const [loading, setLoading] = useState(false)
+  const currentChild = children[selectedChildIdx]
+
+  const generate = async () => {
+    setLoading(true)
+    try {
+      const res = await axios.post(`${API}/api/personalise-message`, {
+        messageContent: item.messages?.transformed_content || '',
+        childName: currentChild?.name || profile.child_name || 'your child',
+        childInterests: currentChild?.interests || profile.child_interests || '',
+        childStruggles: currentChild?.struggles || profile.child_struggles || '',
+        language: profile.language
+      })
+      setMessage(res.data.message)
+    } catch(e) {}
+    setLoading(false)
+  }
+
+  if (message) {
+    return (
+      <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-3">
+        <p className="text-xs font-semibold text-indigo-700 mb-1">👤 What this means for {currentChild?.name || profile.child_name}:</p>
+        <p className="text-sm text-indigo-800">{message}</p>
+        <p className="text-xs text-indigo-400 mt-1">Powered by CurricuLLM</p>
+      </div>
+    )
+  }
+
   return (
-    <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 text-sm text-blue-800">
-      {text || `Hi ${profile.name}!`}
-    </div>
+    <button onClick={generate} disabled={loading}
+      className="text-xs text-indigo-600 hover:text-indigo-800 underline disabled:opacity-50">
+      {loading ? '✨ Personalising...' : `✨ What does this mean for ${currentChild?.name || profile.child_name}?`}
+    </button>
   )
 }
 
@@ -124,19 +165,18 @@ export default function ParentDashboard({ supabase, profile }) {
   const [readingLevel, setReadingLevel] = useState({})
   const [triedTips, setTriedTips] = useState({})
   const [flagged, setFlagged] = useState({})
+  const [lastReadSubject, setLastReadSubject] = useState({})
+  const [personalMessages, setPersonalMessages] = useState({})
+const [loadingPersonal, setLoadingPersonal] = useState({})
   const [chatOpen, setChatOpen] = useState(false)
   const [chatMessages, setChatMessages] = useState([])
   const [chatInit, setChatInit] = useState(false)
-//  const [chatMessages, setChatMessages] = useState([
-//    { role: 'assistant', text: "Hi! I'm here to help you support your child's learning at home. What would you like to know? 😊\n\nPowered by CurricuLLM 🎓" }
-//  ])
   const [chatInput, setChatInput] = useState('')
   const [chatLoading, setChatLoading] = useState(false)
   const [consentGiven, setConsentGiven] = useState(
     () => localStorage.getItem(`consent_${profile.id}`) === 'true'
   )
   const chatEndRef = useRef(null)
-
   const [interests, setInterests] = useState(profile.child_interests || '')
   const [struggles, setStruggles] = useState(profile.child_struggles || '')
   const [learningStyle, setLearningStyle] = useState(profile.child_learning_style || '')
@@ -174,9 +214,7 @@ export default function ParentDashboard({ supabase, profile }) {
   const handleSimplify = async (messageId, originalContent, level) => {
     setSimplifying(s => ({ ...s, [messageId]: true }))
     try {
-      const res = await axios.post(`${API}/api/simplify`, {
-        content: originalContent, level, language: profile.language
-      })
+      const res = await axios.post(`${API}/api/simplify`, { content: originalContent, level, language: profile.language })
       setSimplifiedContent(s => ({ ...s, [messageId]: res.data.content }))
       setReadingLevel(r => ({ ...r, [messageId]: level }))
     } catch (e) {}
@@ -243,7 +281,6 @@ export default function ParentDashboard({ supabase, profile }) {
   const lang = LANGUAGES.find(l => l.code === profile.language) || LANGUAGES[0]
   const currentChild = children[selectedChildIdx]
 
-  // ── CONSENT MODAL ──────────────────────────────────────────────────────────
   if (!consentGiven) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-teal-50 to-blue-100 flex items-center justify-center p-4">
@@ -260,8 +297,7 @@ export default function ParentDashboard({ supabase, profile }) {
             <p><strong>Your rights:</strong> Update or delete your profile at any time. Flag any message that concerns you.</p>
             <p className="text-xs text-gray-400">Compliant with the Australian Privacy Act 1988.</p>
           </div>
-          <button onClick={handleConsent}
-            className="w-full bg-teal-600 text-white py-3 rounded-xl font-semibold hover:bg-teal-700 transition">
+          <button onClick={handleConsent} className="w-full bg-teal-600 text-white py-3 rounded-xl font-semibold hover:bg-teal-700 transition">
             I understand and agree to continue
           </button>
         </div>
@@ -271,7 +307,6 @@ export default function ParentDashboard({ supabase, profile }) {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
       <header className="bg-blue-700 text-white px-6 py-4 flex justify-between items-center shadow">
         <div className="flex items-center gap-3">
           <span className="text-2xl">🌉</span>
@@ -287,7 +322,6 @@ export default function ParentDashboard({ supabase, profile }) {
         </div>
       </header>
 
-      {/* Multi-child selector */}
       {children.length > 1 && (
         <div className="bg-white border-b px-6 py-3 flex gap-3 items-center overflow-x-auto">
           <span className="text-sm text-gray-500 font-medium whitespace-nowrap">Viewing:</span>
@@ -300,78 +334,56 @@ export default function ParentDashboard({ supabase, profile }) {
         </div>
       )}
 
-      {/* Tabs */}
       <div className="bg-white border-b px-6 flex gap-6">
         {['updates', 'profile'].map(t => (
           <button key={t} onClick={() => setTab(t)}
             className={`py-4 text-sm font-medium border-b-2 transition ${tab === t ? 'border-blue-600 text-blue-700' : 'border-transparent text-gray-500 hover:text-gray-700'}`}>
-            {t === 'updates'
-              ? `📬 Learning Updates (${messages.length})`
-              : `👤 ${currentChild?.name || profile.child_name || 'Child'}'s Profile`}
+            {t === 'updates' ? `📬 Learning Updates (${messages.length})` : `👤 ${currentChild?.name || profile.child_name || 'Child'}'s Profile`}
           </button>
         ))}
       </div>
 
       <div className="max-w-3xl mx-auto p-6 space-y-4 pb-32">
 
-        {/* ── UPDATES TAB ── */}
         {tab === 'updates' && (
           <>
-            <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 text-sm text-blue-800">
-              <WelcomeBanner profile={profile} currentChild={currentChild} language={profile.language} />
-            </div>
+            <WelcomeBanner profile={profile} currentChild={currentChild} language={profile.language} />
 
-            {/* ── TO-DO SUMMARY ── */}
-{(() => {
-  const allTodos = []
-  Object.entries(groupedMessages).forEach(([subject, msgs]) => {
-    msgs.forEach(item => {
-      const tips = item.translated_tips ? item.translated_tips.split(' | ') : []
-      tips.forEach((tip, i) => {
-        const key = `${item.message_id}_${i}`
-        if (!triedTips[key]) {
-          allTodos.push({ subject, tip, messageId: item.message_id, tipIdx: i, recipientId: item.id, date: item.created_at })
-        }
-      })
-    })
-  })
-  if (allTodos.length === 0) return null
-  return (
-    <div className="bg-yellow-50 border-2 border-yellow-300 rounded-xl p-4 space-y-3">
-      <div className="flex items-center justify-between">
-       <p className="font-bold text-yellow-800 text-sm">📋 To-Do: {allTodos.length} activities</p>
-      </div>
-      <div className="space-y-2">
-        {allTodos.slice(0, 5).map((todo, i) => (
-          <div key={i} className="flex items-start gap-3 bg-white rounded-lg p-3 shadow-sm">
-            <div className="flex-1">
-              <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
-               todo.subject==='English'?'bg-blue-100 text-blue-700':
-               todo.subject==='Science'?'bg-green-100 text-green-700':
-               todo.subject==='Mathematics'?'bg-purple-100 text-purple-700':
-              'bg-gray-100 text-gray-600'}`}>{todo.subject}
-              </span>
-              <p className="text-sm text-gray-700 mt-0.5">{todo.tip}</p>
-            </div>
-            <div className="flex flex-col gap-1 flex-shrink-0">
-              <button onClick={() => handleTried(todo.recipientId, todo.messageId, todo.tipIdx, 'tried')}
-                className="text-xs px-2 py-1 bg-green-100 text-green-700 rounded-full hover:bg-green-200 whitespace-nowrap">
-                ✅ Done
-              </button>
-              <button onClick={() => handleTried(todo.recipientId, todo.messageId, todo.tipIdx, 'struggled')}
-                className="text-xs px-2 py-1 bg-orange-100 text-orange-700 rounded-full hover:bg-orange-200 whitespace-nowrap">
-                😕 Hard
-              </button>
-            </div>
-          </div>
-        ))}
-        {allTodos.length > 5 && (
-          <p className="text-xs text-yellow-600 text-center">+{allTodos.length - 5} more — open a subject card to see all</p>
-        )}
-      </div>
-    </div>
-  )
-})()}
+            {(() => {
+              const allTodos = []
+              Object.entries(groupedMessages).forEach(([subject, msgs]) => {
+                msgs.forEach(item => {
+                  const tips = item.translated_tips ? item.translated_tips.split(' | ') : []
+                  tips.forEach((tip, i) => {
+                    const key = `${item.message_id}_${i}`
+                    if (!triedTips[key]) {
+                      allTodos.push({ subject, tip, messageId: item.message_id, tipIdx: i, recipientId: item.id })
+                    }
+                  })
+                })
+              })
+              if (allTodos.length === 0) return null
+              return (
+                <div className="bg-yellow-50 border-2 border-yellow-300 rounded-xl p-4 space-y-3">
+                  <p className="font-bold text-yellow-800 text-sm">📋 To-Do: {allTodos.length} activities</p>
+                  <div className="space-y-2">
+                    {allTodos.slice(0, 5).map((todo, i) => (
+                      <div key={i} className="flex items-start gap-3 bg-white rounded-lg p-3 shadow-sm">
+                        <div className="flex-1">
+                          <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${todo.subject==='English'?'bg-blue-100 text-blue-700':todo.subject==='Science'?'bg-green-100 text-green-700':todo.subject==='Mathematics'?'bg-purple-100 text-purple-700':'bg-gray-100 text-gray-600'}`}>{todo.subject}</span>
+                          <p className="text-sm text-gray-700 mt-0.5">{todo.tip}</p>
+                        </div>
+                        <div className="flex flex-col gap-1 flex-shrink-0">
+                          <button onClick={() => handleTried(todo.recipientId, todo.messageId, todo.tipIdx, 'tried')} className="text-xs px-2 py-1 bg-green-100 text-green-700 rounded-full hover:bg-green-200 whitespace-nowrap">✅ Done</button>
+                          <button onClick={() => handleTried(todo.recipientId, todo.messageId, todo.tipIdx, 'struggled')} className="text-xs px-2 py-1 bg-orange-100 text-orange-700 rounded-full hover:bg-orange-200 whitespace-nowrap">😕 Hard</button>
+                        </div>
+                      </div>
+                    ))}
+                    {allTodos.length > 5 && <p className="text-xs text-yellow-600 text-center">+{allTodos.length - 5} more — open a subject card to see all</p>}
+                  </div>
+                </div>
+              )
+            })()}
 
             {Object.keys(groupedMessages).length === 0 ? (
               <div className="text-center py-12 text-gray-400">
@@ -386,37 +398,44 @@ export default function ParentDashboard({ supabase, profile }) {
 
                 return (
                   <div key={subject} className={`rounded-xl border-2 overflow-hidden shadow-sm ${cfg.border}`}>
-                    {/* Subject header — always visible */}
-                    <button onClick={() => setExpandedSubject(isExpanded ? null : subject)}
-                      className={`w-full ${cfg.header} text-white px-5 py-4 flex justify-between items-center hover:opacity-90 transition`}>
+<button onClick={() => {
+  setExpandedSubject(isExpanded ? null : subject)
+  if (!isExpanded) {
+    setLastReadSubject(prev => ({ ...prev, [subject]: new Date().toISOString() }))
+  }
+}}                      className={`w-full ${cfg.header} text-white px-5 py-4 flex justify-between items-center hover:opacity-90 transition`}>
                       <div className="flex items-center gap-3">
                         <span className="text-3xl">{cfg.icon}</span>
                         <div className="text-left">
                           <p className="font-bold text-lg">{subject}</p>
-                          <p className="text-xs opacity-75">{subjectMessages.length} update{subjectMessages.length !== 1 ? 's' : ''} from Ms. {profile.name === 'Ms. Tiffany Stephenson' ? 'Tiffany Stephenson' : 'your teacher'}</p>
+                          <p className="text-xs opacity-75">{subjectMessages.length} update{subjectMessages.length !== 1 ? 's' : ''} from Ms. your teacher</p>
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
-                        {todosRemaining > 0 && (
-                          <span className="bg-yellow-300 text-yellow-900 text-xs px-2 py-0.5 rounded-full font-bold">
-                            {todosRemaining} to-do
-                          </span>
-                        )}
-                        <span className="text-xl">{isExpanded ? '▲' : '▼'}</span>
-                      </div>
+  {(() => {
+    const hasNew = subjectMessages.some(m => {
+      const msgDate = new Date(m.created_at)
+      const lastRead = lastReadSubject[subject]
+      return !lastRead || msgDate > new Date(lastRead)
+    })
+    return hasNew && !isExpanded ? (
+      <span className="w-3 h-3 bg-red-400 rounded-full animate-pulse"/>
+    ) : null
+  })()}
+  {todosRemaining > 0 && <span className="bg-yellow-300 text-yellow-900 text-xs px-2 py-0.5 rounded-full font-bold">{todosRemaining} to-do</span>}
+  <span className="text-xl">{isExpanded ? '▲' : '▼'}</span>
+</div>
                     </button>
 
-                    {/* Expanded timeline */}
                     {isExpanded && (
                       <div className={`${cfg.bg} divide-y divide-gray-200`}>
-                        {subjectMessages.map((item, itemIdx) => {
+                        {subjectMessages.map((item) => {
                           const originalContent = item.translated_content || item.messages?.transformed_content
                           const displayContent = simplifiedContent[item.message_id] || originalContent
                           const tips = item.translated_tips ? item.translated_tips.split(' | ') : []
 
                           return (
                             <div key={item.id} className="p-5 space-y-4">
-                              {/* Timeline marker + date + badge */}
                               <div className="flex justify-between items-start">
                                 <div className="flex items-center gap-2">
                                   <div className="w-3 h-3 rounded-full bg-white border-2 border-current mt-1"/>
@@ -425,47 +444,48 @@ export default function ParentDashboard({ supabase, profile }) {
                                   </span>
                                 </div>
                                 <div className="flex items-center gap-2 flex-wrap justify-end">
-                                  {flagged[item.message_id] && (
-                                    <span className="text-xs bg-red-100 text-red-700 px-2 py-0.5 rounded-full">🚩 Flagged</span>
-                                  )}
-                                  <span className="text-xs bg-teal-100 text-teal-700 px-2 py-0.5 rounded-full font-medium">
-                                    🤖 AI-generated • ✅ Teacher-approved
-                                  </span>
+                                  {flagged[item.message_id] && <span className="text-xs bg-red-100 text-red-700 px-2 py-0.5 rounded-full">🚩 Flagged</span>}
+                                  <span className="text-xs bg-teal-100 text-teal-700 px-2 py-0.5 rounded-full font-medium">🤖 AI-generated • ✅ Teacher-approved</span>
                                 </div>
                               </div>
 
-                              {/* This week's learning */}
                               <div className="bg-white rounded-xl p-4 shadow-sm space-y-3">
                                 <p className="text-sm font-semibold text-gray-700">📚 This week's learning</p>
                                 <p className="text-sm text-gray-700 leading-relaxed">
                                   <JargonText text={displayContent} language={profile.language} />
                                 </p>
+                                <p className="text-sm text-gray-700 leading-relaxed">
+  <JargonText text={displayContent} language={profile.language} />
+</p>
 
-                                {/* Reading level buttons */}
+{/* ADD THIS */}
+<PersonalMessageBanner 
+  item={item} 
+  profile={profile} 
+  children={children}
+  selectedChildIdx={selectedChildIdx}
+  API={API}
+/>
+                                {profile.language !== 'en' && (
+                                  <p className="text-xs text-gray-400 mt-2 italic">
+                                    🔍 Tap highlighted terms for explanations: <JargonText text={item.messages?.transformed_content || ''} language={profile.language} />
+                                  </p>
+                                )}
                                 <div className="flex gap-2 flex-wrap pt-1">
                                   <span className="text-xs text-gray-400 self-center">Reading level:</span>
-                                  {[
-                                    { key: 'simple', label: '🟢 Simpler' },
-                                    { key: 'standard', label: '🔵 Standard' },
-                                    { key: 'detailed', label: '🟣 More detail' }
-                                  ].map(lvl => (
-                                    <button key={lvl.key}
-                                      onClick={() => handleSimplify(item.message_id, originalContent, lvl.key)}
-                                      disabled={simplifying[item.message_id]}
+                                  {[{ key: 'simple', label: '🟢 Simpler' }, { key: 'standard', label: '🔵 Standard' }, { key: 'detailed', label: '🟣 More detail' }].map(lvl => (
+                                    <button key={lvl.key} onClick={() => handleSimplify(item.message_id, originalContent, lvl.key)} disabled={simplifying[item.message_id]}
                                       className={`text-xs px-3 py-1 rounded-full border transition ${readingLevel[item.message_id] === lvl.key ? 'bg-teal-600 text-white border-teal-600' : 'bg-white text-gray-600 border-gray-300 hover:border-teal-400'}`}>
                                       {simplifying[item.message_id] ? '...' : lvl.label}
                                     </button>
                                   ))}
                                   {simplifiedContent[item.message_id] && (
                                     <button onClick={() => { setSimplifiedContent(s => ({ ...s, [item.message_id]: null })); setReadingLevel(r => ({ ...r, [item.message_id]: null })) }}
-                                      className="text-xs px-3 py-1 rounded-full border bg-gray-100 text-gray-500 hover:bg-gray-200">
-                                      ↺ Reset
-                                    </button>
+                                      className="text-xs px-3 py-1 rounded-full border bg-gray-100 text-gray-500 hover:bg-gray-200">↺ Reset</button>
                                   )}
                                 </div>
                               </div>
 
-                              {/* At-home tips with feedback */}
                               {tips.length > 0 && (
                                 <div className="bg-white rounded-xl p-4 shadow-sm">
                                   <p className="text-sm font-semibold text-green-800 mb-3">🏠 How you can help at home</p>
@@ -478,19 +498,11 @@ export default function ParentDashboard({ supabase, profile }) {
                                           <p className="text-sm text-gray-700"><span className="font-bold text-green-600">{i+1}.</span> {tip}</p>
                                           {!fb ? (
                                             <div className="flex gap-2 mt-2">
-                                              <button onClick={() => handleTried(item.id, item.message_id, i, 'tried')}
-                                                className="text-xs px-3 py-1 bg-green-100 text-green-700 rounded-full hover:bg-green-200 transition">
-                                                ✅ We tried this!
-                                              </button>
-                                              <button onClick={() => handleTried(item.id, item.message_id, i, 'struggled')}
-                                                className="text-xs px-3 py-1 bg-orange-100 text-orange-700 rounded-full hover:bg-orange-200 transition">
-                                                😕 We struggled
-                                              </button>
+                                              <button onClick={() => handleTried(item.id, item.message_id, i, 'tried')} className="text-xs px-3 py-1 bg-green-100 text-green-700 rounded-full hover:bg-green-200 transition">✅ We tried this!</button>
+                                              <button onClick={() => handleTried(item.id, item.message_id, i, 'struggled')} className="text-xs px-3 py-1 bg-orange-100 text-orange-700 rounded-full hover:bg-orange-200 transition">😕 We struggled</button>
                                             </div>
                                           ) : (
-                                            <p className="text-xs mt-2 text-gray-500 italic">
-                                              {fb === 'tried' ? '✅ Great! Your teacher can see this.' : '😕 Noted — your teacher will follow up.'}
-                                            </p>
+                                            <p className="text-xs mt-2 text-gray-500 italic">{fb === 'tried' ? '✅ Great! Your teacher can see this.' : '😕 Noted — your teacher will follow up.'}</p>
                                           )}
                                         </div>
                                       )
@@ -499,7 +511,6 @@ export default function ParentDashboard({ supabase, profile }) {
                                 </div>
                               )}
 
-                              {/* Reply section */}
                               <div className="bg-white rounded-xl p-4 shadow-sm space-y-3">
                                 <div className="flex justify-between items-center">
                                   <p className="text-sm font-semibold text-gray-700">💬 Reply to teacher</p>
@@ -511,29 +522,30 @@ export default function ParentDashboard({ supabase, profile }) {
                                 <div className="bg-amber-50 rounded-lg p-2 text-xs text-amber-700">
                                   ⚠️ Not for urgent welfare issues — contact the school directly for emergencies.
                                 </div>
-                                {/* Quick emoji reactions */}
-<div className="flex gap-2 flex-wrap mb-2">
-  <span className="text-xs text-gray-500 self-center">Quick reply:</span>
-  {[
-    { emoji: '👍', text: 'Thanks, got it!' },
-    { emoji: '😕', text: "I'm not sure how to help with this" },
-    { emoji: '❓', text: 'Can you explain this more simply?' },
-    { emoji: '🌟', text: 'We tried the activities and it went well!' },
-  ].map((reaction, i) => (
-    <button key={i}
-      onClick={() => {
-        setReplyText(r => ({ ...r, [item.message_id]: reaction.text }))
-      }}
-      className="text-lg hover:scale-125 transition-transform"
-      title={reaction.text}>
-      {reaction.emoji}
-    </button>
-  ))}
-</div>
-                                <textarea
-                                  value={replyText[item.message_id] || ''}
-                                  onChange={e => setReplyText(r => ({ ...r, [item.message_id]: e.target.value }))}
-                                  rows={2}
+                                <div className="flex gap-2 flex-wrap">
+                                  <span className="text-xs text-gray-500 self-center">Quick reply:</span>
+                                  {[
+                                    { emoji: '👍', textEn: 'Thanks, got it!' },
+                                    { emoji: '😕', textEn: "I'm not sure how to help with this" },
+                                    { emoji: '❓', textEn: 'Can you explain this more simply?' },
+                                    { emoji: '🌟', textEn: 'We tried the activities and it went well!' },
+                                  ].map((reaction, i) => (
+                                    <button key={i}
+                                      onClick={async () => {
+                                        let text = reaction.textEn
+                                        if (profile.language !== 'en') {
+                                          try {
+                                            const res = await axios.post(`${API}/api/translate`, { text: reaction.textEn, targetLanguage: profile.language })
+                                            text = res.data.translated
+                                          } catch(e) {}
+                                        }
+                                        setReplyText(r => ({ ...r, [item.message_id]: text }))
+                                      }}
+className="text-xl hover:scale-125 transition-transform">                                      {reaction.emoji}
+                                    </button>
+                                  ))}
+                                </div>
+                                <textarea value={replyText[item.message_id] || ''} onChange={e => setReplyText(r => ({ ...r, [item.message_id]: e.target.value }))} rows={2}
                                   className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
                                   placeholder="Write in any language — translated automatically for your teacher..."/>
                                 {sentReplies[item.message_id] ? (
@@ -557,40 +569,30 @@ export default function ParentDashboard({ supabase, profile }) {
           </>
         )}
 
-        {/* ── PROFILE TAB ── */}
         {tab === 'profile' && (
           <div className="space-y-5">
             <div className="bg-purple-50 border border-purple-200 rounded-xl p-4 text-sm text-purple-800">
               <strong>🌟 Personalise {currentChild?.name || profile.child_name || "your child"}'s tips!</strong>
               <p className="mt-1">BridgeUp uses this to generate at-home tips tailored to your child — not generic advice.</p>
             </div>
-
             <div className="bg-white rounded-xl shadow p-6 space-y-5">
               <h2 className="text-lg font-semibold text-gray-800">👤 {currentChild?.name || profile.child_name || "Your Child"}'s Learning Profile</h2>
-
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1">🎮 What do they love? (hobbies, interests)</label>
+                <label className="block text-sm font-semibold text-gray-700 mb-1">🎮 What do they love?</label>
                 <textarea value={interests} onChange={e => setInterests(e.target.value)} rows={2}
                   className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400"
-                  placeholder="e.g. Minecraft, Roblox, cricket, cooking, drawing..."/>
+                  placeholder="e.g. Minecraft, Roblox, cricket, cooking..."/>
               </div>
-
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-1">📉 What do they find difficult?</label>
                 <textarea value={struggles} onChange={e => setStruggles(e.target.value)} rows={2}
                   className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400"
-                  placeholder="e.g. grammar, essay writing, maths word problems..."/>
+                  placeholder="e.g. grammar, essay writing, maths..."/>
               </div>
-
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">🧠 How do they learn best?</label>
                 <div className="grid grid-cols-2 gap-2">
-                  {[
-                    { value: 'visual', label: '👁️ Visual (diagrams, videos)' },
-                    { value: 'hands-on', label: '🙌 Hands-on (doing things)' },
-                    { value: 'reading', label: '📖 Reading & writing' },
-                    { value: 'talking', label: '💬 Talking it through' },
-                  ].map(opt => (
+                  {[{ value: 'visual', label: '👁️ Visual' }, { value: 'hands-on', label: '🙌 Hands-on' }, { value: 'reading', label: '📖 Reading & writing' }, { value: 'talking', label: '💬 Talking it through' }].map(opt => (
                     <button key={opt.value} onClick={() => setLearningStyle(opt.value)}
                       className={`text-left px-3 py-2 rounded-lg text-sm border transition ${learningStyle === opt.value ? 'bg-purple-600 text-white border-purple-600' : 'bg-white text-gray-700 border-gray-300 hover:border-purple-400'}`}>
                       {opt.label}
@@ -598,15 +600,10 @@ export default function ParentDashboard({ supabase, profile }) {
                   ))}
                 </div>
               </div>
-
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">💪 How confident do you feel supporting their learning?</label>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">💪 How confident are you supporting their learning?</label>
                 <div className="flex gap-2">
-                  {[
-                    { value: 'low', label: '😟 Not very' },
-                    { value: 'medium', label: '🙂 Somewhat' },
-                    { value: 'high', label: '😄 Very confident' },
-                  ].map(opt => (
+                  {[{ value: 'low', label: '😟 Not very' }, { value: 'medium', label: '🙂 Somewhat' }, { value: 'high', label: '😄 Very confident' }].map(opt => (
                     <button key={opt.value} onClick={() => setConfidenceLevel(opt.value)}
                       className={`flex-1 px-2 py-2 rounded-lg text-xs border transition ${confidenceLevel === opt.value ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-700 border-gray-300 hover:border-blue-400'}`}>
                       {opt.label}
@@ -614,15 +611,10 @@ export default function ParentDashboard({ supabase, profile }) {
                   ))}
                 </div>
               </div>
-
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">🕐 When do you have time for home activities?</label>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">🕐 When do you have time?</label>
                 <div className="grid grid-cols-3 gap-2">
-                  {[
-                    { value: 'morning', label: '🌅 Mornings' },
-                    { value: 'evening', label: '🌙 Evenings' },
-                    { value: 'weekend', label: '📅 Weekends' },
-                  ].map(opt => (
+                  {[{ value: 'morning', label: '🌅 Mornings' }, { value: 'evening', label: '🌙 Evenings' }, { value: 'weekend', label: '📅 Weekends' }].map(opt => (
                     <button key={opt.value} onClick={() => setAvailabilityWindow(opt.value)}
                       className={`px-2 py-2 rounded-lg text-sm border transition ${availabilityWindow === opt.value ? 'bg-green-600 text-white border-green-600' : 'bg-white text-gray-700 border-gray-300 hover:border-green-400'}`}>
                       {opt.label}
@@ -630,9 +622,8 @@ export default function ParentDashboard({ supabase, profile }) {
                   ))}
                 </div>
               </div>
-
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">⏱️ How long can you spend on home activities?</label>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">⏱️ How long for activities?</label>
                 <div className="flex gap-2">
                   {['5', '10', '15'].map(min => (
                     <button key={min} onClick={() => setActivityLength(min)}
@@ -642,11 +633,8 @@ export default function ParentDashboard({ supabase, profile }) {
                   ))}
                 </div>
               </div>
-
               {profileSaved ? (
-                <div className="bg-green-100 text-green-800 text-center py-3 rounded-lg font-semibold">
-                  ✅ Profile saved! Tips will now be personalised.
-                </div>
+                <div className="bg-green-100 text-green-800 text-center py-3 rounded-lg font-semibold">✅ Profile saved!</div>
               ) : (
                 <button onClick={handleSaveProfile} disabled={savingProfile}
                   className="w-full bg-purple-600 text-white py-3 rounded-lg font-semibold hover:bg-purple-700 transition disabled:opacity-50">
@@ -654,21 +642,17 @@ export default function ParentDashboard({ supabase, profile }) {
                 </button>
               )}
             </div>
-
             <div className="bg-gray-50 rounded-xl p-4 text-xs text-gray-500 space-y-1">
               <p className="font-semibold">🔐 Privacy notice</p>
-              <p>Stored securely. Never shared or used for advertising. Delete anytime. Compliant with the Australian Privacy Act 1988.</p>
+              <p>Stored securely. Never shared or used for advertising. Compliant with the Australian Privacy Act 1988.</p>
             </div>
           </div>
         )}
       </div>
 
-      {/* ── FLOATING AI CHAT BUBBLE ── */}
-      {/* ── FLOATING AI CHAT BUBBLE ── */}
       <div className="fixed bottom-6 right-6 z-50">
         {chatOpen && (
-          <div className="bg-white rounded-2xl shadow-2xl border border-gray-200 mb-4 w-80 flex flex-col overflow-hidden"
-            style={{ height: '420px' }}>
+          <div className="bg-white rounded-2xl shadow-2xl border border-gray-200 mb-4 w-80 flex flex-col overflow-hidden" style={{ height: '420px' }}>
             <div className="bg-teal-700 text-white px-4 py-3 flex justify-between items-center flex-shrink-0">
               <div>
                 <p className="font-semibold text-sm">💬 Ask BridgeUp</p>
@@ -676,7 +660,6 @@ export default function ParentDashboard({ supabase, profile }) {
               </div>
               <button onClick={() => setChatOpen(false)} className="text-white opacity-75 hover:opacity-100 text-lg">✕</button>
             </div>
-
             <div className="flex-1 overflow-y-auto p-3 space-y-3 bg-gray-50">
               {chatMessages.map((msg, i) => (
                 <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
@@ -687,30 +670,22 @@ export default function ParentDashboard({ supabase, profile }) {
               ))}
               {chatLoading && (
                 <div className="flex justify-start">
-                  <div className="bg-white text-gray-400 px-3 py-2 rounded-2xl text-sm shadow rounded-bl-none">
-                    Thinking...
-                  </div>
+                  <div className="bg-white text-gray-400 px-3 py-2 rounded-2xl text-sm shadow rounded-bl-none">Thinking...</div>
                 </div>
               )}
               <div ref={chatEndRef}/>
             </div>
-
             <div className="p-3 border-t flex gap-2 flex-shrink-0">
-              <input
-                value={chatInput}
-                onChange={e => setChatInput(e.target.value)}
+              <input value={chatInput} onChange={e => setChatInput(e.target.value)}
                 onKeyDown={e => e.key === 'Enter' && !e.shiftKey && handleChat()}
                 placeholder="Ask anything in any language..."
                 className="flex-1 border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400"/>
               <button onClick={handleChat} disabled={chatLoading || !chatInput.trim()}
-                className="bg-teal-600 text-white px-3 py-2 rounded-lg hover:bg-teal-700 transition disabled:opacity-50 font-bold">
-                →
-              </button>
+                className="bg-teal-600 text-white px-3 py-2 rounded-lg hover:bg-teal-700 transition disabled:opacity-50 font-bold">→</button>
             </div>
             <p className="text-xs text-center text-gray-400 pb-2 px-2">Not for urgent welfare issues — contact school directly</p>
           </div>
         )}
-
         <button onClick={async () => {
           setChatOpen(!chatOpen)
           if (!chatOpen && !chatInit) {
