@@ -87,6 +87,7 @@ export default function TeacherDashboard({ supabase, profile }) {
   const [engagement, setEngagement] = useState(null)
   const [expandedReplies, setExpandedReplies] = useState({})
   const [expandedSubjectTeacher, setExpandedSubjectTeacher] = useState(null)
+  const [unengaged, setUnengaged] = useState([])
   useEffect(() => { fetchMessages(); fetchEngagement(); }, [])
 
   const fetchMessages = async () => {
@@ -94,10 +95,12 @@ export default function TeacherDashboard({ supabase, profile }) {
     setMessages(res.data.data || [])
   }
 
-  const fetchEngagement = async () => {
-    const res = await axios.get(`${API}/api/engagement/${profile.id}`)
-    if (res.data.success) setEngagement(res.data.data)
-  }
+const fetchEngagement = async () => {
+  const res = await axios.get(`${API}/api/engagement/${profile.id}`)
+  if (res.data.success) setEngagement(res.data.data)
+  const res2 = await axios.get(`${API}/api/unengaged/${profile.id}`)
+  if (res2.data.success) setUnengaged(res2.data.data)
+}
 
   const handleTransform = async () => {
     if (!rawContent.trim()) return
@@ -519,6 +522,26 @@ export default function TeacherDashboard({ supabase, profile }) {
                     <p className="mt-1">Check inbox — a parent may need immediate attention.</p>
                   </div>
                 )}
+                {unengaged.length > 0 && (
+  <div className="bg-orange-50 border border-orange-200 rounded-xl p-4 space-y-3">
+    <p className="text-sm font-bold text-orange-800">
+      📭 {unengaged.length} {unengaged.length === 1 ? 'family has' : 'families have'} not yet engaged
+    </p>
+    <p className="text-xs text-orange-600">These parents have received messages but haven't replied yet. Consider a follow-up.</p>
+    <div className="space-y-1">
+      {unengaged.map((p, i) => (
+        <div key={i} className="flex items-center gap-2 bg-white rounded-lg px-3 py-2">
+          <span className="text-sm">👤</span>
+          <span className="text-sm text-gray-700">{p.name}</span>
+          {p.childName && <span className="text-xs text-gray-400">({p.childName})</span>}
+          <span className="text-xs bg-orange-100 text-orange-600 px-2 py-0.5 rounded-full ml-auto">
+            {p.language === 'hi' ? '🇮🇳 Hindi' : p.language === 'zh-Hans' ? '🇨🇳 Mandarin' : '🇦🇺 English'}
+          </span>
+        </div>
+      ))}
+    </div>
+  </div>
+)}
 
                 <div className="bg-gray-50 rounded-xl p-4 text-xs text-gray-500">
                   <p className="font-semibold mb-1">⚡ Powered by CurricuLLM AI Analysis</p>

@@ -1,6 +1,78 @@
 import { useState, useEffect, useRef } from 'react'
 import axios from 'axios'
 
+function JargonText({ text, language }) {
+  const [tooltip, setTooltip] = useState(null)
+  const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0 })
+  const [loading, setLoading] = useState(false)
+
+  const JARGON_TERMS = [
+    'phonemic awareness', 'phonics', 'numeracy', 'literacy', 'scaffolding',
+    'differentiation', 'NAPLAN', 'curriculum', 'strand', 'outcome',
+    'formative', 'summative', 'assessment', 'pedagogy', 'inquiry',
+    'PEEL', 'persuasive', 'narrative', 'expository', 'bioprinting',
+    'algebra', 'equations', 'fractions', 'decimals', 'geometry',
+    'EAL', 'extension', 'intervention', 'metacognition', 'wellbeing',
+    'cross-curricular', 'explicit teaching', 'growth mindset'
+  ]
+
+  const handleWordClick = async (word, e) => {
+    const clean = word.toLowerCase().replace(/[^a-z\s]/g, '')
+    const matched = JARGON_TERMS.find(t => clean.includes(t.toLowerCase()))
+    if (!matched) return
+    setLoading(true)
+    setTooltipPos({ x: e.clientX, y: e.clientY })
+    setTooltip('...')
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/explain-term`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ term: matched, language })
+      })
+      const data = await res.json()
+      setTooltip(data.explanation)
+    } catch (e) {
+      setTooltip('Could not load explanation.')
+    }
+    setLoading(false)
+  }
+
+  const words = text.split(' ')
+
+  return (
+    <span className="relative">
+      {words.map((word, i) => {
+        const clean = word.toLowerCase().replace(/[^a-z\s]/g, '')
+        const isJargon = JARGON_TERMS.some(t => clean.includes(t.toLowerCase()))
+        return (
+          <span key={i}>
+            {isJargon ? (
+              <span
+                onClick={(e) => handleWordClick(word, e)}
+                className="underline decoration-dotted decoration-teal-500 cursor-pointer text-teal-700 font-medium hover:bg-teal-50 rounded px-0.5"
+                title="Tap to explain">
+                {word}
+              </span>
+            ) : word}
+            {i < words.length - 1 ? ' ' : ''}
+          </span>
+        )
+      })}
+      {tooltip && (
+        <div
+          className="fixed z-50 bg-teal-800 text-white text-xs rounded-xl px-3 py-2 shadow-xl max-w-xs"
+          style={{ left: Math.min(tooltipPos.x, window.innerWidth - 200), top: tooltipPos.y - 60 }}>
+          <div className="flex justify-between items-start gap-2">
+            <span>{loading ? '⏳ Explaining...' : `💡 ${tooltip}`}</span>
+            <button onClick={() => setTooltip(null)} className="text-teal-300 hover:text-white ml-1 flex-shrink-0">✕</button>
+          </div>
+          <p className="text-teal-300 text-xs mt-1">Powered by CurricuLLM</p>
+        </div>
+      )}
+    </span>
+  )
+}
+
 const API = 'https://bridgeup-server-production.up.railway.app'
 
 const LANGUAGES = [
@@ -365,7 +437,9 @@ export default function ParentDashboard({ supabase, profile }) {
                               {/* This week's learning */}
                               <div className="bg-white rounded-xl p-4 shadow-sm space-y-3">
                                 <p className="text-sm font-semibold text-gray-700">📚 This week's learning</p>
-                                <p className="text-sm text-gray-700 leading-relaxed">{displayContent}</p>
+                                <p className="text-sm text-gray-700 leading-relaxed">
+                                  <JargonText text={displayContent} language={profile.language} />
+                                </p>
 
                                 {/* Reading level buttons */}
                                 <div className="flex gap-2 flex-wrap pt-1">
@@ -437,6 +511,25 @@ export default function ParentDashboard({ supabase, profile }) {
                                 <div className="bg-amber-50 rounded-lg p-2 text-xs text-amber-700">
                                   ⚠️ Not for urgent welfare issues — contact the school directly for emergencies.
                                 </div>
+                                {/* Quick emoji reactions */}
+<div className="flex gap-2 flex-wrap mb-2">
+  <span className="text-xs text-gray-500 self-center">Quick reply:</span>
+  {[
+    { emoji: '👍', text: 'Thanks, got it!' },
+    { emoji: '😕', text: "I'm not sure how to help with this" },
+    { emoji: '❓', text: 'Can you explain this more simply?' },
+    { emoji: '🌟', text: 'We tried the activities and it went well!' },
+  ].map((reaction, i) => (
+    <button key={i}
+      onClick={() => {
+        setReplyText(r => ({ ...r, [item.message_id]: reaction.text }))
+      }}
+      className="text-lg hover:scale-125 transition-transform"
+      title={reaction.text}>
+      {reaction.emoji}
+    </button>
+  ))}
+</div>
                                 <textarea
                                   value={replyText[item.message_id] || ''}
                                   onChange={e => setReplyText(r => ({ ...r, [item.message_id]: e.target.value }))}
