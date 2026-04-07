@@ -642,9 +642,18 @@ export default function TeacherDashboard({ supabase, profile }) {
                         </span>
                       </div>
                       {nudges[p.parentId] ? (
-                        <div className="bg-teal-50 rounded p-2">
-                          <p className="text-xs text-teal-800">💡 {nudges[p.parentId]}</p>
-                        </div>
+  <div className="bg-teal-50 rounded p-2 space-y-2">
+    <p className="text-xs text-teal-800">💡 {nudges[p.parentId]}</p>
+    <button onClick={() => {
+      setDmParentId(p.parentId)
+      setDmContent(nudges[p.parentId])
+      setDmSubject('A quick note about your child')
+      setTab('direct')
+    }}
+      className="text-xs bg-teal-600 text-white px-3 py-1.5 rounded-lg hover:bg-teal-700 transition w-full">
+      📤 Apply — Send as Direct Message
+    </button>
+  </div>
                       ) : (
                         <button onClick={async () => {
                           setNudgeLoading(n => ({ ...n, [p.parentId]: true }))
