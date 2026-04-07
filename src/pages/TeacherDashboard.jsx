@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import axios from 'axios'
 
-const API = import.meta.env.VITE_API_URL
+const API = 'https://bridgeup-server-production.up.railway.app'
 
 const SENTIMENT_CONFIG = {
   positive: { emoji: '✅', label: 'Positive', color: 'bg-green-100 text-green-800 border-green-200' },

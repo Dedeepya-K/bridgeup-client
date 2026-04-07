@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import axios from 'axios'
 
-const API = import.meta.env.VITE_API_URL
+const API = 'https://bridgeup-server-production.up.railway.app'
 
 const LANGUAGES = [
   { code: 'en', label: '🇦🇺 English' },

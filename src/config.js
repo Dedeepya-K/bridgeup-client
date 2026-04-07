@@ -1,0 +1,1 @@
+export const API_URL = 'https://bridgeup-server-production.up.railway.app'
