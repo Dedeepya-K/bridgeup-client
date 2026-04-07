@@ -235,10 +235,10 @@ export default function TeacherDashboard({ supabase, profile }) {
       </header>
 
       <div className="bg-white border-b px-6 flex gap-6 overflow-x-auto">
-        {['compose', 'inbox', 'insights', 'direct', 'naplan'].map(t => (
-          <button key={t} onClick={() => { setTab(t); if(t==='inbox') fetchMessages(); if(t==='insights'||t==='naplan') fetchEngagement(); }}
+        {['compose', 'inbox', 'insights', 'direct', 'schedule', 'naplan'].map(t => (
+          <button key={t} onClick={() => { setTab(t); if(t==='inbox') fetchMessages(); if(t==='insights'||t==='naplan'||t==='schedule') fetchEngagement(); }}
             className={`py-4 text-sm font-medium border-b-2 transition whitespace-nowrap ${tab===t ? 'border-teal-600 text-teal-700' : 'border-transparent text-gray-500 hover:text-gray-700'}`}>
-            {t==='compose' ? '✏️ New Update' : t==='inbox' ? `📬 Sent (${messages.length})` : t==='insights' ? '📊 Insights' : t==='direct' ? '✉️ Direct' : '📈 NAPLAN'}
+            {t==='compose' ? '✏️ New Update' : t==='inbox' ? `📬 Sent (${messages.length})` : t==='insights' ? '📊 Insights' : t==='direct' ? '✉️ Direct' : t==='schedule' ? '📅 Schedule' : '📈 NAPLAN'}
           </button>
         ))}
       </div>
@@ -792,51 +792,51 @@ export default function TeacherDashboard({ supabase, profile }) {
         )}
 
         {/* ── DIRECT MESSAGE ── */}
-        {tab === 'direct' && (
-          <div className="space-y-5">
-            <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 text-sm text-blue-800">
-              <strong>✉️ Direct Message</strong> — Send a private message to a specific parent. It will be automatically translated into their language.
-            </div>
-            <div className="bg-white rounded-xl shadow p-6 space-y-4">
-              <h2 className="text-lg font-semibold text-gray-800">Send Direct Message</h2>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Select Parent</label>
-                <select value={dmParentId} onChange={e => setDmParentId(e.target.value)}
-                  className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400">
-                  <option value="">-- Select a parent --</option>
-                  {allParents.map(p => (
-                    <option key={p.id} value={p.id}>
-                      {p.name} {p.child_name ? `(${p.child_name})` : ''} — {p.language === 'hi' ? '🇮🇳 Hindi' : p.language === 'zh-Hans' ? '🇨🇳 Mandarin' : '🇦🇺 English'}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Subject</label>
-                <input value={dmSubject} onChange={e => setDmSubject(e.target.value)}
-                  className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400"
-                  placeholder="e.g. Follow-up on last week's assessment"/>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Message</label>
-                <textarea value={dmContent} onChange={e => setDmContent(e.target.value)} rows={5}
-                  className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400"
-                  placeholder="Write your message here — it will be automatically translated for the parent..."/>
-              </div>
-              <div className="bg-blue-50 rounded-lg p-3 text-xs text-blue-700">
-                🌍 This message will be automatically translated into the parent's preferred language before delivery.
-              </div>
-              {dmSent ? (
-                <div className="bg-green-100 text-green-800 text-center py-3 rounded-lg font-semibold">✅ Message sent!</div>
-              ) : (
-                <button onClick={handleDmSend} disabled={dmSending || !dmParentId || !dmContent.trim()}
-                  className="w-full bg-teal-600 text-white py-3 rounded-lg font-semibold hover:bg-teal-700 transition disabled:opacity-50">
-                  {dmSending ? 'Sending...' : '📤 Send Direct Message'}
-                </button>
-              )}
-            </div>
-          </div>
-        )}
+{tab === 'direct' && (
+  <div className="space-y-5">
+    <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 text-sm text-blue-800">
+      <strong>✉️ Direct Message</strong> — Send a private message to a specific parent. It will be automatically translated into their language.
+    </div>
+    <div className="bg-white rounded-xl shadow p-6 space-y-4">
+      <h2 className="text-lg font-semibold text-gray-800">Send Direct Message</h2>
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">Select Parent</label>
+        <select value={dmParentId} onChange={e => setDmParentId(e.target.value)}
+          className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400">
+          <option value="">-- Select a parent --</option>
+          {allParents.map(p => (
+            <option key={p.id} value={p.id}>
+              {p.name} {p.child_name ? `(${p.child_name})` : ''} — {p.language === 'hi' ? '🇮🇳 Hindi' : p.language === 'zh-Hans' ? '🇨🇳 Mandarin' : '🇦🇺 English'}
+            </option>
+          ))}
+        </select>
+      </div>
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">Subject</label>
+        <input value={dmSubject} onChange={e => setDmSubject(e.target.value)}
+          className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400"
+          placeholder="e.g. Follow-up on last week's assessment"/>
+      </div>
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">Message</label>
+        <textarea value={dmContent} onChange={e => setDmContent(e.target.value)} rows={5}
+          className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400"
+          placeholder="Write your message here — it will be automatically translated for the parent..."/>
+      </div>
+      <div className="bg-blue-50 rounded-lg p-3 text-xs text-blue-700">
+        🌍 This message will be automatically translated into the parent's preferred language before delivery.
+      </div>
+      {dmSent ? (
+        <div className="bg-green-100 text-green-800 text-center py-3 rounded-lg font-semibold">✅ Message sent!</div>
+      ) : (
+        <button onClick={handleDmSend} disabled={dmSending || !dmParentId || !dmContent.trim()}
+          className="w-full bg-teal-600 text-white py-3 rounded-lg font-semibold hover:bg-teal-700 transition disabled:opacity-50">
+          {dmSending ? 'Sending...' : '📤 Send Direct Message'}
+        </button>
+      )}
+    </div>
+  </div>
+)}
 {/* SEND REMINDER */}
 <div className="bg-white rounded-xl shadow p-6 space-y-4">
   <h2 className="text-lg font-semibold text-gray-800">📅 Send Reminder to Parents</h2>
@@ -951,6 +951,156 @@ export default function TeacherDashboard({ supabase, profile }) {
     </div>
   </div>
 )}
+
+{/* ── SCHEDULE ── */}
+{tab === 'schedule' && (
+  <div className="space-y-5">
+    <h2 className="text-lg font-semibold text-gray-800">📅 Schedule & Reminders</h2>
+
+    {/* SEND REMINDER */}
+    <div className="bg-white rounded-xl shadow p-6 space-y-4">
+      <h3 className="text-base font-semibold text-gray-800">🔔 Send Reminder to Parents</h3>
+      <div className="bg-blue-50 rounded-lg p-3 text-xs text-blue-700">
+        Send exam reminders, absence notices, or activity alerts directly to parents.
+      </div>
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">Reminder type</label>
+        <div className="grid grid-cols-2 gap-2">
+          {[
+            { value: 'exam', label: '📝 Exam' },
+            { value: 'absent', label: '🏠 Absence Notice' },
+            { value: 'assessment', label: '📊 Assessment' },
+            { value: 'event', label: '🎉 Class Activity' },
+          ].map(t => (
+            <button key={t.value} onClick={() => setReminderType(t.value)}
+              className={`px-3 py-2 rounded-lg text-xs border transition text-left ${reminderType === t.value ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-700 border-gray-300 hover:border-blue-400'}`}>
+              {t.label}
+            </button>
+          ))}
+        </div>
+      </div>
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">Title</label>
+        <input value={reminderTitle} onChange={e => setReminderTitle(e.target.value)}
+          className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+          placeholder="e.g. Year 8 Maths Exam, Emma absent Tuesday..."/>
+      </div>
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">Date</label>
+        <input type="date" value={reminderDate} onChange={e => setReminderDate(e.target.value)}
+          min={new Date().toISOString().split('T')[0]}
+          className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"/>
+      </div>
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">Note (optional)</label>
+        <textarea value={reminderNote} onChange={e => setReminderNote(e.target.value)} rows={2}
+          className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+          placeholder="Additional details for parents..."/>
+      </div>
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">Send to</label>
+        <select value={reminderParent} onChange={e => setReminderParent(e.target.value)}
+          className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400">
+          <option value="">📢 All parents</option>
+          {allParents.map(p => (
+            <option key={p.id} value={p.id}>{p.name} ({p.child_name})</option>
+          ))}
+        </select>
+      </div>
+      {reminderSent ? (
+        <div className="bg-green-100 text-green-800 text-center py-3 rounded-lg font-semibold">✅ Reminder sent!</div>
+      ) : (
+        <button onClick={async () => {
+          if (!reminderTitle || !reminderDate) return
+          setReminderSending(true)
+          try {
+            await axios.post(`${API}/api/send-reminder`, {
+              teacherId: profile.id, type: reminderType,
+              title: reminderTitle, date: reminderDate,
+              note: reminderNote, targetParentId: reminderParent || null
+            })
+            setReminderSent(true)
+            setReminderTitle(''); setReminderDate(''); setReminderNote(''); setReminderParent('')
+            setTimeout(() => setReminderSent(false), 3000)
+          } catch(e) {}
+          setReminderSending(false)
+        }} disabled={reminderSending || !reminderTitle || !reminderDate}
+          className="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 disabled:opacity-50">
+          {reminderSending ? 'Sending...' : '📤 Send Reminder'}
+        </button>
+      )}
+    </div>
+
+    {/* PTM REQUESTS */}
+    {ptmRequests.length > 0 && (
+      <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 space-y-3">
+        <p className="text-sm font-bold text-blue-800">📅 {ptmRequests.length} Meeting Request{ptmRequests.length > 1 ? 's' : ''}</p>
+        <div className="space-y-2">
+          {ptmRequests.map((r, i) => (
+            <div key={i} className="bg-white rounded-lg p-3 flex justify-between items-start">
+              <div>
+                <p className="text-sm font-semibold text-gray-800">{r.parent_name} <span className="text-gray-400 font-normal">({r.child_name})</span></p>
+                <p className="text-xs text-blue-600">🕐 {r.preferred_time}</p>
+                {r.reason && <p className="text-xs text-gray-500 mt-0.5">"{r.reason}"</p>}
+              </div>
+              <span className="text-xs bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded-full">Pending</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    )}
+
+    {/* APPOINTMENT REQUESTS */}
+    {appointments.length > 0 && (
+      <div className="bg-white rounded-xl shadow p-5 space-y-3">
+        <h3 className="text-sm font-bold text-gray-800">📋 Appointment Requests ({appointments.length})</h3>
+        <div className="space-y-2">
+          {appointments.map((a, i) => (
+            <div key={i} className="bg-gray-50 rounded-lg p-3 space-y-2">
+              <div className="flex justify-between items-start">
+                <div>
+                  <p className="text-sm font-semibold text-gray-800">{a.parent_name} <span className="text-gray-400 font-normal">({a.child_name})</span></p>
+                  <p className="text-xs text-blue-600">📋 {a.appointment_type}</p>
+                  <p className="text-xs text-gray-500">📅 {new Date(a.preferred_date).toLocaleDateString('en-AU', { weekday: 'long', day: 'numeric', month: 'long' })} at {a.preferred_time}</p>
+                  {a.note && <p className="text-xs text-gray-400 italic">"{a.note}"</p>}
+                </div>
+                <span className={`text-xs px-2 py-0.5 rounded-full ${a.status === 'confirmed' ? 'bg-green-100 text-green-700' : a.status === 'cancelled' ? 'bg-red-100 text-red-700' : 'bg-yellow-100 text-yellow-700'}`}>
+                  {a.status === 'confirmed' ? '✅ Confirmed' : a.status === 'cancelled' ? '❌ Cancelled' : '⏳ Pending'}
+                </span>
+              </div>
+              {a.status === 'pending' && (
+                <div className="flex gap-2">
+                  <button onClick={async () => {
+                    await axios.post(`${API}/api/update-appointment-status`, { appointmentId: a.id, status: 'confirmed' })
+                    const res = await axios.get(`${API}/api/appointments/teacher/${profile.id}`)
+                    if (res.data.success) setAppointments(res.data.data)
+                  }} className="flex-1 text-xs bg-green-600 text-white py-1.5 rounded-lg hover:bg-green-700">
+                    ✅ Confirm
+                  </button>
+                  <button onClick={async () => {
+                    await axios.post(`${API}/api/update-appointment-status`, { appointmentId: a.id, status: 'cancelled' })
+                    const res = await axios.get(`${API}/api/appointments/teacher/${profile.id}`)
+                    if (res.data.success) setAppointments(res.data.data)
+                  }} className="flex-1 text-xs bg-red-100 text-red-700 py-1.5 rounded-lg hover:bg-red-200">
+                    ❌ Decline
+                  </button>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+    )}
+
+    {appointments.length === 0 && ptmRequests.length === 0 && (
+      <div className="text-center py-8 text-gray-400">
+        <p className="text-4xl mb-2">📋</p>
+        <p className="text-sm">No appointment requests yet.</p>
+      </div>
+    )}
+  </div>
+)}
+
         {/* ── NAPLAN ── */}
         {tab === 'naplan' && (
           <div className="space-y-5">
