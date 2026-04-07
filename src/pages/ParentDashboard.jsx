@@ -215,69 +215,6 @@ function CustomFAQ({ language }) {
   )
 }
 
-function PTMRequest({ profile, currentChild }) {
-  const [preferredDate, setPreferredDate] = useState('')
-  const [preferredTime, setPreferredTime] = useState('')
-  const [reason, setReason] = useState('')
-  const [sending, setSending] = useState(false)
-  const [sent, setSent] = useState(false)
-
-  const TEACHER_ID = '83e0135e-9d7b-43af-aa81-4bce2c025208'
-
-  const handleSubmit = async () => {
-    if (!preferredDate || !preferredTime) return
-    setSending(true)
-    try {
-      await axios.post(`${API}/api/book-appointment`, {
-        parentId: profile.id, parentName: profile.name,
-        childName: currentChild?.name || profile.child_name,
-        teacherId: TEACHER_ID,
-        appointmentType: 'Parent-Teacher Meeting',
-        preferredDate, preferredTime, note: reason
-      })
-      setSent(true)
-    } catch(e) {}
-    setSending(false)
-  }
-
-  if (sent) return (
-    <div className="bg-green-100 text-green-800 text-center py-3 rounded-lg font-semibold">
-      ✅ Meeting request sent! Your teacher will confirm shortly.
-    </div>
-  )
-
-  return (
-    <div className="space-y-3">
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Preferred date</label>
-        <input type="date" value={preferredDate} onChange={e => setPreferredDate(e.target.value)}
-          min={new Date().toISOString().split('T')[0]}
-          className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400"/>
-      </div>
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Preferred time</label>
-        <div className="grid grid-cols-3 gap-2">
-          {['8:00 AM','9:00 AM','10:00 AM','11:00 AM','1:00 PM','2:00 PM','3:00 PM','After school','Phone call'].map(t => (
-            <button key={t} onClick={() => setPreferredTime(t)}
-              className={`px-2 py-2 rounded-lg text-xs border transition ${preferredTime === t ? 'bg-teal-600 text-white border-teal-600' : 'bg-white text-gray-700 border-gray-300 hover:border-teal-400'}`}>
-              {t}
-            </button>
-          ))}
-        </div>
-      </div>
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Reason (optional)</label>
-        <textarea value={reason} onChange={e => setReason(e.target.value)} rows={2}
-          className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400"
-          placeholder="e.g. I'd like to discuss my child's progress in maths..."/>
-      </div>
-      <button onClick={handleSubmit} disabled={sending || !preferredDate || !preferredTime}
-        className="w-full bg-teal-600 text-white py-2 rounded-lg text-sm font-semibold hover:bg-teal-700 transition disabled:opacity-50">
-        {sending ? 'Sending...' : '📅 Request Meeting'}
-      </button>
-    </div>
-  )
-}
 const LANGUAGES = [
   { code: 'en', label: '🇦🇺 English' },
   { code: 'hi', label: '🇮🇳 Hindi' },
@@ -659,6 +596,7 @@ function AppointmentBooking({ profile, currentChild }) {
     </div>
   )
 }
+
 export default function ParentDashboard({ supabase, profile }) {
   const [tab, setTab] = useState('updates')
   const [messages, setMessages] = useState([])
@@ -784,7 +722,6 @@ export default function ParentDashboard({ supabase, profile }) {
   const lang = LANGUAGES.find(l => l.code === profile.language) || LANGUAGES[0]
   const currentChild = children[selectedChildIdx]
 
-  // ── Shared expanded subject content renderer ──
   const renderSubjectContent = (subject, subjectMessages) => {
     const cfg = SUBJECT_CONFIG[subject] || SUBJECT_CONFIG['General']
     return (
@@ -829,9 +766,7 @@ export default function ParentDashboard({ supabase, profile }) {
                   <AudioPlayer text={displayContent} language={profile.language} />
                   <WeekendSpark item={item} profile={profile} children={children} selectedChildIdx={selectedChildIdx} />
                   {profile.language !== 'en' && (
-                    <p className="text-xs text-gray-400 mt-2 italic">
-                      🔍 Tap highlighted terms for explanations
-                    </p>
+                    <p className="text-xs text-gray-400 mt-2 italic">🔍 Tap highlighted terms for explanations</p>
                   )}
                   <div className="flex gap-2 flex-wrap pt-1">
                     <span className="text-xs text-gray-400 self-center">Reading level:</span>
@@ -992,10 +927,10 @@ export default function ParentDashboard({ supabase, profile }) {
       )}
 
       <div className="bg-white border-b px-6 flex gap-4 overflow-x-auto">
-        {['updates', 'faq', 'profile'].map(t => (
+        {['updates', 'faq', 'schedule', 'profile'].map(t => (
           <button key={t} onClick={() => setTab(t)}
             className={`py-4 text-sm font-medium border-b-2 transition whitespace-nowrap ${tab === t ? 'border-blue-600 text-blue-700' : 'border-transparent text-gray-500 hover:text-gray-700'}`}>
-            {t === 'updates' ? `📬 Learning Updates (${messages.length})` : t === 'faq' ? '❓ FAQ' : `👤 ${currentChild?.name || profile.child_name || 'Child'}'s Profile`}
+            {t === 'updates' ? `📬 Learning Updates (${messages.length})` : t === 'faq' ? '❓ FAQ' : t === 'schedule' ? '📅 Schedule' : `👤 ${currentChild?.name || profile.child_name || 'Child'}'s Profile`}
           </button>
         ))}
       </div>
@@ -1007,7 +942,6 @@ export default function ParentDashboard({ supabase, profile }) {
           <>
             <WelcomeBanner profile={profile} currentChild={currentChild} language={profile.language} />
             <CommunityStats />
-
             {(() => {
               const allTodos = []
               Object.entries(groupedMessages).forEach(([subject, msgs]) => {
@@ -1041,7 +975,6 @@ export default function ParentDashboard({ supabase, profile }) {
                 </div>
               )
             })()}
-
             {Object.keys(groupedMessages).length === 0 ? (
               <div className="text-center py-12 text-gray-400">
                 <p className="text-4xl mb-3">📬</p>
@@ -1115,6 +1048,18 @@ export default function ParentDashboard({ supabase, profile }) {
               </div>
             </div>
             <CustomFAQ language={profile.language} />
+          </div>
+        )}
+
+        {/* ── SCHEDULE TAB ── */}
+        {tab === 'schedule' && (
+          <div className="space-y-5">
+            <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 text-sm text-blue-800">
+              <strong>📅 Your Schedule</strong>
+              <p className="mt-1">View reminders from your teacher and book appointments.</p>
+            </div>
+            <RemindersWidget profile={profile} />
+            <AppointmentBooking profile={profile} currentChild={currentChild} />
           </div>
         )}
 
@@ -1192,13 +1137,6 @@ export default function ParentDashboard({ supabase, profile }) {
                 </button>
               )}
             </div>
-
-            <div className="bg-white rounded-xl shadow p-5 space-y-4">
-              <h3 className="text-base font-semibold text-gray-800">📅 Request a Parent-Teacher Meeting</h3>
-              <PTMRequest profile={profile} currentChild={currentChild} />
-            </div>
-              <RemindersWidget profile={profile} />
-              <AppointmentBooking profile={profile} currentChild={currentChild} />  
             <div className="bg-gray-50 rounded-xl p-4 text-xs text-gray-500 space-y-1">
               <p className="font-semibold">🔐 Privacy notice</p>
               <p>Stored securely. Never shared or used for advertising. Compliant with the Australian Privacy Act 1988.</p>
