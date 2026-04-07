@@ -93,6 +93,18 @@ export default function TeacherDashboard({ supabase, profile }) {
   const [dmContent, setDmContent] = useState('')
   const [dmSending, setDmSending] = useState(false)
   const [dmSent, setDmSent] = useState(false)
+  const [frictionData, setFrictionData] = useState([])
+  const [weeklyReport, setWeeklyReport] = useState(null)
+  const [reportLoading, setReportLoading] = useState(false)
+  const [familyFeed, setFamilyFeed] = useState([])
+  const [feedAverage, setFeedAverage] = useState(0)
+  const [nudges, setNudges] = useState({})
+  const [nudgeLoading, setNudgeLoading] = useState({})
+  const [naplanNote, setNaplanNote] = useState('')
+  const [naplanResult, setNaplanResult] = useState('')
+  const [naplanLoading, setNaplanLoading] = useState(false)
+  const [naplanSubject, setNaplanSubject] = useState('English')
+  const [naplanYear, setNaplanYear] = useState('8')
 
   useEffect(() => {
     fetchMessages()
@@ -112,6 +124,10 @@ export default function TeacherDashboard({ supabase, profile }) {
     if (res2.data.success) setUnengaged(res2.data.data)
     const res3 = await axios.get(`${API}/api/ptm-requests/${profile.id}`)
     if (res3.data.success) setPtmRequests(res3.data.data)
+    const res4 = await axios.get(`${API}/api/friction-forecast/${profile.id}`)
+    if (res4.data.success) setFrictionData(res4.data.data)
+    const res5 = await axios.get(`${API}/api/family-feed/${profile.id}`)
+    if (res5.data.success) { setFamilyFeed(res5.data.data); setFeedAverage(res5.data.classAverage || 0) }
   }
 
   const handleTransform = async () => {
@@ -175,10 +191,10 @@ export default function TeacherDashboard({ supabase, profile }) {
       </header>
 
       <div className="bg-white border-b px-6 flex gap-6 overflow-x-auto">
-        {['compose', 'inbox', 'insights', 'direct'].map(t => (
-          <button key={t} onClick={() => { setTab(t); if(t==='inbox') fetchMessages(); if(t==='insights') fetchEngagement(); }}
+        {['compose', 'inbox', 'insights', 'direct', 'naplan'].map(t => (
+          <button key={t} onClick={() => { setTab(t); if(t==='inbox') fetchMessages(); if(t==='insights'||t==='naplan') fetchEngagement(); }}
             className={`py-4 text-sm font-medium border-b-2 transition whitespace-nowrap ${tab===t ? 'border-teal-600 text-teal-700' : 'border-transparent text-gray-500 hover:text-gray-700'}`}>
-            {t==='compose' ? '✏️ New Update' : t==='inbox' ? `📬 Sent Messages (${messages.length})` : t==='insights' ? '📊 Insights' : '✉️ Direct Message'}
+            {t==='compose' ? '✏️ New Update' : t==='inbox' ? `📬 Sent (${messages.length})` : t==='insights' ? '📊 Insights' : t==='direct' ? '✉️ Direct' : '📈 NAPLAN'}
           </button>
         ))}
       </div>
@@ -191,7 +207,6 @@ export default function TeacherDashboard({ supabase, profile }) {
             <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 text-sm text-blue-800">
               <strong>How it works:</strong> Write your lesson notes naturally. BridgeUp uses <strong>CurricuLLM</strong> to transform them into parent-friendly messages with personalised at-home tips for each family.
             </div>
-
             <div className="bg-white rounded-xl shadow p-6 space-y-4">
               <h2 className="text-lg font-semibold text-gray-800">📝 This Week's Learning Update</h2>
               <div className="grid grid-cols-2 gap-4">
@@ -556,6 +571,106 @@ export default function TeacherDashboard({ supabase, profile }) {
                   </div>
                 )}
 
+                {frictionData.length > 0 && (
+                  <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4 space-y-3">
+                    <p className="text-sm font-bold text-yellow-800">🔮 Friction Forecast — Topics Parents Struggled With</p>
+                    {frictionData.map((f, i) => (
+                      <div key={i} className="bg-white rounded-lg p-3 space-y-1">
+                        <div className="flex justify-between items-center">
+                          <p className="text-sm font-semibold text-gray-800">{f.subject}</p>
+                          <span className={`text-xs px-2 py-0.5 rounded-full ${f.percentage >= 40 ? 'bg-red-100 text-red-700' : 'bg-yellow-100 text-yellow-700'}`}>
+                            {f.percentage}% struggled
+                          </span>
+                        </div>
+                        <p className="text-xs text-teal-700">{f.recommendation}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {familyFeed.length > 0 && (
+                  <div className="bg-green-50 border border-green-200 rounded-xl p-4 space-y-3">
+                    <div className="flex justify-between items-center">
+                      <p className="text-sm font-bold text-green-800">🏃 Live Family Activity Feed</p>
+                      <span className="text-xs bg-green-600 text-white px-2 py-0.5 rounded-full">{feedAverage}% class engaged</span>
+                    </div>
+                    <div className="space-y-1.5">
+                      {familyFeed.slice(0, 5).map((f, i) => (
+                        <div key={i} className="bg-white rounded-lg px-3 py-2 flex items-center gap-2">
+                          <span className="text-sm">{f.feedback === 'tried' ? '✅' : '😕'}</span>
+                          <span className="text-sm text-gray-700"><strong>{f.childName || f.parentName}</strong> {f.feedback === 'tried' ? 'completed' : 'tried but struggled with'} {f.subject} activity</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                <div className="bg-orange-50 border border-orange-200 rounded-xl p-4 space-y-3">
+                  <p className="text-sm font-bold text-orange-800">💬 Smart Nudges for Unengaged Families</p>
+                  {unengaged.length === 0 ? (
+                    <p className="text-xs text-orange-600">All families are engaged! 🎉</p>
+                  ) : unengaged.map((p, i) => (
+                    <div key={i} className="bg-white rounded-lg p-3 space-y-2">
+                      <div className="flex justify-between items-center">
+                        <p className="text-sm font-semibold">{p.name} ({p.childName})</p>
+                        <span className="text-xs bg-orange-100 text-orange-600 px-2 py-0.5 rounded-full">
+                          {p.language === 'hi' ? '🇮🇳' : p.language === 'zh-Hans' ? '🇨🇳' : '🇦🇺'} {p.language}
+                        </span>
+                      </div>
+                      {nudges[p.parentId] ? (
+                        <div className="bg-teal-50 rounded p-2">
+                          <p className="text-xs text-teal-800">💡 {nudges[p.parentId]}</p>
+                        </div>
+                      ) : (
+                        <button onClick={async () => {
+                          setNudgeLoading(n => ({ ...n, [p.parentId]: true }))
+                          try {
+                            const res = await axios.post(`${API}/api/engagement-nudge`, {
+                              parentName: p.name, childName: p.childName,
+                              language: p.language, availability: 'evening',
+                              confidence: 'medium', lastSubject: messages[0]?.subject || 'Mathematics'
+                            })
+                            setNudges(n => ({ ...n, [p.parentId]: res.data.nudge }))
+                          } catch(e) {}
+                          setNudgeLoading(n => ({ ...n, [p.parentId]: false }))
+                        }} disabled={nudgeLoading[p.parentId]}
+                          className="text-xs px-3 py-1 bg-teal-100 text-teal-700 rounded-full hover:bg-teal-200 disabled:opacity-50">
+                          {nudgeLoading[p.parentId] ? '✨ Generating...' : '✨ Generate Smart Nudge'}
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+
+                <div className="bg-white rounded-xl shadow p-5 space-y-3">
+                  <div className="flex justify-between items-center">
+                    <p className="text-sm font-bold text-gray-800">📄 Weekly School Report</p>
+                    <button onClick={async () => {
+                      setReportLoading(true)
+                      try {
+                        const res = await axios.get(`${API}/api/weekly-report/${profile.id}`)
+                        if (res.data.success) setWeeklyReport(res.data.data)
+                      } catch(e) {}
+                      setReportLoading(false)
+                    }} disabled={reportLoading} className="text-xs bg-teal-600 text-white px-3 py-1.5 rounded-lg hover:bg-teal-700 disabled:opacity-50">
+                      {reportLoading ? '⏳ Generating...' : '📊 Generate Report'}
+                    </button>
+                  </div>
+                  {weeklyReport && (
+                    <div className="space-y-3">
+                      <div className="bg-teal-50 rounded-lg p-3">
+                        <p className="text-sm text-gray-700">{weeklyReport.summary}</p>
+                      </div>
+                      <div className="grid grid-cols-3 gap-2 text-center text-xs">
+                        <div className="bg-blue-50 rounded-lg p-2"><p className="font-bold text-blue-800">{weeklyReport.totalMessages}</p><p className="text-gray-500">Updates</p></div>
+                        <div className="bg-green-50 rounded-lg p-2"><p className="font-bold text-green-800">{weeklyReport.tried}</p><p className="text-gray-500">Activities</p></div>
+                        <div className="bg-purple-50 rounded-lg p-2"><p className="font-bold text-purple-800">{Object.keys(weeklyReport.languages).length}</p><p className="text-gray-500">Languages</p></div>
+                      </div>
+                      <p className="text-xs text-gray-400 text-center">Generated {new Date(weeklyReport.generatedAt).toLocaleString('en-AU')}</p>
+                    </div>
+                  )}
+                </div>
+
                 <div className="bg-gray-50 rounded-xl p-4 text-xs text-gray-500">
                   <p className="font-semibold mb-1">⚡ Powered by CurricuLLM AI Analysis</p>
                   <p>Sentiment auto-detected from parent replies to help prioritise responses. Always use professional judgment when following up.</p>
@@ -607,6 +722,59 @@ export default function TeacherDashboard({ supabase, profile }) {
                   className="w-full bg-teal-600 text-white py-3 rounded-lg font-semibold hover:bg-teal-700 transition disabled:opacity-50">
                   {dmSending ? 'Sending...' : '📤 Send Direct Message'}
                 </button>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* ── NAPLAN ── */}
+        {tab === 'naplan' && (
+          <div className="space-y-5">
+            <div className="bg-indigo-50 border border-indigo-200 rounded-xl p-4 text-sm text-indigo-800">
+              <strong>📈 NAPLAN Progress Snapshot</strong>
+              <p className="mt-1">Turn your progress notes into parent-friendly NAPLAN updates with targeted home tips.</p>
+            </div>
+            <div className="bg-white rounded-xl shadow p-6 space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Subject</label>
+                  <select value={naplanSubject} onChange={e => setNaplanSubject(e.target.value)}
+                    className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400">
+                    {['English','Mathematics','Science'].map(s => <option key={s}>{s}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Year Level</label>
+                  <select value={naplanYear} onChange={e => setNaplanYear(e.target.value)}
+                    className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400">
+                    {['3','5','7','9'].map(y => <option key={y}>{y}</option>)}
+                  </select>
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Your progress note</label>
+                <textarea value={naplanNote} onChange={e => setNaplanNote(e.target.value)} rows={3}
+                  className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                  placeholder="e.g. Year 3 reading improving — strong comprehension but needs work on vocabulary..."/>
+              </div>
+              <button onClick={async () => {
+                if (!naplanNote.trim()) return
+                setNaplanLoading(true)
+                try {
+                  const res = await axios.post(`${API}/api/naplan-snapshot`, { teacherNote: naplanNote, yearLevel: naplanYear, subject: naplanSubject })
+                  setNaplanResult(res.data.message)
+                } catch(e) {}
+                setNaplanLoading(false)
+              }} disabled={naplanLoading || !naplanNote.trim()}
+                className="w-full bg-indigo-600 text-white py-3 rounded-lg font-semibold hover:bg-indigo-700 disabled:opacity-50">
+                {naplanLoading ? '✨ Generating with CurricuLLM...' : '📊 Generate NAPLAN Update'}
+              </button>
+              {naplanResult && (
+                <div className="bg-indigo-50 border border-indigo-200 rounded-xl p-4 space-y-2">
+                  <p className="text-xs font-semibold text-indigo-600">📬 Parent-Ready NAPLAN Message:</p>
+                  <p className="text-sm text-gray-700">{naplanResult}</p>
+                  <p className="text-xs text-indigo-400">Powered by CurricuLLM 🎓</p>
+                </div>
               )}
             </div>
           </div>

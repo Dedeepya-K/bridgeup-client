@@ -128,10 +128,19 @@ function PersonalMessageBanner({ item, profile, children, selectedChildIdx }) {
   )
 }
 
-function FAQItem({ question, language }) {
+function FAQItem({ questionEn, language }) {
   const [answer, setAnswer] = useState(null)
   const [loading, setLoading] = useState(false)
   const [open, setOpen] = useState(false)
+  const [translatedQ, setTranslatedQ] = useState(questionEn)
+
+  useEffect(() => {
+    if (language !== 'en') {
+      axios.post(`${API}/api/translate`, { text: questionEn, targetLanguage: language })
+        .then(r => setTranslatedQ(r.data.translated))
+        .catch(() => {})
+    }
+  }, [language])
 
   const handleClick = async () => {
     if (open) { setOpen(false); return; }
@@ -139,16 +148,16 @@ function FAQItem({ question, language }) {
     if (answer) return
     setLoading(true)
     try {
-      const res = await axios.post(`${API}/api/faq`, { question, language })
+      const res = await axios.post(`${API}/api/faq`, { question: questionEn, language })
       setAnswer(res.data.answer)
-    } catch(e) { setAnswer('Could not load answer. Please try again.') }
+    } catch(e) { setAnswer('Could not load answer.') }
     setLoading(false)
   }
 
   return (
     <div className="border rounded-xl overflow-hidden">
       <button onClick={handleClick} className="w-full text-left px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50 flex justify-between items-center">
-        <span>{question}</span>
+        <span>{translatedQ}</span>
         <span className="text-gray-400 ml-2">{open ? '▲' : '▼'}</span>
       </button>
       {open && (
@@ -166,7 +175,6 @@ function FAQItem({ question, language }) {
     </div>
   )
 }
-
 function CustomFAQ({ language }) {
   const [question, setQuestion] = useState('')
   const [answer, setAnswer] = useState(null)
@@ -276,6 +284,132 @@ const SUBJECT_CONFIG = {
   'Geography':   { icon: '🌍', header: 'bg-teal-700',   border: 'border-teal-300',   bg: 'bg-teal-50' },
   'PDHPE':       { icon: '⚽', header: 'bg-red-700',    border: 'border-red-300',    bg: 'bg-red-50' },
   'General':     { icon: '📚', header: 'bg-gray-700',   border: 'border-gray-300',   bg: 'bg-gray-50' },
+}
+
+function WeekendSpark({ item, profile, children, selectedChildIdx }) {
+  const [spark, setSpark] = useState(null)
+  const [loading, setLoading] = useState(false)
+  const currentChild = children[selectedChildIdx]
+
+  const generate = async () => {
+    setLoading(true)
+    try {
+      const res = await axios.post(`${API}/api/weekend-spark`, {
+        subject: item.messages?.subject || 'General',
+        lessonSummary: item.messages?.transformed_content?.slice(0, 200) || '',
+        childName: currentChild?.name || profile.child_name || 'your child',
+        childInterests: currentChild?.interests || profile.child_interests || 'games',
+        language: profile.language
+      })
+      setSpark(res.data.spark)
+    } catch(e) {}
+    setLoading(false)
+  }
+
+  if (spark) return (
+    <div className="bg-gradient-to-r from-orange-50 to-yellow-50 border border-orange-200 rounded-xl p-4 space-y-2">
+      <div className="flex items-center gap-2">
+        <span className="text-xl">🌟</span>
+        <p className="text-sm font-bold text-orange-800">Weekend Mission!</p>
+        <span className="text-xs bg-orange-200 text-orange-700 px-2 py-0.5 rounded-full">Powered by CurricuLLM</span>
+      </div>
+      <p className="text-sm text-gray-700">{spark}</p>
+    </div>
+  )
+
+  return (
+    <button onClick={generate} disabled={loading}
+      className="w-full text-left bg-orange-50 border border-orange-200 rounded-xl p-3 hover:bg-orange-100 transition disabled:opacity-50">
+      <div className="flex items-center gap-2">
+        <span className="text-lg">🌟</span>
+        <div>
+          <p className="text-sm font-semibold text-orange-700">{loading ? '✨ Generating Weekend Mission...' : 'Get this weekend\'s activity mission!'}</p>
+          <p className="text-xs text-orange-500">Personalised for {currentChild?.name || profile.child_name} by CurricuLLM</p>
+        </div>
+      </div>
+    </button>
+  )
+}
+
+function AudioPlayer({ text, language }) {
+  const [loading, setLoading] = useState(false)
+  const [playing, setPlaying] = useState(false)
+  const audioRef = useRef(null)
+
+  const handlePlay = async () => {
+    if (playing) { audioRef.current?.pause(); setPlaying(false); return; }
+    setLoading(true)
+    try {
+      const res = await fetch(`${API}/api/text-to-speech`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: text.slice(0, 400), language })
+      })
+      if (!res.ok) throw new Error('TTS failed')
+      const blob = await res.blob()
+      const url = URL.createObjectURL(blob)
+      const audio = new Audio(url)
+      audioRef.current = audio
+      audio.onended = () => setPlaying(false)
+      audio.play()
+      setPlaying(true)
+    } catch(e) {
+      console.log('TTS not available')
+    }
+    setLoading(false)
+  }
+
+  return (
+    <button onClick={handlePlay} disabled={loading}
+      className={`flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full border transition ${playing ? 'bg-teal-600 text-white border-teal-600' : 'bg-white text-teal-700 border-teal-300 hover:bg-teal-50'} disabled:opacity-50`}>
+      {loading ? '⏳' : playing ? '⏹ Stop' : '🔊 Listen'}
+      <span>{loading ? 'Loading...' : playing ? 'Playing...' : 'Hear this'}</span>
+    </button>
+  )
+}
+
+function ConfidenceBadge({ tip, subject, yearLevel }) {
+  const [data, setData] = useState(null)
+  const [show, setShow] = useState(false)
+  const [loading, setLoading] = useState(false)
+
+  const fetchConfidence = async () => {
+    if (data) { setShow(!show); return; }
+    setLoading(true)
+    try {
+      const res = await axios.post(`${API}/api/confidence-check`, { tip, subject, yearLevel })
+      setData(res.data.data)
+      setShow(true)
+    } catch(e) {}
+    setLoading(false)
+  }
+
+  const color = !data ? 'bg-gray-200' : data.confidence >= 80 ? 'bg-green-500' : data.confidence >= 60 ? 'bg-yellow-400' : 'bg-red-400'
+
+  return (
+    <div className="relative flex-shrink-0">
+      <button onClick={fetchConfidence} disabled={loading}
+        className="flex items-center gap-1 text-xs text-gray-400 hover:text-gray-600"
+        title="Check curriculum alignment">
+        {loading ? '...' : (
+          <div className="flex gap-0.5">
+            {[1,2,3].map(b => <div key={b} className={`w-1.5 h-3 rounded-sm ${data && b <= Math.ceil(data.confidence/34) ? color : 'bg-gray-200'}`}/>)}
+          </div>
+        )}
+      </button>
+      {show && data && (
+        <div className="absolute right-0 top-6 z-40 bg-white border border-gray-200 rounded-xl p-3 shadow-xl w-56 text-xs space-y-1">
+          <div className="flex justify-between items-center">
+            <span className="font-semibold text-gray-700">AI Confidence</span>
+            <span className={`px-2 py-0.5 rounded-full text-white text-xs ${color}`}>{data.confidence}%</span>
+          </div>
+          <p className="text-gray-500">{data.reason}</p>
+          <p className="text-teal-600 font-medium">{data.acara_ref}</p>
+          <button onClick={() => setShow(false)} className="text-gray-400 hover:text-gray-600">Close</button>
+        </div>
+      )}
+    </div>
+  )
 }
 
 export default function ParentDashboard({ supabase, profile }) {
@@ -576,6 +710,8 @@ export default function ParentDashboard({ supabase, profile }) {
                                   <JargonText text={displayContent} language={profile.language} />
                                 </p>
                                 <PersonalMessageBanner item={item} profile={profile} children={children} selectedChildIdx={selectedChildIdx} />
+<AudioPlayer text={displayContent} language={profile.language} />
+<WeekendSpark item={item} profile={profile} children={children} selectedChildIdx={selectedChildIdx} />
                                 {profile.language !== 'en' && (
                                   <p className="text-xs text-gray-400 mt-2 italic">
                                     🔍 Tap highlighted terms for explanations: <JargonText text={item.messages?.transformed_content || ''} language={profile.language} />
@@ -605,7 +741,10 @@ export default function ParentDashboard({ supabase, profile }) {
                                       const fb = triedTips[tipKey]
                                       return (
                                         <div key={i} className={`rounded-lg p-3 transition ${fb === 'tried' ? 'bg-green-50 border border-green-200' : fb === 'struggled' ? 'bg-orange-50 border border-orange-200' : 'bg-gray-50'}`}>
-                                          <p className="text-sm text-gray-700"><span className="font-bold text-green-600">{i+1}.</span> {tip}</p>
+                                          <div className="flex items-start justify-between gap-2">
+  <p className="text-sm text-gray-700 flex-1"><span className="font-bold text-green-600">{i+1}.</span> {tip}</p>
+  <ConfidenceBadge tip={tip} subject={item.messages?.subject} yearLevel="8" />
+</div>
                                           {!fb ? (
                                             <div className="flex gap-2 mt-2">
                                               <button onClick={() => handleTried(item.id, item.message_id, i, 'tried')} className="text-xs px-3 py-1 bg-green-100 text-green-700 rounded-full hover:bg-green-200 transition">✅ We tried this!</button>
@@ -698,7 +837,7 @@ export default function ParentDashboard({ supabase, profile }) {
                   'How do I help with maths homework without doing it for them?',
                   'What is phonics and why does it matter?',
                 ].map((q, i) => (
-                  <FAQItem key={i} question={q} language={profile.language} />
+                  <FAQItem key={i} questionEn={q} language={profile.language} />
                 ))}
               </div>
             </div>
