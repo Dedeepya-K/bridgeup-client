@@ -117,11 +117,11 @@ export default function TeacherDashboard({ supabase, profile }) {
   const [reminderSending, setReminderSending] = useState(false)
   const [reminderSent, setReminderSent] = useState(false)
   const [broadcastContent, setBroadcastContent] = useState('')
-const [broadcastSubject, setBroadcastSubject] = useState('')
-const [broadcastUrgent, setBroadcastUrgent] = useState(false)
-const [broadcastSending, setBroadcastSending] = useState(false)
-const [broadcastSent, setBroadcastSent] = useState(false)
-const [broadcastCount, setBroadcastCount] = useState(0)
+  const [broadcastSubject, setBroadcastSubject] = useState('')
+  const [broadcastUrgent, setBroadcastUrgent] = useState(false)
+  const [broadcastSending, setBroadcastSending] = useState(false)
+  const [broadcastSent, setBroadcastSent] = useState(false)
+  const [broadcastCount, setBroadcastCount] = useState(0)
 
   useEffect(() => {
     fetchMessages()
@@ -212,6 +212,26 @@ const [broadcastCount, setBroadcastCount] = useState(0)
     setReminderSending(false)
   }
 
+  const handleBroadcast = async () => {
+    if (!broadcastContent.trim()) return
+    setBroadcastSending(true)
+    try {
+      const res = await axios.post(`${API}/api/broadcast`, {
+        teacherId: profile.id, teacherName: profile.name,
+        subject: broadcastSubject || 'Important Notice',
+        content: broadcastContent, urgent: broadcastUrgent
+      })
+      if (res.data.success) {
+        setBroadcastSent(true)
+        setBroadcastCount(res.data.sentTo)
+        setBroadcastContent(''); setBroadcastSubject(''); setBroadcastUrgent(false)
+        setTimeout(() => setBroadcastSent(false), 5000)
+        fetchMessages()
+      }
+    } catch(e) {}
+    setBroadcastSending(false)
+  }
+
   const handleLogout = () => supabase.auth.signOut()
   const toggleReplies = (msgId) => setExpandedReplies(prev => ({ ...prev, [msgId]: !prev[msgId] }))
 
@@ -246,7 +266,6 @@ const [broadcastCount, setBroadcastCount] = useState(0)
     setTimeout(() => reportWindow.print(), 500)
   }
 
-  // ── Reminder Form (reusable) ──
   const ReminderForm = () => (
     <div className="bg-white rounded-xl shadow p-6 space-y-4">
       <h3 className="text-base font-semibold text-gray-800">🔔 Send Reminder to Parents</h3>
@@ -385,7 +404,6 @@ const [broadcastCount, setBroadcastCount] = useState(0)
                 {loading ? '✨ Transforming with CurricuLLM...' : '✨ Transform for Parents'}
               </button>
             </div>
-
             {preview && (
               <div className="bg-white rounded-xl shadow p-6 space-y-5 border-2 border-teal-200">
                 <div className="flex items-center justify-between flex-wrap gap-2">
@@ -661,10 +679,10 @@ const [broadcastCount, setBroadcastCount] = useState(0)
                     <h3 className="text-sm font-semibold text-gray-700 mb-3">Reply Sentiment Breakdown</h3>
                     <div className="space-y-2">
                       {Object.entries(engagement.sentiments).filter(([key]) => ['positive','question','concern'].includes(key)).map(([key, val]) => {
-  const s = SENTIMENT_CONFIG[key]
-  const pct = Math.round((val / engagement.totalReplies) * 100)
-  return (
-    <div key={key} className="flex items-center gap-3">
+                        const s = SENTIMENT_CONFIG[key]
+                        const pct = Math.round((val / engagement.totalReplies) * 100)
+                        return (
+                          <div key={key} className="flex items-center gap-3">
                             <span className="text-sm w-24">{s?.emoji} {s?.label}</span>
                             <div className="flex-1 bg-gray-100 rounded-full h-3">
                               <div className={`h-3 rounded-full ${key==='positive'?'bg-green-400':key==='question'?'bg-yellow-400':'bg-red-400'}`}
@@ -845,82 +863,81 @@ const [broadcastCount, setBroadcastCount] = useState(0)
                     </div>
                   </div>
                 )}
-
                 {engagementScores.length > 0 && (
-  <div className="bg-white rounded-xl shadow p-5 space-y-3">
-    <p className="text-sm font-bold text-gray-800">📊 Parent Engagement Scores</p>
-    <p className="text-xs text-gray-500">Based on activities tried, messages read and replies sent</p>
-    <div className="space-y-2">
-      {engagementScores.map((p, i) => (
-        <div key={i} className="flex items-center gap-3 bg-gray-50 rounded-lg p-3">
-          <span className="text-lg">{p.emoji}</span>
-          <div className="flex-1">
-            <div className="flex justify-between items-center">
-              <p className="text-sm font-semibold text-gray-800">{p.name}
-                <span className="text-gray-400 font-normal text-xs ml-1">({p.childName})</span>
-              </p>
-              <span className={`text-xs px-2 py-0.5 rounded-full font-bold ${p.level === 'High' ? 'bg-green-100 text-green-700' : p.level === 'Medium' ? 'bg-yellow-100 text-yellow-700' : 'bg-red-100 text-red-700'}`}>
-                {p.score}/100
-              </span>
-            </div>
-            <div className="w-full bg-gray-200 rounded-full h-1.5 mt-1">
-              <div className={`h-1.5 rounded-full ${p.level === 'High' ? 'bg-green-500' : p.level === 'Medium' ? 'bg-yellow-400' : 'bg-red-400'}`}
-                style={{ width: `${p.score}%` }}/>
-            </div>
-            <p className="text-xs text-gray-400 mt-0.5">
-              ✅ {p.tried} activities · 💬 {p.replies} replies · 👁 {p.read} read
-              · {p.language === 'hi' ? '🇮🇳' : p.language === 'zh-Hans' ? '🇨🇳' : '🇦🇺'} {p.language}
-            </p>
-          </div>
-        </div>
-      ))}
-    </div>
-  </div>
-)}
-{parentActivity.length > 0 && (
-  <div className="bg-white rounded-xl shadow p-5 space-y-3">
-    <div className="flex justify-between items-center">
-      <p className="text-sm font-bold text-gray-800">👁️ Family Engagement Tracker</p>
-      <span className="text-xs text-gray-400">To identify families who may need extra support</span>
-    </div>
-    <div className="space-y-2">
-      {parentActivity.map((p, i) => (
-        <div key={i} className="flex items-center gap-3 bg-gray-50 rounded-lg p-3">
-          <div className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${
-            p.statusColor === 'green' ? 'bg-green-500' :
-            p.statusColor === 'yellow' ? 'bg-yellow-400' :
-            p.statusColor === 'orange' ? 'bg-orange-400' :
-            p.statusColor === 'red' ? 'bg-red-400' : 'bg-gray-300'
-          } ${p.statusColor === 'green' ? 'animate-pulse' : ''}`}/>
-          <div className="flex-1">
-            <div className="flex justify-between items-center">
-              <p className="text-sm font-semibold text-gray-800">
-                {p.name}
-                <span className="text-gray-400 font-normal text-xs ml-1">({p.childName})</span>
-              </p>
-              <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
-                p.statusColor === 'green' ? 'bg-green-100 text-green-700' :
-                p.statusColor === 'yellow' ? 'bg-yellow-100 text-yellow-700' :
-                p.statusColor === 'orange' ? 'bg-orange-100 text-orange-700' :
-                p.statusColor === 'red' ? 'bg-red-100 text-red-700' :
-                'bg-gray-100 text-gray-500'
-              }`}>
-                {p.status}
-              </span>
-            </div>
-            <p className="text-xs text-gray-400 mt-0.5">
-              {p.language === 'hi' ? '🇮🇳' : p.language === 'zh-Hans' ? '🇨🇳' : '🇦🇺'} {p.language}
-              {p.loginCount > 0 && ` · ${p.loginCount} login${p.loginCount > 1 ? 's' : ''}`}
-              {p.lastSeen && ` · Last: ${new Date(p.lastSeen).toLocaleDateString('en-AU', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}`}
-            </p>
-          </div>
-        </div>
-      ))}
-    </div>
-    <p className="text-xs text-gray-400 text-center">🟢 Active · 🟡 Recent · 🔴 May need a check-in</p>
-    <p className="text-xs text-gray-400 text-center">Use this to support families, not to assess them. Parents are informed of this tracking.</p>
-  </div>
-)}
+                  <div className="bg-white rounded-xl shadow p-5 space-y-3">
+                    <p className="text-sm font-bold text-gray-800">📊 Parent Engagement Scores</p>
+                    <p className="text-xs text-gray-500">Based on activities tried, messages read and replies sent</p>
+                    <div className="space-y-2">
+                      {engagementScores.map((p, i) => (
+                        <div key={i} className="flex items-center gap-3 bg-gray-50 rounded-lg p-3">
+                          <span className="text-lg">{p.emoji}</span>
+                          <div className="flex-1">
+                            <div className="flex justify-between items-center">
+                              <p className="text-sm font-semibold text-gray-800">{p.name}
+                                <span className="text-gray-400 font-normal text-xs ml-1">({p.childName})</span>
+                              </p>
+                              <span className={`text-xs px-2 py-0.5 rounded-full font-bold ${p.level === 'High' ? 'bg-green-100 text-green-700' : p.level === 'Medium' ? 'bg-yellow-100 text-yellow-700' : 'bg-red-100 text-red-700'}`}>
+                                {p.score}/100
+                              </span>
+                            </div>
+                            <div className="w-full bg-gray-200 rounded-full h-1.5 mt-1">
+                              <div className={`h-1.5 rounded-full ${p.level === 'High' ? 'bg-green-500' : p.level === 'Medium' ? 'bg-yellow-400' : 'bg-red-400'}`}
+                                style={{ width: `${p.score}%` }}/>
+                            </div>
+                            <p className="text-xs text-gray-400 mt-0.5">
+                              ✅ {p.tried} activities · 💬 {p.replies} replies · 👁 {p.read} read
+                              · {p.language === 'hi' ? '🇮🇳' : p.language === 'zh-Hans' ? '🇨🇳' : '🇦🇺'} {p.language}
+                            </p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {parentActivity.length > 0 && (
+                  <div className="bg-white rounded-xl shadow p-5 space-y-3">
+                    <div className="flex justify-between items-center">
+                      <p className="text-sm font-bold text-gray-800">👁️ Family Engagement Tracker</p>
+                      <span className="text-xs text-gray-400">To identify families who may need extra support</span>
+                    </div>
+                    <div className="space-y-2">
+                      {parentActivity.map((p, i) => (
+                        <div key={i} className="flex items-center gap-3 bg-gray-50 rounded-lg p-3">
+                          <div className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${
+                            p.statusColor === 'green' ? 'bg-green-500' :
+                            p.statusColor === 'yellow' ? 'bg-yellow-400' :
+                            p.statusColor === 'orange' ? 'bg-orange-400' :
+                            p.statusColor === 'red' ? 'bg-red-400' : 'bg-gray-300'
+                          } ${p.statusColor === 'green' ? 'animate-pulse' : ''}`}/>
+                          <div className="flex-1">
+                            <div className="flex justify-between items-center">
+                              <p className="text-sm font-semibold text-gray-800">
+                                {p.name}
+                                <span className="text-gray-400 font-normal text-xs ml-1">({p.childName})</span>
+                              </p>
+                              <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+                                p.statusColor === 'green' ? 'bg-green-100 text-green-700' :
+                                p.statusColor === 'yellow' ? 'bg-yellow-100 text-yellow-700' :
+                                p.statusColor === 'orange' ? 'bg-orange-100 text-orange-700' :
+                                p.statusColor === 'red' ? 'bg-red-100 text-red-700' :
+                                'bg-gray-100 text-gray-500'
+                              }`}>
+                                {p.status}
+                              </span>
+                            </div>
+                            <p className="text-xs text-gray-400 mt-0.5">
+                              {p.language === 'hi' ? '🇮🇳' : p.language === 'zh-Hans' ? '🇨🇳' : '🇦🇺'} {p.language}
+                              {p.loginCount > 0 && ` · ${p.loginCount} login${p.loginCount > 1 ? 's' : ''}`}
+                              {p.lastSeen && ` · Last: ${new Date(p.lastSeen).toLocaleDateString('en-AU', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}`}
+                            </p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    <p className="text-xs text-gray-400 text-center">🟢 Active · 🟡 Recent · 🔴 May need a check-in</p>
+                    <p className="text-xs text-gray-400 text-center">Use this to support families, not to assess them. Parents are informed of this tracking.</p>
+                  </div>
+                )}
                 <div className="bg-gray-50 rounded-xl p-4 text-xs text-gray-500">
                   <p className="font-semibold mb-1">⚡ Powered by CurricuLLM AI Analysis</p>
                   <p>Sentiment auto-detected from parent replies to help prioritise responses. Always use professional judgment when following up.</p>
@@ -974,83 +991,60 @@ const [broadcastCount, setBroadcastCount] = useState(0)
                 </button>
               )}
             </div>
+
+            {/* BROADCAST — only in direct tab */}
+            <div className="bg-white rounded-xl shadow p-6 space-y-4">
+              <div className="flex items-center gap-3">
+                <span className="text-2xl">📢</span>
+                <div>
+                  <h2 className="text-lg font-semibold text-gray-800">Broadcast to All Parents</h2>
+                  <p className="text-xs text-gray-500">Send an instant notice to every family — auto-translated to their language</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3 bg-red-50 border border-red-200 rounded-lg p-3">
+                <button onClick={() => setBroadcastUrgent(!broadcastUrgent)}
+                  className={`relative w-10 h-6 rounded-full transition-colors flex-shrink-0 ${broadcastUrgent ? 'bg-red-500' : 'bg-gray-300'}`}>
+                  <span className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-all ${broadcastUrgent ? 'left-4' : 'left-0.5'}`}/>
+                </button>
+                <div>
+                  <p className="text-sm font-semibold text-red-700">🚨 Mark as Urgent</p>
+                  <p className="text-xs text-red-500">Adds URGENT prefix in parent's language</p>
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Subject</label>
+                <input value={broadcastSubject} onChange={e => setBroadcastSubject(e.target.value)}
+                  className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-400"
+                  placeholder="e.g. School closure tomorrow, Excursion reminder..."/>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Message</label>
+                <textarea value={broadcastContent} onChange={e => setBroadcastContent(e.target.value)} rows={4}
+                  className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-400"
+                  placeholder="e.g. Dear families, school will be closed tomorrow due to a staff development day..."/>
+              </div>
+              <div className="bg-amber-50 rounded-lg p-3 text-xs text-amber-700">
+                ⚡ This message will be sent immediately to all {allParents.length} families and auto-translated into their language. No CurricuLLM transform — exactly as written.
+              </div>
+              {broadcastSent ? (
+                <div className="bg-green-100 text-green-800 text-center py-3 rounded-lg font-semibold">
+                  ✅ Broadcast sent to {broadcastCount} families!
+                </div>
+              ) : (
+                <button onClick={handleBroadcast} disabled={broadcastSending || !broadcastContent.trim()}
+                  className={`w-full py-3 rounded-lg font-semibold transition disabled:opacity-50 text-white ${broadcastUrgent ? 'bg-red-600 hover:bg-red-700' : 'bg-orange-500 hover:bg-orange-600'}`}>
+                  {broadcastSending ? 'Sending to all families...' : `📢 ${broadcastUrgent ? '🚨 Send Urgent Broadcast' : 'Send Broadcast'} to All ${allParents.length} Families`}
+                </button>
+              )}
+            </div>
           </div>
         )}
-        {/* BROADCAST */}
-<div className="bg-white rounded-xl shadow p-6 space-y-4">
-  <div className="flex items-center gap-3">
-    <span className="text-2xl">📢</span>
-    <div>
-      <h2 className="text-lg font-semibold text-gray-800">Broadcast to All Parents</h2>
-      <p className="text-xs text-gray-500">Send an instant notice to every family — auto-translated to their language</p>
-    </div>
-  </div>
-
-  <div className="flex items-center gap-3 bg-red-50 border border-red-200 rounded-lg p-3">
-    <button onClick={() => setBroadcastUrgent(!broadcastUrgent)}
-      className={`relative w-10 h-6 rounded-full transition-colors ${broadcastUrgent ? 'bg-red-500' : 'bg-gray-300'}`}>
-      <span className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${broadcastUrgent ? 'left-4.5 translate-x-0.5' : 'left-0.5'}`}/>
-    </button>
-    <div>
-      <p className="text-sm font-semibold text-red-700">🚨 Mark as Urgent</p>
-      <p className="text-xs text-red-500">Adds URGENT prefix in parent's language</p>
-    </div>
-  </div>
-
-  <div>
-    <label className="block text-sm font-medium text-gray-700 mb-1">Subject</label>
-    <input value={broadcastSubject} onChange={e => setBroadcastSubject(e.target.value)}
-      className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-400"
-      placeholder="e.g. School closure tomorrow, Excursion reminder..."/>
-  </div>
-
-  <div>
-    <label className="block text-sm font-medium text-gray-700 mb-1">Message</label>
-    <textarea value={broadcastContent} onChange={e => setBroadcastContent(e.target.value)} rows={4}
-      className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-400"
-      placeholder="e.g. Dear families, school will be closed tomorrow due to a staff development day..."/>
-  </div>
-
-  <div className="bg-amber-50 rounded-lg p-3 text-xs text-amber-700">
-    ⚡ This message will be sent immediately to all {allParents.length} families and auto-translated into their language. No CurricuLLM transform — exactly as written.
-  </div>
-
-  {broadcastSent ? (
-    <div className="bg-green-100 text-green-800 text-center py-3 rounded-lg font-semibold">
-      ✅ Broadcast sent to {broadcastCount} families!
-    </div>
-  ) : (
-    <button onClick={async () => {
-      if (!broadcastContent.trim()) return
-      setBroadcastSending(true)
-      try {
-        const res = await axios.post(`${API}/api/broadcast`, {
-          teacherId: profile.id, teacherName: profile.name,
-          subject: broadcastSubject || 'Important Notice',
-          content: broadcastContent, urgent: broadcastUrgent
-        })
-        if (res.data.success) {
-          setBroadcastSent(true)
-          setBroadcastCount(res.data.sentTo)
-          setBroadcastContent(''); setBroadcastSubject(''); setBroadcastUrgent(false)
-          setTimeout(() => setBroadcastSent(false), 5000)
-          fetchMessages()
-        }
-      } catch(e) {}
-      setBroadcastSending(false)
-    }} disabled={broadcastSending || !broadcastContent.trim()}
-      className={`w-full py-3 rounded-lg font-semibold transition disabled:opacity-50 text-white ${broadcastUrgent ? 'bg-red-600 hover:bg-red-700' : 'bg-orange-500 hover:bg-orange-600'}`}>
-      {broadcastSending ? 'Sending to all families...' : `📢 ${broadcastUrgent ? '🚨 Send Urgent Broadcast' : 'Send Broadcast'} to All ${allParents.length} Families`}
-    </button>
-  )}
-</div>
 
         {/* ── SCHEDULE ── */}
         {tab === 'schedule' && (
           <div className="space-y-5">
             <h2 className="text-lg font-semibold text-gray-800">📅 Schedule & Reminders</h2>
             <ReminderForm />
-
             {ptmRequests.length > 0 && (
               <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 space-y-3">
                 <p className="text-sm font-bold text-blue-800">📅 {ptmRequests.length} Meeting Request{ptmRequests.length > 1 ? 's' : ''}</p>
@@ -1068,7 +1062,6 @@ const [broadcastCount, setBroadcastCount] = useState(0)
                 </div>
               </div>
             )}
-
             {appointments.length > 0 ? (
               <div className="bg-white rounded-xl shadow p-5 space-y-3">
                 <h3 className="text-sm font-bold text-gray-800">📋 Appointment Requests ({appointments.length})</h3>
