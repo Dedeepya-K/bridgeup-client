@@ -651,11 +651,11 @@ export default function TeacherDashboard({ supabase, profile }) {
                   <div className="bg-white rounded-xl shadow p-5">
                     <h3 className="text-sm font-semibold text-gray-700 mb-3">Reply Sentiment Breakdown</h3>
                     <div className="space-y-2">
-                      {Object.entries(engagement.sentiments).map(([key, val]) => {
-                        const s = SENTIMENT_CONFIG[key]
-                        const pct = Math.round((val / engagement.totalReplies) * 100)
-                        return (
-                          <div key={key} className="flex items-center gap-3">
+                      {Object.entries(engagement.sentiments).filter(([key]) => ['positive','question','concern'].includes(key)).map(([key, val]) => {
+  const s = SENTIMENT_CONFIG[key]
+  const pct = Math.round((val / engagement.totalReplies) * 100)
+  return (
+    <div key={key} className="flex items-center gap-3">
                             <span className="text-sm w-24">{s?.emoji} {s?.label}</span>
                             <div className="flex-1 bg-gray-100 rounded-full h-3">
                               <div className={`h-3 rounded-full ${key==='positive'?'bg-green-400':key==='question'?'bg-yellow-400':'bg-red-400'}`}
