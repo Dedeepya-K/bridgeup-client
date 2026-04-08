@@ -754,6 +754,75 @@ function AppointmentBooking({ profile, currentChild, children, selectedChildIdx,
   )
 }
 
+function AchievementBadges({ profile }) {
+  const [badges, setBadges] = useState(null)
+  const [show, setShow] = useState(false)
+
+  useEffect(() => {
+    axios.get(`${API}/api/badges/${profile.id}`)
+      .then(r => { if (r.data.success) setBadges(r.data) })
+      .catch(() => {})
+  }, [])
+
+  if (!badges) return null
+
+  return (
+    <div className="bg-white rounded-xl shadow p-5 space-y-3">
+      <div className="flex justify-between items-center">
+        <div className="flex items-center gap-2">
+          <h3 className="text-sm font-bold text-gray-800">🏆 Your Achievements</h3>
+          <span className="text-xs bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded-full font-bold">
+            {badges.earned.length} earned
+          </span>
+        </div>
+        <button onClick={() => setShow(!show)}
+          className="text-xs text-teal-600 hover:text-teal-800">
+          {show ? '▲ Hide' : '▼ Show all'}
+        </button>
+      </div>
+
+      {/* Earned badges preview — always show top 3 */}
+      <div className="flex gap-2 flex-wrap">
+        {badges.earned.slice(0, show ? 99 : 3).map((badge, i) => (
+          <div key={i} className={`rounded-xl border px-3 py-2 flex items-center gap-2 ${badge.color}`}>
+            <span className="text-xl">{badge.emoji}</span>
+            <div>
+              <p className="text-xs font-bold">{badge.title}</p>
+              <p className="text-xs opacity-70">{badge.description}</p>
+            </div>
+          </div>
+        ))}
+        {!show && badges.earned.length > 3 && (
+          <button onClick={() => setShow(true)}
+            className="rounded-xl border border-gray-200 px-3 py-2 text-xs text-gray-500 hover:bg-gray-50">
+            +{badges.earned.length - 3} more
+          </button>
+        )}
+      </div>
+
+      {/* Locked badges */}
+      {show && badges.locked.length > 0 && (
+        <div className="space-y-2">
+          <p className="text-xs font-semibold text-gray-500 mt-2">🔒 Still to earn:</p>
+          <div className="flex gap-2 flex-wrap">
+            {badges.locked.map((badge, i) => (
+              <div key={i} className="rounded-xl border border-gray-200 px-3 py-2 flex items-center gap-2 bg-gray-50 opacity-60">
+                <span className="text-xl grayscale">{badge.emoji}</span>
+                <div>
+                  <p className="text-xs font-bold text-gray-600">{badge.title}</p>
+                  <p className="text-xs text-gray-400">{badge.description}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <p className="text-xs text-gray-400 text-center">Keep supporting {profile.child_name}'s learning to unlock more! 🌟</p>
+    </div>
+  )
+}
+
 export default function ParentDashboard({ supabase, profile }) {
   const [tab, setTab] = useState('updates')
   const [messages, setMessages] = useState([])
@@ -1118,6 +1187,7 @@ export default function ParentDashboard({ supabase, profile }) {
           <>
             <WelcomeBanner profile={profile} currentChild={currentChild} language={profile.language} />
             <CommunityStats />
+            <AchievementBadges profile={profile} />
             {(() => {
               const allTodos = []
               Object.entries(groupedMessages).forEach(([subject, msgs]) => {
