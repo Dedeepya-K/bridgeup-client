@@ -115,6 +115,12 @@ export default function TeacherDashboard({ supabase, profile }) {
   const [reminderParent, setReminderParent] = useState('')
   const [reminderSending, setReminderSending] = useState(false)
   const [reminderSent, setReminderSent] = useState(false)
+  const [broadcastContent, setBroadcastContent] = useState('')
+const [broadcastSubject, setBroadcastSubject] = useState('')
+const [broadcastUrgent, setBroadcastUrgent] = useState(false)
+const [broadcastSending, setBroadcastSending] = useState(false)
+const [broadcastSent, setBroadcastSent] = useState(false)
+const [broadcastCount, setBroadcastCount] = useState(0)
 
   useEffect(() => {
     fetchMessages()
@@ -923,6 +929,74 @@ export default function TeacherDashboard({ supabase, profile }) {
             </div>
           </div>
         )}
+        {/* BROADCAST */}
+<div className="bg-white rounded-xl shadow p-6 space-y-4">
+  <div className="flex items-center gap-3">
+    <span className="text-2xl">📢</span>
+    <div>
+      <h2 className="text-lg font-semibold text-gray-800">Broadcast to All Parents</h2>
+      <p className="text-xs text-gray-500">Send an instant notice to every family — auto-translated to their language</p>
+    </div>
+  </div>
+
+  <div className="flex items-center gap-3 bg-red-50 border border-red-200 rounded-lg p-3">
+    <button onClick={() => setBroadcastUrgent(!broadcastUrgent)}
+      className={`relative w-10 h-6 rounded-full transition-colors ${broadcastUrgent ? 'bg-red-500' : 'bg-gray-300'}`}>
+      <span className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${broadcastUrgent ? 'left-4.5 translate-x-0.5' : 'left-0.5'}`}/>
+    </button>
+    <div>
+      <p className="text-sm font-semibold text-red-700">🚨 Mark as Urgent</p>
+      <p className="text-xs text-red-500">Adds URGENT prefix in parent's language</p>
+    </div>
+  </div>
+
+  <div>
+    <label className="block text-sm font-medium text-gray-700 mb-1">Subject</label>
+    <input value={broadcastSubject} onChange={e => setBroadcastSubject(e.target.value)}
+      className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-400"
+      placeholder="e.g. School closure tomorrow, Excursion reminder..."/>
+  </div>
+
+  <div>
+    <label className="block text-sm font-medium text-gray-700 mb-1">Message</label>
+    <textarea value={broadcastContent} onChange={e => setBroadcastContent(e.target.value)} rows={4}
+      className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-400"
+      placeholder="e.g. Dear families, school will be closed tomorrow due to a staff development day..."/>
+  </div>
+
+  <div className="bg-amber-50 rounded-lg p-3 text-xs text-amber-700">
+    ⚡ This message will be sent immediately to all {allParents.length} families and auto-translated into their language. No CurricuLLM transform — exactly as written.
+  </div>
+
+  {broadcastSent ? (
+    <div className="bg-green-100 text-green-800 text-center py-3 rounded-lg font-semibold">
+      ✅ Broadcast sent to {broadcastCount} families!
+    </div>
+  ) : (
+    <button onClick={async () => {
+      if (!broadcastContent.trim()) return
+      setBroadcastSending(true)
+      try {
+        const res = await axios.post(`${API}/api/broadcast`, {
+          teacherId: profile.id, teacherName: profile.name,
+          subject: broadcastSubject || 'Important Notice',
+          content: broadcastContent, urgent: broadcastUrgent
+        })
+        if (res.data.success) {
+          setBroadcastSent(true)
+          setBroadcastCount(res.data.sentTo)
+          setBroadcastContent(''); setBroadcastSubject(''); setBroadcastUrgent(false)
+          setTimeout(() => setBroadcastSent(false), 5000)
+          fetchMessages()
+        }
+      } catch(e) {}
+      setBroadcastSending(false)
+    }} disabled={broadcastSending || !broadcastContent.trim()}
+      className={`w-full py-3 rounded-lg font-semibold transition disabled:opacity-50 text-white ${broadcastUrgent ? 'bg-red-600 hover:bg-red-700' : 'bg-orange-500 hover:bg-orange-600'}`}>
+      {broadcastSending ? 'Sending to all families...' : `📢 ${broadcastUrgent ? '🚨 Send Urgent Broadcast' : 'Send Broadcast'} to All ${allParents.length} Families`}
+    </button>
+  )}
+</div>
 
         {/* ── SCHEDULE ── */}
         {tab === 'schedule' && (
