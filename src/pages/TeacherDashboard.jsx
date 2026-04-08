@@ -107,6 +107,7 @@ export default function TeacherDashboard({ supabase, profile }) {
   const [naplanYear, setNaplanYear] = useState('8')
   const [emojiInsights, setEmojiInsights] = useState([])
   const [engagementScores, setEngagementScores] = useState([])
+  const [parentActivity, setParentActivity] = useState([])
   const [appointments, setAppointments] = useState([])
   const [reminderType, setReminderType] = useState('exam')
   const [reminderTitle, setReminderTitle] = useState('')
@@ -150,6 +151,8 @@ const [broadcastCount, setBroadcastCount] = useState(0)
     if (res7.data.success) setAppointments(res7.data.data)
     const res8 = await axios.get(`${API}/api/parent-engagement-scores/${profile.id}`)
     if (res8.data.success) setEngagementScores(res8.data.data)
+    const res9 = await axios.get(`${API}/api/parent-activity/${profile.id}`)
+    if (res9.data.success) setParentActivity(res9.data.data)
   }
 
   const handleTransform = async () => {
@@ -872,6 +875,50 @@ const [broadcastCount, setBroadcastCount] = useState(0)
         </div>
       ))}
     </div>
+  </div>
+)}
+{parentActivity.length > 0 && (
+  <div className="bg-white rounded-xl shadow p-5 space-y-3">
+    <div className="flex justify-between items-center">
+      <p className="text-sm font-bold text-gray-800">👁️ Family Engagement Tracker</p>
+      <span className="text-xs text-gray-400">To identify families who may need extra support</span>
+    </div>
+    <div className="space-y-2">
+      {parentActivity.map((p, i) => (
+        <div key={i} className="flex items-center gap-3 bg-gray-50 rounded-lg p-3">
+          <div className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${
+            p.statusColor === 'green' ? 'bg-green-500' :
+            p.statusColor === 'yellow' ? 'bg-yellow-400' :
+            p.statusColor === 'orange' ? 'bg-orange-400' :
+            p.statusColor === 'red' ? 'bg-red-400' : 'bg-gray-300'
+          } ${p.statusColor === 'green' ? 'animate-pulse' : ''}`}/>
+          <div className="flex-1">
+            <div className="flex justify-between items-center">
+              <p className="text-sm font-semibold text-gray-800">
+                {p.name}
+                <span className="text-gray-400 font-normal text-xs ml-1">({p.childName})</span>
+              </p>
+              <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+                p.statusColor === 'green' ? 'bg-green-100 text-green-700' :
+                p.statusColor === 'yellow' ? 'bg-yellow-100 text-yellow-700' :
+                p.statusColor === 'orange' ? 'bg-orange-100 text-orange-700' :
+                p.statusColor === 'red' ? 'bg-red-100 text-red-700' :
+                'bg-gray-100 text-gray-500'
+              }`}>
+                {p.status}
+              </span>
+            </div>
+            <p className="text-xs text-gray-400 mt-0.5">
+              {p.language === 'hi' ? '🇮🇳' : p.language === 'zh-Hans' ? '🇨🇳' : '🇦🇺'} {p.language}
+              {p.loginCount > 0 && ` · ${p.loginCount} login${p.loginCount > 1 ? 's' : ''}`}
+              {p.lastSeen && ` · Last: ${new Date(p.lastSeen).toLocaleDateString('en-AU', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}`}
+            </p>
+          </div>
+        </div>
+      ))}
+    </div>
+    <p className="text-xs text-gray-400 text-center">🟢 Active · 🟡 Recent · 🔴 May need a check-in</p>
+    <p className="text-xs text-gray-400 text-center">Use this to support families, not to assess them. Parents are informed of this tracking.</p>
   </div>
 )}
                 <div className="bg-gray-50 rounded-xl p-4 text-xs text-gray-500">

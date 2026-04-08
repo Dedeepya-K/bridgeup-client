@@ -1089,7 +1089,11 @@ export default function ParentDashboard({ supabase, profile }) {
   const [savingProfile, setSavingProfile] = useState(false)
   const [profileSaved, setProfileSaved] = useState(false)
 
-  useEffect(() => { fetchMessages(); fetchChildren(); }, [])
+  useEffect(() => {
+  fetchMessages()
+  fetchChildren()
+  axios.post(`${API}/api/track-activity`, { parentId: profile.id }).catch(() => {})
+}, [])
   useEffect(() => { chatEndRef.current?.scrollIntoView({ behavior: 'smooth' }) }, [chatMessages])
 
   const fetchMessages = async () => {
@@ -1346,6 +1350,7 @@ export default function ParentDashboard({ supabase, profile }) {
             <p><strong>AI usage:</strong> Messages use CurricuLLM (curriculum-trained AI). Your teacher always reviews and approves every message before it reaches you.</p>
             <p><strong>Your data:</strong> Your language preference and child profile are stored securely and never sold or shared with third parties.</p>
             <p><strong>Your rights:</strong> Update or delete your profile at any time. Flag any message that concerns you.</p>
+            <p><strong>Activity tracking:</strong> Your last login time is visible to your teacher to help them support your family better.</p>
             <p className="text-xs text-gray-400">Compliant with the Australian Privacy Act 1988.</p>
           </div>
           <button onClick={handleConsent} className="w-full bg-teal-600 text-white py-3 rounded-xl font-semibold hover:bg-teal-700 transition">
