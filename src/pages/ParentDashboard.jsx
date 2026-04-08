@@ -1099,7 +1099,11 @@ const [savingVisibility, setSavingVisibility] = useState(false)
   axios.post(`${API}/api/track-activity`, { parentId: profile.id }).catch(() => {})
 }, [])
   useEffect(() => { chatEndRef.current?.scrollIntoView({ behavior: 'smooth' }) }, [chatMessages])
-
+useEffect(() => {
+  const unread = messages.filter(m => !m.is_read).length
+  document.title = unread > 0 ? `(${unread}) BridgeUp` : 'BridgeUp'
+  return () => { document.title = 'BridgeUp' }
+}, [messages])
   const fetchMessages = async () => {
     const res = await axios.get(`${API}/api/parent-messages/${profile.id}`)
     setMessages(res.data.data || [])
