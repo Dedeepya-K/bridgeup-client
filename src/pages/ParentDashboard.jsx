@@ -1088,6 +1088,10 @@ export default function ParentDashboard({ supabase, profile }) {
   const [activityLength, setActivityLength] = useState('10')
   const [savingProfile, setSavingProfile] = useState(false)
   const [profileSaved, setProfileSaved] = useState(false)
+  const [activityVisible, setActivityVisible] = useState(
+  profile.activity_visible !== false
+)
+const [savingVisibility, setSavingVisibility] = useState(false)
 
   useEffect(() => {
   fetchMessages()
@@ -1630,10 +1634,38 @@ export default function ParentDashboard({ supabase, profile }) {
                 </button>
               )}
             </div>
-            <div className="bg-gray-50 rounded-xl p-4 text-xs text-gray-500 space-y-1">
-              <p className="font-semibold">🔐 Privacy notice</p>
-              <p>Stored securely. Never shared or used for advertising. Compliant with the Australian Privacy Act 1988.</p>
-            </div>
+            <div className="bg-gray-50 rounded-xl p-4 text-xs text-gray-500 space-y-3">
+  <p className="font-semibold text-gray-700">🔐 Privacy Settings</p>
+
+  {/* Activity Visibility Toggle */}
+  <div className="bg-white rounded-xl border border-gray-200 p-4 space-y-2">
+    <div className="flex justify-between items-center">
+      <div>
+        <p className="text-sm font-semibold text-gray-700">👁️ Show my last active time</p>
+        <p className="text-xs text-gray-400 mt-0.5">Your teacher can see when you last used the app</p>
+      </div>
+      <button onClick={async () => {
+        const newVal = !activityVisible
+        setActivityVisible(newVal)
+        setSavingVisibility(true)
+        try {
+          await axios.post(`${API}/api/update-activity-visibility`, {
+            parentId: profile.id, visible: newVal
+          })
+        } catch(e) {}
+        setSavingVisibility(false)
+      }}
+        className={`relative w-12 h-6 rounded-full transition-colors ${activityVisible ? 'bg-teal-500' : 'bg-gray-300'} ${savingVisibility ? 'opacity-50' : ''}`}>
+        <span className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-all ${activityVisible ? 'left-6' : 'left-0.5'}`}/>
+      </button>
+    </div>
+    <p className={`text-xs font-medium ${activityVisible ? 'text-teal-600' : 'text-gray-400'}`}>
+      {activityVisible ? '✅ Visible to teacher — helps them support your family' : '🔒 Hidden — teacher cannot see your activity'}
+    </p>
+  </div>
+
+  <p className="text-xs text-gray-400">Stored securely. Never shared or used for advertising. Compliant with the Australian Privacy Act 1988.</p>
+</div>
           </div>
         )}
       </div>
