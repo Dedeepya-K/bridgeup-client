@@ -1070,13 +1070,18 @@ export default function TeacherDashboard({ supabase, profile }) {
                 <div>
                   <label className="block text-xs font-semibold text-gray-500 mb-1.5">Student name</label>
                   <select value={naplanBandStudent} onChange={e => setNaplanBandStudent(e.target.value)} className="input-base">
-                    <option value="">— Select a student —</option>
-                    {allParents.map(p => (
-                      <option key={p.id} value={p.child_name || p.name}>
-                        {p.child_name || p.name} {p.child_name ? `(parent: ${p.name})` : ''}
-                      </option>
-                    ))}
-                  </select>
+  <option value="">— Select a student —</option>
+  {allParents.flatMap(p => {
+    if (!p.child_name) return [<option key={p.id} value={p.name}>{p.name}</option>]
+    const names = p.child_name.split(/[,&]/).map(n => n.trim()).filter(Boolean)
+    if (names.length <= 1) {
+      return [<option key={p.id} value={p.child_name}>{p.child_name} (parent: {p.name})</option>]
+    }
+    return names.map((name, i) => (
+      <option key={`${p.id}-${i}`} value={name}>{name} (parent: {p.name})</option>
+    ))
+  })}
+</select>
                 </div>
                 <div>
                   <label className="block text-xs font-semibold text-gray-500 mb-1.5">Subject</label>
