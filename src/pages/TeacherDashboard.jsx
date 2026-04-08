@@ -68,6 +68,9 @@ function TeacherReplyBox({ messageId, parentId, teacherName, suggestedResponse }
 }
 
 export default function TeacherDashboard({ supabase, profile }) {
+  const [teacherConsentGiven, setTeacherConsentGiven] = useState(
+  () => localStorage.getItem(`teacher_consent_${profile.id}`) === 'true'
+)
   const [tab, setTab] = useState('compose')
   const [subject, setSubject] = useState('Science')
   const [yearLevel, setYearLevel] = useState('8')
@@ -301,6 +304,35 @@ export default function TeacherDashboard({ supabase, profile }) {
     </div>
   )
 
+  if (!teacherConsentGiven) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-4" style={{ background: '#F5F3FF' }}>
+        <div className="bg-white rounded-2xl shadow-xl p-8 max-w-lg w-full space-y-5">
+          <div className="text-center">
+            <div className="w-16 h-16 rounded-2xl flex items-center justify-center text-3xl mx-auto mb-3" style={{ background: '#6C47FF' }}>🌉</div>
+            <h1 className="text-2xl font-bold text-gray-900">BridgeUp — Teacher Portal</h1>
+            <p className="text-gray-500 text-sm mt-1">Before you continue, please read your responsibilities</p>
+          </div>
+          <div className="rounded-xl p-4 space-y-3 text-sm text-gray-700" style={{ background: '#F5F3FF' }}>
+            <p className="font-semibold" style={{ color: '#4B0FA8' }}>📋 Your responsibilities under H-AI-H</p>
+            <p><strong>Human oversight:</strong> All AI-generated content must be reviewed and edited by you before sending to families. You are the qualified educator — AI assists, never replaces.</p>
+            <p><strong>Accuracy:</strong> CurricuLLM may produce inaccurate or biased content. Always verify curriculum facts and check cultural appropriateness before approving messages.</p>
+            <p><strong>Machine translation:</strong> Parent messages are machine-translated. For critical communications, verify with EAL/D families directly.</p>
+            <p><strong>Data controller:</strong> You are the data controller for student and family information processed through BridgeUp. Handle all data in accordance with your school's privacy policy.</p>
+            <p><strong>Privacy:</strong> Do not enter sensitive student welfare information into BridgeUp. For urgent welfare concerns, use your school's official channels.</p>
+            <p className="text-xs text-gray-400 pt-2 border-t border-gray-200">Compliant with the Australian Privacy Act 1988 · Australian Framework for Generative AI in Schools (2023) · H-AI-H Human-Centered AI Principles</p>
+          </div>
+          <button onClick={() => {
+            localStorage.setItem(`teacher_consent_${profile.id}`, 'true')
+            setTeacherConsentGiven(true)
+          }} className="btn-primary w-full py-3">
+            I understand my responsibilities — Continue to BridgeUp
+          </button>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-screen" style={{ background: '#F9FAFB' }}>
 
@@ -346,6 +378,7 @@ export default function TeacherDashboard({ supabase, profile }) {
               <div className="mt-3 rounded-xl bg-white bg-opacity-10 p-3 text-xs space-y-1" style={{ color: '#E0D7FF' }}>
                 <p>✏️ <strong>Your role:</strong> Start with your notes → review AI output → edit if needed → approve to send</p>
                 <p>⚠️ <strong>AI may hallucinate</strong> — always verify curriculum facts before sending to families</p>
+                <p>⚖️ <strong>AI may reflect bias</strong> — review tips for cultural appropriateness for all families</p>
                 <p>🌍 <strong>Translated messages</strong> are machine-translated — check with EAL/D families if unsure</p>
               </div>
             </div>
@@ -1108,6 +1141,10 @@ export default function TeacherDashboard({ supabase, profile }) {
               }} disabled={naplanLoading || !naplanNote.trim()} className="btn-primary w-full">
                 {naplanLoading ? '✨ Generating with CurricuLLM...' : '📊 Generate NAPLAN Update'}
               </button>
+              <div className="rounded-xl px-4 py-3 text-xs" style={{ background: '#EDE9FF', color: '#4B0FA8' }}>
+  <p className="font-semibold">⚠️ H-AI-H Reminder</p>
+  <p className="opacity-75 mt-1">This NAPLAN message is AI-generated. Review carefully before sharing with families. You are responsible as the qualified educator.</p>
+</div>
               {naplanResult && (
                 <div className="rounded-xl p-4 space-y-2" style={{ background: '#EDE9FF' }}>
                   <p className="eyebrow">Parent-Ready Message</p>

@@ -1158,11 +1158,12 @@ export default function ParentDashboard({ supabase, profile }) {
             <p><strong>Your rights:</strong> Update or delete your profile at any time. Flag any message that concerns you. You may opt out of activity tracking in your profile settings.</p>
             <p><strong>Activity tracking:</strong> Your last login time is visible to your teacher to help them support your family. You can turn this off in your profile.</p>
             <p><strong>Child data:</strong> Information about your child is used solely to personalise learning tips and is never shared outside your school.</p>
-            <p className="text-xs text-gray-400 pt-1 border-t border-gray-200">Compliant with the Australian Privacy Act 1988 · Australian Framework for Generative AI in Schools (2023) · H-AI-H Human-Centered AI Principles</p>
+            
           </div>
           <button onClick={handleConsent} className="btn-primary w-full py-3">
             I understand and agree to continue
           </button>
+          <p className="text-xs text-gray-400 pt-1 border-t border-gray-200">The class teacher is the data controller for your information. Data is retained for the duration of the school year and deleted upon request. Compliant with the Australian Privacy Act 1988 · Australian Framework for Generative AI in Schools (2023) · H-AI-H Human-Centered AI Principles</p>
         </div>
       </div>
     )
