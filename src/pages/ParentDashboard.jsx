@@ -490,8 +490,165 @@ function AppointmentBooking({ profile, currentChild }) {
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
 
+function AppointmentBooking({ profile, currentChild, children, selectedChildIdx, setSelectedChildIdx }) {
+  const [appointments, setAppointments] = useState([])
+  const [booking, setBooking] = useState(false)
+  const [appointmentType, setAppointmentType] = useState('Academic Progress')
+  const [preferredDate, setPreferredDate] = useState('')
+  const [preferredTime, setPreferredTime] = useState('')
+  const [note, setNote] = useState('')
+  const [saving, setSaving] = useState(false)
+  const [saved, setSaved] = useState(false)
+  const [selectedChild, setSelectedChild] = useState(currentChild?.name || profile.child_name || '')
+
   const TEACHER_ID = '83e0135e-9d7b-43af-aa81-4bce2c025208'
 
+  useEffect(() => {
+    setSelectedChild(currentChild?.name || profile.child_name || '')
+  }, [currentChild])
+
+  useEffect(() => { fetchAppointments() }, [])
+
+  const fetchAppointments = async () => {
+    try {
+      const res = await axios.get(`${API}/api/appointments/${profile.id}`)
+      setAppointments(res.data.data || [])
+    } catch(e) {}
+  }
+
+  const handleBook = async () => {
+    if (!preferredDate || !preferredTime) return
+    setSaving(true)
+    try {
+      await axios.post(`${API}/api/book-appointment`, {
+        parentId: profile.id,
+        parentName: profile.name,
+        childName: selectedChild,
+        teacherId: TEACHER_ID,
+        appointmentType,
+        preferredDate,
+        preferredTime,
+        note
+      })
+      setSaved(true)
+      setPreferredDate(''); setPreferredTime(''); setNote(''); setBooking(false)
+      fetchAppointments()
+      setTimeout(() => setSaved(false), 3000)
+    } catch(e) {}
+    setSaving(false)
+  }
+
+  return (
+    <div className="bg-white rounded-xl shadow p-5 space-y-4">
+      <div className="flex justify-between items-center">
+        <h3 className="text-sm font-bold text-gray-800">📋 Book an Appointment</h3>
+        <button onClick={() => setBooking(!booking)}
+          className="text-xs bg-teal-600 text-white px-3 py-1.5 rounded-lg hover:bg-teal-700 transition">
+          {booking ? '✕ Cancel' : '+ Book'}
+        </button>
+      </div>
+
+      {saved && (
+        <div className="bg-green-100 text-green-800 text-center py-2 rounded-lg text-sm font-semibold">
+          ✅ Request sent! Teacher will confirm.
+        </div>
+      )}
+
+      {booking && (
+        <div className="bg-teal-50 rounded-xl p-4 space-y-3">
+
+          {/* Child selector — only show if multiple children */}
+          {children && children.length > 1 && (
+            <div>
+              <label className="block text-xs font-semibold text-gray-700 mb-1">Which child is this for?</label>
+              <div className="flex gap-2 flex-wrap">
+                {children.map((child, idx) => (
+                  <button key={child.id} onClick={() => setSelectedChild(child.name)}
+                    className={`px-3 py-2 rounded-lg text-xs border transition ${selectedChild === child.name ? 'bg-teal-600 text-white border-teal-600' : 'bg-white text-gray-700 border-gray-300 hover:border-teal-400'}`}>
+                    👤 {child.name} — Yr {child.year_level}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <div>
+            <label className="block text-xs font-semibold text-gray-700 mb-1">What is this about?</label>
+            <div className="grid grid-cols-2 gap-2">
+              {['Academic Progress', 'Behaviour Concern', 'Learning Support', 'General Check-in'].map(t => (
+                <button key={t} onClick={() => setAppointmentType(t)}
+                  className={`px-3 py-2 rounded-lg text-xs border transition text-left ${appointmentType === t ? 'bg-teal-600 text-white border-teal-600' : 'bg-white text-gray-700 border-gray-300 hover:border-teal-400'}`}>
+                  {t}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-gray-700 mb-1">Preferred date</label>
+            <input type="date" value={preferredDate} onChange={e => setPreferredDate(e.target.value)}
+              min={new Date().toISOString().split('T')[0]}
+              className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400"/>
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-gray-700 mb-1">Preferred time</label>
+            <div className="grid grid-cols-3 gap-2">
+              {['8:00 AM','9:00 AM','10:00 AM','11:00 AM','1:00 PM','2:00 PM','3:00 PM','After school','Phone call'].map(t => (
+                <button key={t} onClick={() => setPreferredTime(t)}
+                  className={`px-2 py-2 rounded-lg text-xs border transition ${preferredTime === t ? 'bg-teal-600 text-white border-teal-600' : 'bg-white text-gray-700 border-gray-300 hover:border-teal-400'}`}>
+                  {t}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <textarea value={note} onChange={e => setNote(e.target.value)} rows={2}
+            className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400"
+            placeholder="What would you like to discuss? (optional)"/>
+
+          <div className="bg-amber-50 rounded-lg p-2 text-xs text-amber-700">
+            ⚠️ For urgent welfare concerns contact the school directly.
+          </div>
+
+          {selectedChild && (
+            <div className="bg-teal-100 rounded-lg p-2 text-xs text-teal-800">
+              📋 Booking for: <strong>{selectedChild}</strong>
+            </div>
+          )}
+
+          <button onClick={handleBook} disabled={saving || !preferredDate || !preferredTime}
+            className="w-full bg-teal-600 text-white py-2 rounded-lg text-sm font-semibold hover:bg-teal-700 disabled:opacity-50">
+            {saving ? 'Booking...' : '📅 Request Appointment'}
+          </button>
+        </div>
+      )}
+
+      {appointments.length > 0 && (
+        <div className="space-y-2">
+          <p className="text-xs font-semibold text-gray-600">Your appointments:</p>
+          {appointments.map((a, i) => (
+            <div key={i} className="bg-gray-50 rounded-lg p-3 space-y-1">
+              <div className="flex justify-between items-center">
+                <div>
+                  <p className="text-sm font-semibold text-gray-800">{a.appointment_type}</p>
+                  {a.child_name && <p className="text-xs text-teal-600">👤 {a.child_name}</p>}
+                </div>
+                <span className={`text-xs px-2 py-0.5 rounded-full ${a.status === 'confirmed' ? 'bg-green-100 text-green-700' : a.status === 'cancelled' ? 'bg-red-100 text-red-700' : 'bg-yellow-100 text-yellow-700'}`}>
+                  {a.status === 'confirmed' ? '✅ Confirmed' : a.status === 'cancelled' ? '❌ Cancelled' : '⏳ Pending'}
+                </span>
+              </div>
+              <p className="text-xs text-gray-500">
+                📅 {new Date(a.preferred_date).toLocaleDateString('en-AU', { weekday: 'long', day: 'numeric', month: 'long' })} at {a.preferred_time}
+              </p>
+              {a.note && <p className="text-xs text-gray-400 italic">"{a.note}"</p>}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
   useEffect(() => { fetchAppointments() }, [])
 
   const fetchAppointments = async () => {
@@ -908,10 +1065,29 @@ export default function ParentDashboard({ supabase, profile }) {
           </div>
         </div>
         <div className="flex items-center gap-3">
-          <span className="text-sm">{lang.label}</span>
-          <span className="text-sm">👋 {profile.name}</span>
-          <button onClick={handleLogout} className="text-blue-200 hover:text-white text-sm">Sign out</button>
-        </div>
+  <div className="relative">
+    <select
+      value={profile.language}
+      onChange={async (e) => {
+        const newLang = e.target.value
+        try {
+          await axios.post(`${API}/api/update-language`, {
+            parentId: profile.id,
+            language: newLang
+          })
+          window.location.reload()
+        } catch(e) {}
+      }}
+      className="bg-blue-600 text-white text-xs border border-blue-400 rounded-lg px-2 py-1.5 cursor-pointer hover:bg-blue-500 transition appearance-none pr-6">
+      {LANGUAGES.map(l => (
+        <option key={l.code} value={l.code} className="bg-white text-gray-800">{l.label}</option>
+      ))}
+    </select>
+    <span className="absolute right-1.5 top-1.5 text-white text-xs pointer-events-none">▼</span>
+  </div>
+  <span className="text-sm">👋 {profile.name}</span>
+  <button onClick={handleLogout} className="text-blue-200 hover:text-white text-sm">Sign out</button>
+</div>
       </header>
 
       {children.length > 1 && (
@@ -1059,7 +1235,13 @@ export default function ParentDashboard({ supabase, profile }) {
               <p className="mt-1">View reminders from your teacher and book appointments.</p>
             </div>
             <RemindersWidget profile={profile} />
-            <AppointmentBooking profile={profile} currentChild={currentChild} />
+            <AppointmentBooking
+  profile={profile}
+  currentChild={currentChild}
+  children={children}
+  selectedChildIdx={selectedChildIdx}
+  setSelectedChildIdx={setSelectedChildIdx}
+/>
           </div>
         )}
 
