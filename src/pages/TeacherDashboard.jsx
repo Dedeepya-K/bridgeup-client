@@ -520,31 +520,44 @@ export default function TeacherDashboard({ supabase, profile }) {
               return (
                 <>
                   {!expandedSubjectTeacher && (
-                    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-                      {Object.entries(grouped).map(([subj, msgs]) => {
-                        const cfg = SUBJ_CFG[subj] || SUBJ_CFG['General']
-                        const totalReplies = msgs.reduce((s, m) => s + (m.replies?.length || 0), 0)
-                        const concerns = msgs.reduce((s, m) => s + (m.replies?.filter(r => r.sentiment === 'concern' || r.urgency === 'high').length || 0), 0)
-                        return (
-                          <button key={subj} onClick={() => setExpandedSubjectTeacher(subj)}
-                            className="card overflow-hidden text-left hover:shadow-md transition">
-                            <div className={`${cfg.color} px-4 py-3 text-white`}>
-                              <div className="flex justify-between">
-                                <span className="text-2xl">{cfg.icon}</span>
-                                {concerns > 0 && <span className="badge bg-red-400 text-white animate-pulse">⚠️ {concerns}</span>}
-                                {totalReplies > 0 && concerns === 0 && <span className="badge bg-yellow-300 text-yellow-900">💬 {totalReplies}</span>}
-                              </div>
-                              <p className="font-semibold mt-2">{subj}</p>
-                              <p className="text-xs opacity-75">{msgs.length} update{msgs.length > 1 ? 's' : ''}</p>
-                            </div>
-                            <div className="px-4 py-2.5 bg-white">
-                              <p className="text-xs text-gray-500">{totalReplies > 0 ? `${totalReplies} repl${totalReplies > 1 ? 'ies' : 'y'}` : 'No replies yet'}</p>
-                              <p className="text-xs font-semibold mt-0.5" style={{ color: '#6C47FF' }}>View →</p>
-                            </div>
-                          </button>
-                        )
-                      })}
-                    </div>
+                    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 items-stretch">
+  {Object.entries(grouped).map(([subj, msgs]) => {
+    const cfg = SUBJ_CFG[subj] || SUBJ_CFG['General']
+    const totalReplies = msgs.reduce((s, m) => s + (m.replies?.length || 0), 0)
+    const concerns = msgs.reduce((s, m) => s + (m.replies?.filter(r => r.sentiment === 'concern' || r.urgency === 'high').length || 0), 0)
+    return (
+      <button key={subj} onClick={() => setExpandedSubjectTeacher(subj)}
+        className="card overflow-hidden text-left hover:shadow-md transition flex flex-col">
+        
+        {/* Fixed height header — prevents title length affecting card size */}
+        <div className={`${cfg.color} p-4 text-white relative flex flex-col justify-end`} style={{ minHeight: '112px' }}>
+          
+          {/* Badge — always top right, shown when replies exist */}
+          {concerns > 0 && (
+            <span className="absolute top-3 right-3 badge bg-red-400 text-white animate-pulse">⚠️ {concerns}</span>
+          )}
+          {totalReplies > 0 && concerns === 0 && (
+            <span className="absolute top-3 right-3 badge bg-yellow-300 text-yellow-900">💬 {totalReplies}</span>
+          )}
+
+          <span className="text-2xl mb-2">{cfg.icon}</span>
+
+          {/* line-clamp-2 prevents title from growing the card */}
+          <p className="font-semibold text-sm leading-snug line-clamp-2">{subj}</p>
+          <p className="text-xs opacity-75 mt-0.5">{msgs.length} update{msgs.length > 1 ? 's' : ''}</p>
+        </div>
+
+        {/* Body — flex-1 + justify-between pins View → to bottom */}
+        <div className="flex-1 bg-white px-4 py-3 flex flex-col justify-between">
+          <p className="text-xs text-gray-500">
+            {totalReplies > 0 ? `${totalReplies} repl${totalReplies > 1 ? 'ies' : 'y'}` : 'No replies yet'}
+          </p>
+          <p className="text-xs font-semibold mt-2" style={{ color: '#6C47FF' }}>View →</p>
+        </div>
+      </button>
+    )
+  })}
+</div>
                   )}
 
                   {expandedSubjectTeacher && (() => {
