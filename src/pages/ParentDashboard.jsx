@@ -480,7 +480,7 @@ function RemindersWidget({ profile }) {
   )
 }
 
-function AppointmentBooking({ profile, currentChild }) {
+function AppointmentBooking({ profile, currentChild, children }) {
   const [appointments, setAppointments] = useState([])
   const [booking, setBooking] = useState(false)
   const [appointmentType, setAppointmentType] = useState('Academic Progress')
@@ -489,25 +489,20 @@ function AppointmentBooking({ profile, currentChild }) {
   const [note, setNote] = useState('')
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
-
-function AppointmentBooking({ profile, currentChild, children, selectedChildIdx, setSelectedChildIdx }) {
-  const [appointments, setAppointments] = useState([])
-  const [booking, setBooking] = useState(false)
-  const [appointmentType, setAppointmentType] = useState('Academic Progress')
-  const [preferredDate, setPreferredDate] = useState('')
-  const [preferredTime, setPreferredTime] = useState('')
-  const [note, setNote] = useState('')
-  const [saving, setSaving] = useState(false)
-  const [saved, setSaved] = useState(false)
-  const [selectedChild, setSelectedChild] = useState(currentChild?.name || profile.child_name || '')
+  const [selectedChild, setSelectedChild] = useState('')
 
   const TEACHER_ID = '83e0135e-9d7b-43af-aa81-4bce2c025208'
 
   useEffect(() => {
+    fetchAppointments()
     setSelectedChild(currentChild?.name || profile.child_name || '')
-  }, [currentChild])
+  }, [])
 
-  useEffect(() => { fetchAppointments() }, [])
+  useEffect(() => {
+    if (!selectedChild) {
+      setSelectedChild(currentChild?.name || profile.child_name || '')
+    }
+  }, [currentChild])
 
   const fetchAppointments = async () => {
     try {
@@ -556,13 +551,11 @@ function AppointmentBooking({ profile, currentChild, children, selectedChildIdx,
 
       {booking && (
         <div className="bg-teal-50 rounded-xl p-4 space-y-3">
-
-          {/* Child selector — only show if multiple children */}
           {children && children.length > 1 && (
             <div>
               <label className="block text-xs font-semibold text-gray-700 mb-1">Which child is this for?</label>
               <div className="flex gap-2 flex-wrap">
-                {children.map((child, idx) => (
+                {children.map((child) => (
                   <button key={child.id} onClick={() => setSelectedChild(child.name)}
                     className={`px-3 py-2 rounded-lg text-xs border transition ${selectedChild === child.name ? 'bg-teal-600 text-white border-teal-600' : 'bg-white text-gray-700 border-gray-300 hover:border-teal-400'}`}>
                     👤 {child.name} — Yr {child.year_level}
@@ -571,7 +564,6 @@ function AppointmentBooking({ profile, currentChild, children, selectedChildIdx,
               </div>
             </div>
           )}
-
           <div>
             <label className="block text-xs font-semibold text-gray-700 mb-1">What is this about?</label>
             <div className="grid grid-cols-2 gap-2">
@@ -583,14 +575,12 @@ function AppointmentBooking({ profile, currentChild, children, selectedChildIdx,
               ))}
             </div>
           </div>
-
           <div>
             <label className="block text-xs font-semibold text-gray-700 mb-1">Preferred date</label>
             <input type="date" value={preferredDate} onChange={e => setPreferredDate(e.target.value)}
               min={new Date().toISOString().split('T')[0]}
               className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400"/>
           </div>
-
           <div>
             <label className="block text-xs font-semibold text-gray-700 mb-1">Preferred time</label>
             <div className="grid grid-cols-3 gap-2">
@@ -602,21 +592,17 @@ function AppointmentBooking({ profile, currentChild, children, selectedChildIdx,
               ))}
             </div>
           </div>
-
           <textarea value={note} onChange={e => setNote(e.target.value)} rows={2}
             className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400"
             placeholder="What would you like to discuss? (optional)"/>
-
           <div className="bg-amber-50 rounded-lg p-2 text-xs text-amber-700">
             ⚠️ For urgent welfare concerns contact the school directly.
           </div>
-
           {selectedChild && (
             <div className="bg-teal-100 rounded-lg p-2 text-xs text-teal-800">
               📋 Booking for: <strong>{selectedChild}</strong>
             </div>
           )}
-
           <button onClick={handleBook} disabled={saving || !preferredDate || !preferredTime}
             className="w-full bg-teal-600 text-white py-2 rounded-lg text-sm font-semibold hover:bg-teal-700 disabled:opacity-50">
             {saving ? 'Booking...' : '📅 Request Appointment'}
@@ -634,110 +620,6 @@ function AppointmentBooking({ profile, currentChild, children, selectedChildIdx,
                   <p className="text-sm font-semibold text-gray-800">{a.appointment_type}</p>
                   {a.child_name && <p className="text-xs text-teal-600">👤 {a.child_name}</p>}
                 </div>
-                <span className={`text-xs px-2 py-0.5 rounded-full ${a.status === 'confirmed' ? 'bg-green-100 text-green-700' : a.status === 'cancelled' ? 'bg-red-100 text-red-700' : 'bg-yellow-100 text-yellow-700'}`}>
-                  {a.status === 'confirmed' ? '✅ Confirmed' : a.status === 'cancelled' ? '❌ Cancelled' : '⏳ Pending'}
-                </span>
-              </div>
-              <p className="text-xs text-gray-500">
-                📅 {new Date(a.preferred_date).toLocaleDateString('en-AU', { weekday: 'long', day: 'numeric', month: 'long' })} at {a.preferred_time}
-              </p>
-              {a.note && <p className="text-xs text-gray-400 italic">"{a.note}"</p>}
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  )
-}
-  useEffect(() => { fetchAppointments() }, [])
-
-  const fetchAppointments = async () => {
-    try {
-      const res = await axios.get(`${API}/api/appointments/${profile.id}`)
-      setAppointments(res.data.data || [])
-    } catch(e) {}
-  }
-
-  const handleBook = async () => {
-    if (!preferredDate || !preferredTime) return
-    setSaving(true)
-    try {
-      await axios.post(`${API}/api/book-appointment`, {
-        parentId: profile.id, parentName: profile.name,
-        childName: currentChild?.name || profile.child_name,
-        teacherId: TEACHER_ID, appointmentType,
-        preferredDate, preferredTime, note
-      })
-      setSaved(true)
-      setPreferredDate(''); setPreferredTime(''); setNote(''); setBooking(false)
-      fetchAppointments()
-      setTimeout(() => setSaved(false), 3000)
-    } catch(e) {}
-    setSaving(false)
-  }
-
-  return (
-    <div className="bg-white rounded-xl shadow p-5 space-y-4">
-      <div className="flex justify-between items-center">
-        <h3 className="text-sm font-bold text-gray-800">📋 Book an Appointment</h3>
-        <button onClick={() => setBooking(!booking)}
-          className="text-xs bg-teal-600 text-white px-3 py-1.5 rounded-lg hover:bg-teal-700 transition">
-          {booking ? '✕ Cancel' : '+ Book'}
-        </button>
-      </div>
-
-      {saved && <div className="bg-green-100 text-green-800 text-center py-2 rounded-lg text-sm font-semibold">✅ Request sent! Teacher will confirm.</div>}
-
-      {booking && (
-        <div className="bg-teal-50 rounded-xl p-4 space-y-3">
-          <div>
-            <label className="block text-xs font-semibold text-gray-700 mb-1">What is this about?</label>
-            <div className="grid grid-cols-2 gap-2">
-              {['Academic Progress', 'Behaviour Concern', 'Learning Support', 'General Check-in'].map(t => (
-                <button key={t} onClick={() => setAppointmentType(t)}
-                  className={`px-3 py-2 rounded-lg text-xs border transition text-left ${appointmentType === t ? 'bg-teal-600 text-white border-teal-600' : 'bg-white text-gray-700 border-gray-300 hover:border-teal-400'}`}>
-                  {t}
-                </button>
-              ))}
-            </div>
-          </div>
-          <div>
-            <label className="block text-xs font-semibold text-gray-700 mb-1">Preferred date</label>
-            <input type="date" value={preferredDate} onChange={e => setPreferredDate(e.target.value)}
-              min={new Date().toISOString().split('T')[0]}
-              className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400"/>
-          </div>
-          <div>
-            <label className="block text-xs font-semibold text-gray-700 mb-1">Preferred time</label>
-            <div className="grid grid-cols-3 gap-2">
-              {['8:00 AM','9:00 AM','10:00 AM','11:00 AM','1:00 PM','2:00 PM','3:00 PM','After school','Phone call'].map(t => (
-                <button key={t} onClick={() => setPreferredTime(t)}
-                  className={`px-2 py-2 rounded-lg text-xs border transition ${preferredTime === t ? 'bg-teal-600 text-white border-teal-600' : 'bg-white text-gray-700 border-gray-300 hover:border-teal-400'}`}>
-                  {t}
-                </button>
-              ))}
-            </div>
-          </div>
-          <textarea value={note} onChange={e => setNote(e.target.value)} rows={2}
-            className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400"
-            placeholder="What would you like to discuss? (optional)"/>
-          <div className="bg-amber-50 rounded-lg p-2 text-xs text-amber-700">
-            ⚠️ For urgent welfare concerns contact the school directly.
-          </div>
-          <button onClick={handleBook} disabled={saving || !preferredDate || !preferredTime}
-            className="w-full bg-teal-600 text-white py-2 rounded-lg text-sm font-semibold hover:bg-teal-700 disabled:opacity-50">
-            {saving ? 'Booking...' : '📅 Request Appointment'}
-          </button>
-        </div>
-      )}
-
-      {appointments.length > 0 && (
-        <div className="space-y-2">
-          <p className="text-xs font-semibold text-gray-600">Your appointments:</p>
-          {appointments.map((a, i) => (
-            <div key={i} className="bg-gray-50 rounded-lg p-3 space-y-1">
-              <div className="flex justify-between items-center">
-                <p className="text-sm font-semibold text-gray-800">{a.appointment_type}</p>
                 <span className={`text-xs px-2 py-0.5 rounded-full ${a.status === 'confirmed' ? 'bg-green-100 text-green-700' : a.status === 'cancelled' ? 'bg-red-100 text-red-700' : 'bg-yellow-100 text-yellow-700'}`}>
                   {a.status === 'confirmed' ? '✅ Confirmed' : a.status === 'cancelled' ? '❌ Cancelled' : '⏳ Pending'}
                 </span>
@@ -775,13 +657,10 @@ function AchievementBadges({ profile }) {
             {badges.earned.length} earned
           </span>
         </div>
-        <button onClick={() => setShow(!show)}
-          className="text-xs text-teal-600 hover:text-teal-800">
+        <button onClick={() => setShow(!show)} className="text-xs text-teal-600 hover:text-teal-800">
           {show ? '▲ Hide' : '▼ Show all'}
         </button>
       </div>
-
-      {/* Earned badges preview — always show top 3 */}
       <div className="flex gap-2 flex-wrap">
         {badges.earned.slice(0, show ? 99 : 3).map((badge, i) => (
           <div key={i} className={`rounded-xl border px-3 py-2 flex items-center gap-2 ${badge.color}`}>
@@ -799,8 +678,6 @@ function AchievementBadges({ profile }) {
           </button>
         )}
       </div>
-
-      {/* Locked badges */}
       {show && badges.locked.length > 0 && (
         <div className="space-y-2">
           <p className="text-xs font-semibold text-gray-500 mt-2">🔒 Still to earn:</p>
@@ -817,7 +694,6 @@ function AchievementBadges({ profile }) {
           </div>
         </div>
       )}
-
       <p className="text-xs text-gray-400 text-center">Keep supporting {profile.child_name}'s learning to unlock more! 🌟</p>
     </div>
   )
@@ -830,7 +706,6 @@ function ProgressSummary({ profile, messages, triedTips }) {
     return acc + tips.length
   }, 0)
   const totalTried = Object.values(triedTips).filter(v => v === 'tried').length
-  const totalStruggled = Object.values(triedTips).filter(v => v === 'struggled').length
 
   const getEncouragement = () => {
     if (totalTried >= 5) return "You're an amazing learning partner! 🌟"
@@ -891,22 +766,13 @@ function ShareWithPartner({ profile, currentChild, messages }) {
         if (t) tips.push(`• ${t}`)
       }
     })
-    return `📚 BridgeUp Update for ${childName}
-
-This week ${childName} is learning: ${subjects.join(', ')}
-
-🏠 How you can help at home:
-${tips.slice(0, 2).join('\n')}
-
-Sent via BridgeUp — bridging school and home 🌉`
+    return `📚 BridgeUp Update for ${childName}\n\nThis week ${childName} is learning: ${subjects.join(', ')}\n\n🏠 How you can help at home:\n${tips.slice(0, 2).join('\n')}\n\nSent via BridgeUp — bridging school and home 🌉`
   }
 
   const handleShare = async () => {
     const text = generateSummary()
     if (navigator.share) {
-      try {
-        await navigator.share({ title: 'BridgeUp Update', text })
-      } catch(e) {}
+      try { await navigator.share({ title: 'BridgeUp Update', text }) } catch(e) {}
     } else {
       navigator.clipboard.writeText(text)
       setCopied(true)
@@ -922,7 +788,7 @@ Sent via BridgeUp — bridging school and home 🌉`
       <span className="text-2xl">📤</span>
       <div className="text-left flex-1">
         <p className="text-sm font-semibold text-gray-800">
-          {copied ? '✅ Copied to clipboard!' : 'Share this week\'s update'}
+          {copied ? '✅ Copied to clipboard!' : "Share this week's update"}
         </p>
         <p className="text-xs text-gray-500">Send to your partner or family via WhatsApp, SMS or email</p>
       </div>
@@ -938,105 +804,21 @@ function PrintableSummary({ profile, currentChild, messages, triedTips }) {
     setGenerating(true)
     const childName = currentChild?.name || profile.child_name || 'your child'
     const subjects = [...new Set(messages.map(m => m.messages?.subject).filter(Boolean))]
-
     const allTips = []
     messages.forEach(m => {
       const subject = m.messages?.subject || 'General'
       const tips = m.translated_tips ? m.translated_tips.split(' | ') : []
       tips.forEach((tip, i) => {
         const key = `${m.message_id}_${i}`
-        const status = triedTips[key]
-        allTips.push({ subject, tip, status })
+        allTips.push({ subject, tip, status: triedTips[key] })
       })
     })
-
     const tried = allTips.filter(t => t.status === 'tried').length
     const total = allTips.length
-
     const printWindow = window.open('', '_blank')
-    printWindow.document.write(`
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <title>BridgeUp — ${childName}'s Learning Summary</title>
-        <style>
-          body { font-family: Arial, sans-serif; max-width: 700px; margin: 30px auto; color: #333; padding: 20px; }
-          .header { background: linear-gradient(135deg, #1d4ed8, #0d9488); color: white; padding: 24px; border-radius: 12px; margin-bottom: 24px; }
-          .header h1 { margin: 0 0 4px 0; font-size: 24px; }
-          .header p { margin: 0; opacity: 0.85; font-size: 14px; }
-          .section { background: #f8fafc; border-radius: 10px; padding: 16px; margin-bottom: 16px; border-left: 4px solid #0d9488; }
-          .section h2 { margin: 0 0 12px 0; font-size: 16px; color: #0d9488; }
-          .tip { background: white; border-radius: 8px; padding: 10px 14px; margin-bottom: 8px; border: 1px solid #e5e7eb; }
-          .tip-subject { font-size: 11px; font-weight: bold; color: #6366f1; text-transform: uppercase; margin-bottom: 4px; }
-          .tip-text { font-size: 13px; color: #374151; }
-          .tip-status { font-size: 11px; margin-top: 4px; }
-          .tried { color: #16a34a; }
-          .struggled { color: #ea580c; }
-          .pending { color: #9ca3af; }
-          .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 16px; }
-          .stat { background: white; border: 1px solid #e5e7eb; border-radius: 8px; padding: 12px; text-align: center; }
-          .stat-value { font-size: 28px; font-weight: bold; color: #0d9488; }
-          .stat-label { font-size: 11px; color: #6b7280; margin-top: 2px; }
-          .subjects { display: flex; gap: 8px; flex-wrap: wrap; }
-          .subject-tag { background: #dbeafe; color: #1e40af; padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: bold; }
-          .footer { text-align: center; margin-top: 24px; padding-top: 16px; border-top: 1px solid #e5e7eb; font-size: 11px; color: #9ca3af; }
-          @media print { body { margin: 0; } }
-        </style>
-      </head>
-      <body>
-        <div class="header">
-          <h1>🌉 BridgeUp Learning Summary</h1>
-          <p>${childName}'s Weekly Update · ${new Date().toLocaleDateString('en-AU', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}</p>
-          <p style="margin-top:6px; font-size:13px;">Prepared for ${profile.name}</p>
-        </div>
-
-        <div class="stats">
-          <div class="stat">
-            <div class="stat-value">${messages.length}</div>
-            <div class="stat-label">Updates this week</div>
-          </div>
-          <div class="stat">
-            <div class="stat-value">${tried}</div>
-            <div class="stat-label">Activities tried</div>
-          </div>
-          <div class="stat">
-            <div class="stat-value">${total}</div>
-            <div class="stat-label">Total activities</div>
-          </div>
-        </div>
-
-        <div class="section">
-          <h2>📚 Subjects This Week</h2>
-          <div class="subjects">
-            ${subjects.map(s => `<span class="subject-tag">${s}</span>`).join('')}
-          </div>
-        </div>
-
-        <div class="section">
-          <h2>🏠 At-Home Activities</h2>
-          ${allTips.slice(0, 10).map(t => `
-            <div class="tip">
-              <div class="tip-subject">${t.subject}</div>
-              <div class="tip-text">${t.tip}</div>
-              <div class="tip-status ${t.status === 'tried' ? 'tried' : t.status === 'struggled' ? 'struggled' : 'pending'}">
-                ${t.status === 'tried' ? '✅ Completed!' : t.status === 'struggled' ? '😕 Needs support' : '⏳ Not yet tried'}
-              </div>
-            </div>
-          `).join('')}
-        </div>
-
-        <div class="footer">
-          <p>Generated by BridgeUp — Powered by CurricuLLM 🎓</p>
-          <p>Compliant with the Australian Privacy Act 1988 · Not for distribution outside the family</p>
-        </div>
-      </body>
-      </html>
-    `)
+    printWindow.document.write(`<!DOCTYPE html><html><head><title>BridgeUp — ${childName}'s Learning Summary</title><style>body{font-family:Arial,sans-serif;max-width:700px;margin:30px auto;color:#333;padding:20px}.header{background:linear-gradient(135deg,#1d4ed8,#0d9488);color:white;padding:24px;border-radius:12px;margin-bottom:24px}.header h1{margin:0 0 4px 0;font-size:24px}.header p{margin:0;opacity:.85;font-size:14px}.section{background:#f8fafc;border-radius:10px;padding:16px;margin-bottom:16px;border-left:4px solid #0d9488}.section h2{margin:0 0 12px 0;font-size:16px;color:#0d9488}.tip{background:white;border-radius:8px;padding:10px 14px;margin-bottom:8px;border:1px solid #e5e7eb}.tip-subject{font-size:11px;font-weight:bold;color:#6366f1;text-transform:uppercase;margin-bottom:4px}.tip-text{font-size:13px;color:#374151}.tip-status{font-size:11px;margin-top:4px}.tried{color:#16a34a}.struggled{color:#ea580c}.pending{color:#9ca3af}.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px}.stat{background:white;border:1px solid #e5e7eb;border-radius:8px;padding:12px;text-align:center}.stat-value{font-size:28px;font-weight:bold;color:#0d9488}.stat-label{font-size:11px;color:#6b7280;margin-top:2px}.subjects{display:flex;gap:8px;flex-wrap:wrap}.subject-tag{background:#dbeafe;color:#1e40af;padding:4px 10px;border-radius:20px;font-size:12px;font-weight:bold}.footer{text-align:center;margin-top:24px;padding-top:16px;border-top:1px solid #e5e7eb;font-size:11px;color:#9ca3af}</style></head><body><div class="header"><h1>🌉 BridgeUp Learning Summary</h1><p>${childName}'s Weekly Update · ${new Date().toLocaleDateString('en-AU',{weekday:'long',day:'numeric',month:'long',year:'numeric'})}</p><p style="margin-top:6px;font-size:13px;">Prepared for ${profile.name}</p></div><div class="stats"><div class="stat"><div class="stat-value">${messages.length}</div><div class="stat-label">Updates this week</div></div><div class="stat"><div class="stat-value">${tried}</div><div class="stat-label">Activities tried</div></div><div class="stat"><div class="stat-value">${total}</div><div class="stat-label">Total activities</div></div></div><div class="section"><h2>📚 Subjects This Week</h2><div class="subjects">${subjects.map(s=>`<span class="subject-tag">${s}</span>`).join('')}</div></div><div class="section"><h2>🏠 At-Home Activities</h2>${allTips.slice(0,10).map(t=>`<div class="tip"><div class="tip-subject">${t.subject}</div><div class="tip-text">${t.tip}</div><div class="tip-status ${t.status==='tried'?'tried':t.status==='struggled'?'struggled':'pending'}">${t.status==='tried'?'✅ Completed!':t.status==='struggled'?'😕 Needs support':'⏳ Not yet tried'}</div></div>`).join('')}</div><div class="footer"><p>Generated by BridgeUp — Powered by CurricuLLM 🎓</p><p>Compliant with the Australian Privacy Act 1988 · Not for distribution outside the family</p></div></body></html>`)
     printWindow.document.close()
-    setTimeout(() => {
-      printWindow.print()
-      setGenerating(false)
-    }, 500)
+    setTimeout(() => { printWindow.print(); setGenerating(false) }, 500)
   }
 
   if (messages.length === 0) return null
@@ -1046,9 +828,7 @@ function PrintableSummary({ profile, currentChild, messages, triedTips }) {
       className="w-full bg-white border border-gray-200 rounded-xl p-3 flex items-center gap-3 hover:bg-gray-50 transition shadow-sm disabled:opacity-50">
       <span className="text-2xl">🖨️</span>
       <div className="text-left flex-1">
-        <p className="text-sm font-semibold text-gray-800">
-          {generating ? '⏳ Generating...' : "Print this week's summary"}
-        </p>
+        <p className="text-sm font-semibold text-gray-800">{generating ? '⏳ Generating...' : "Print this week's summary"}</p>
         <p className="text-xs text-gray-500">Download a PDF with all tips, activities and progress for {currentChild?.name || profile.child_name}</p>
       </div>
       <span className="text-gray-400">→</span>
@@ -1088,22 +868,25 @@ export default function ParentDashboard({ supabase, profile }) {
   const [activityLength, setActivityLength] = useState('10')
   const [savingProfile, setSavingProfile] = useState(false)
   const [profileSaved, setProfileSaved] = useState(false)
-  const [activityVisible, setActivityVisible] = useState(
-  profile.activity_visible !== false
-)
-const [savingVisibility, setSavingVisibility] = useState(false)
+  const [activityVisible, setActivityVisible] = useState(profile.activity_visible !== false)
+  const [savingVisibility, setSavingVisibility] = useState(false)
 
   useEffect(() => {
-  fetchMessages()
-  fetchChildren()
-  axios.post(`${API}/api/track-activity`, { parentId: profile.id }).catch(() => {})
-}, [])
-  useEffect(() => { chatEndRef.current?.scrollIntoView({ behavior: 'smooth' }) }, [chatMessages])
-useEffect(() => {
-  const unread = messages.filter(m => !m.is_read).length
-  document.title = unread > 0 ? `(${unread}) BridgeUp` : 'BridgeUp'
-  return () => { document.title = 'BridgeUp' }
-}, [messages])
+    fetchMessages()
+    fetchChildren()
+    axios.post(`${API}/api/track-activity`, { parentId: profile.id }).catch(() => {})
+  }, [])
+
+  useEffect(() => {
+    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }, [chatMessages])
+
+  useEffect(() => {
+    const unread = messages.filter(m => !m.is_read).length
+    document.title = unread > 0 ? `(${unread}) BridgeUp` : 'BridgeUp'
+    return () => { document.title = 'BridgeUp' }
+  }, [messages])
+
   const fetchMessages = async () => {
     const res = await axios.get(`${API}/api/parent-messages/${profile.id}`)
     setMessages(res.data.data || [])
@@ -1227,7 +1010,6 @@ useEffect(() => {
                     <span className="text-xs bg-teal-100 text-teal-700 px-2 py-0.5 rounded-full font-medium">🤖 AI-generated • ✅ Teacher-approved</span>
                   </div>
                 </div>
-
                 <div className="bg-white rounded-xl p-4 shadow-sm space-y-3">
                   <p className="text-sm font-semibold text-gray-700">📚 This week's learning</p>
                   <p className="text-sm text-gray-700 leading-relaxed">
@@ -1253,7 +1035,6 @@ useEffect(() => {
                     )}
                   </div>
                 </div>
-
                 {tips.length > 0 && (
                   <div className="bg-white rounded-xl p-4 shadow-sm">
                     <p className="text-sm font-semibold text-green-800 mb-3">🏠 How you can help at home</p>
@@ -1287,7 +1068,6 @@ useEffect(() => {
                     </div>
                   </div>
                 )}
-
                 <div className="bg-white rounded-xl p-4 shadow-sm space-y-3">
                   <div className="flex justify-between items-center">
                     <p className="text-sm font-semibold text-gray-700">💬 Reply to teacher</p>
@@ -1380,29 +1160,25 @@ useEffect(() => {
           </div>
         </div>
         <div className="flex items-center gap-3">
-  <div className="relative">
-    <select
-      value={profile.language}
-      onChange={async (e) => {
-        const newLang = e.target.value
-        try {
-          await axios.post(`${API}/api/update-language`, {
-            parentId: profile.id,
-            language: newLang
-          })
-          window.location.reload()
-        } catch(e) {}
-      }}
-      className="bg-blue-600 text-white text-xs border border-blue-400 rounded-lg px-2 py-1.5 cursor-pointer hover:bg-blue-500 transition appearance-none pr-6">
-      {LANGUAGES.map(l => (
-        <option key={l.code} value={l.code} className="bg-white text-gray-800">{l.label}</option>
-      ))}
-    </select>
-    <span className="absolute right-1.5 top-1.5 text-white text-xs pointer-events-none">▼</span>
-  </div>
-  <span className="text-sm">👋 {profile.name}</span>
-  <button onClick={handleLogout} className="text-blue-200 hover:text-white text-sm">Sign out</button>
-</div>
+          <div className="relative">
+            <select value={profile.language}
+              onChange={async (e) => {
+                const newLang = e.target.value
+                try {
+                  await axios.post(`${API}/api/update-language`, { parentId: profile.id, language: newLang })
+                  window.location.reload()
+                } catch(e) {}
+              }}
+              className="bg-blue-600 text-white text-xs border border-blue-400 rounded-lg px-2 py-1.5 cursor-pointer hover:bg-blue-500 transition appearance-none pr-6">
+              {LANGUAGES.map(l => (
+                <option key={l.code} value={l.code} className="bg-white text-gray-800">{l.label}</option>
+              ))}
+            </select>
+            <span className="absolute right-1.5 top-1.5 text-white text-xs pointer-events-none">▼</span>
+          </div>
+          <span className="text-sm">👋 {profile.name}</span>
+          <button onClick={handleLogout} className="text-blue-200 hover:text-white text-sm">Sign out</button>
+        </div>
       </header>
 
       {children.length > 1 && (
@@ -1554,13 +1330,7 @@ useEffect(() => {
               <p className="mt-1">View reminders from your teacher and book appointments.</p>
             </div>
             <RemindersWidget profile={profile} />
-            <AppointmentBooking
-  profile={profile}
-  currentChild={currentChild}
-  children={children}
-  selectedChildIdx={selectedChildIdx}
-  setSelectedChildIdx={setSelectedChildIdx}
-/>
+            <AppointmentBooking profile={profile} currentChild={currentChild} children={children} />
           </div>
         )}
 
@@ -1639,37 +1409,32 @@ useEffect(() => {
               )}
             </div>
             <div className="bg-gray-50 rounded-xl p-4 text-xs text-gray-500 space-y-3">
-  <p className="font-semibold text-gray-700">🔐 Privacy Settings</p>
-
-  {/* Activity Visibility Toggle */}
-  <div className="bg-white rounded-xl border border-gray-200 p-4 space-y-2">
-    <div className="flex justify-between items-center">
-      <div>
-        <p className="text-sm font-semibold text-gray-700">👁️ Show my last active time</p>
-        <p className="text-xs text-gray-400 mt-0.5">Your teacher can see when you last used the app</p>
-      </div>
-      <button onClick={async () => {
-        const newVal = !activityVisible
-        setActivityVisible(newVal)
-        setSavingVisibility(true)
-        try {
-          await axios.post(`${API}/api/update-activity-visibility`, {
-            parentId: profile.id, visible: newVal
-          })
-        } catch(e) {}
-        setSavingVisibility(false)
-      }}
-        className={`relative w-12 h-6 rounded-full transition-colors ${activityVisible ? 'bg-teal-500' : 'bg-gray-300'} ${savingVisibility ? 'opacity-50' : ''}`}>
-        <span className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-all ${activityVisible ? 'left-6' : 'left-0.5'}`}/>
-      </button>
-    </div>
-    <p className={`text-xs font-medium ${activityVisible ? 'text-teal-600' : 'text-gray-400'}`}>
-      {activityVisible ? '✅ Visible to teacher — helps them support your family' : '🔒 Hidden — teacher cannot see your activity'}
-    </p>
-  </div>
-
-  <p className="text-xs text-gray-400">Stored securely. Never shared or used for advertising. Compliant with the Australian Privacy Act 1988.</p>
-</div>
+              <p className="font-semibold text-gray-700">🔐 Privacy Settings</p>
+              <div className="bg-white rounded-xl border border-gray-200 p-4 space-y-2">
+                <div className="flex justify-between items-center">
+                  <div>
+                    <p className="text-sm font-semibold text-gray-700">👁️ Show my last active time</p>
+                    <p className="text-xs text-gray-400 mt-0.5">Your teacher can see when you last used the app</p>
+                  </div>
+                  <button onClick={async () => {
+                    const newVal = !activityVisible
+                    setActivityVisible(newVal)
+                    setSavingVisibility(true)
+                    try {
+                      await axios.post(`${API}/api/update-activity-visibility`, { parentId: profile.id, visible: newVal })
+                    } catch(e) {}
+                    setSavingVisibility(false)
+                  }}
+                    className={`relative w-12 h-6 rounded-full transition-colors ${activityVisible ? 'bg-teal-500' : 'bg-gray-300'} ${savingVisibility ? 'opacity-50' : ''}`}>
+                    <span className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-all ${activityVisible ? 'left-6' : 'left-0.5'}`}/>
+                  </button>
+                </div>
+                <p className={`text-xs font-medium ${activityVisible ? 'text-teal-600' : 'text-gray-400'}`}>
+                  {activityVisible ? '✅ Visible to teacher — helps them support your family' : '🔒 Hidden — teacher cannot see your activity'}
+                </p>
+              </div>
+              <p className="text-xs text-gray-400">Stored securely. Never shared or used for advertising. Compliant with the Australian Privacy Act 1988.</p>
+            </div>
           </div>
         )}
       </div>
