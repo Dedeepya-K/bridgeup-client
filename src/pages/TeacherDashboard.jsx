@@ -137,6 +137,14 @@ export default function TeacherDashboard({ supabase, profile }) {
   useEffect(() => {
     fetchMessages(); fetchEngagement()
     axios.get(`${API}/api/all-parents`).then(r => setAllParents(r.data.data || [])).catch(() => {})
+    axios.get(`${API}/api/naplan-progress/${profile.id}`)
+      .then(r => {
+        if (r.data.success && r.data.data.length > 0) {
+          setNaplanProgress(r.data.data)
+          setNaplanProgressLoaded(true)
+          setSelectedNaplanStudent(r.data.data[0].student_name)
+        }
+      }).catch(() => {})
   }, [])
 
   const fetchMessages = async () => {
