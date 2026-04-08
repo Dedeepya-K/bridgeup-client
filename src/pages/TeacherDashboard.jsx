@@ -100,11 +100,21 @@ export default function TeacherDashboard({ supabase, profile }) {
   const [feedAverage, setFeedAverage] = useState(0)
   const [nudges, setNudges] = useState({})
   const [nudgeLoading, setNudgeLoading] = useState({})
-  const [naplanNote, setNaplanNote] = useState('')
-  const [naplanResult, setNaplanResult] = useState('')
-  const [naplanLoading, setNaplanLoading] = useState(false)
-  const [naplanSubject, setNaplanSubject] = useState('English')
-  const [naplanYear, setNaplanYear] = useState('8')
+const [naplanNote, setNaplanNote] = useState('')
+const [naplanResult, setNaplanResult] = useState('')
+const [naplanLoading, setNaplanLoading] = useState(false)
+const [naplanSubject, setNaplanSubject] = useState('English')
+const [naplanYear, setNaplanYear] = useState('8')
+const [naplanBandStudent, setNaplanBandStudent] = useState('')
+const [naplanBandSubject, setNaplanBandSubject] = useState('English')
+const [naplanBandLevel, setNaplanBandLevel] = useState('5')
+const [naplanBandYear, setNaplanBandYear] = useState('8')
+const [naplanBandDate, setNaplanBandDate] = useState(new Date().toISOString().split('T')[0])
+const [naplanBandNote, setNaplanBandNote] = useState('')
+const [naplanBandSaving, setNaplanBandSaving] = useState(false)
+const [naplanBandSaved, setNaplanBandSaved] = useState(false)
+const [naplanProgress, setNaplanProgress] = useState([])
+const [naplanProgressLoaded, setNaplanProgressLoaded] = useState(false)
   const [emojiInsights, setEmojiInsights] = useState([])
   const [engagementScores, setEngagementScores] = useState([])
   const [parentActivity, setParentActivity] = useState([])
@@ -1106,13 +1116,17 @@ export default function TeacherDashboard({ supabase, profile }) {
         )}
 
         {/* ── NAPLAN ── */}
+        {/* ── NAPLAN ── */}
         {tab === 'naplan' && (
           <div className="space-y-5">
             <div>
               <p className="eyebrow">Assessment</p>
               <h2 className="text-lg font-semibold text-gray-900">NAPLAN Progress Snapshot</h2>
             </div>
+
+            {/* Message Generator */}
             <div className="card p-5 space-y-4">
+              <p className="eyebrow">Message Generator</p>
               <p className="text-sm text-gray-500">Turn your progress notes into parent-friendly NAPLAN updates with targeted home tips.</p>
               <div className="grid grid-cols-2 gap-4">
                 <div>
@@ -1142,9 +1156,9 @@ export default function TeacherDashboard({ supabase, profile }) {
                 {naplanLoading ? '✨ Generating with CurricuLLM...' : '📊 Generate NAPLAN Update'}
               </button>
               <div className="rounded-xl px-4 py-3 text-xs" style={{ background: '#EDE9FF', color: '#4B0FA8' }}>
-  <p className="font-semibold">⚠️ H-AI-H Reminder</p>
-  <p className="opacity-75 mt-1">This NAPLAN message is AI-generated. Review carefully before sharing with families. You are responsible as the qualified educator.</p>
-</div>
+                <p className="font-semibold">⚠️ H-AI-H Reminder</p>
+                <p className="opacity-75 mt-1">This NAPLAN message is AI-generated. Review carefully before sharing with families. You are responsible as the qualified educator.</p>
+              </div>
               {naplanResult && (
                 <div className="rounded-xl p-4 space-y-2" style={{ background: '#EDE9FF' }}>
                   <p className="eyebrow">Parent-Ready Message</p>
@@ -1153,6 +1167,195 @@ export default function TeacherDashboard({ supabase, profile }) {
                 </div>
               )}
             </div>
+
+            {/* Band Tracker */}
+            <div className="card p-5 space-y-4">
+              <p className="eyebrow">Band Tracker</p>
+              <h3 className="text-sm font-semibold text-gray-900">📈 Record Student NAPLAN Band</h3>
+              <p className="text-xs text-gray-500">Track progress over time. Parents see their child's improvement visually in their dashboard.</p>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+  <label className="block text-xs font-semibold text-gray-500 mb-1.5">Student name</label>
+  <select value={naplanBandStudent} onChange={e => setNaplanBandStudent(e.target.value)} className="input-base">
+    <option value="">— Select a student —</option>
+    {allParents.map(p => (
+      <option key={p.id} value={p.child_name || p.name}>
+        {p.child_name || p.name} {p.child_name ? `(parent: ${p.name})` : ''}
+      </option>
+    ))}
+  </select>
+</div>
+                <div>
+                  <label className="block text-xs font-semibold text-gray-500 mb-1.5">Subject</label>
+                  <select value={naplanBandSubject} onChange={e => setNaplanBandSubject(e.target.value)} className="input-base">
+                    {['English','Mathematics','Science'].map(s => <option key={s}>{s}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-gray-500 mb-1.5">NAPLAN Band (1–10)</label>
+                  <select value={naplanBandLevel} onChange={e => setNaplanBandLevel(e.target.value)} className="input-base">
+                    {['1','2','3','4','5','6','7','8','9','10'].map(b => <option key={b}>{b}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-gray-500 mb-1.5">Year Level</label>
+                  <select value={naplanBandYear} onChange={e => setNaplanBandYear(e.target.value)} className="input-base">
+                    {['3','5','7','9'].map(y => <option key={y}>{y}</option>)}
+                  </select>
+                </div>
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-gray-500 mb-1.5">Date assessed</label>
+                <input type="date" value={naplanBandDate} onChange={e => setNaplanBandDate(e.target.value)} className="input-base"/>
+              </div>
+              <textarea value={naplanBandNote} onChange={e => setNaplanBandNote(e.target.value)} rows={2}
+                className="input-base" placeholder="Optional note for your records..."/>
+              {naplanBandSaved ? (
+                <div className="bg-emerald-50 border border-emerald-200 text-emerald-700 text-center py-3 rounded-xl font-semibold text-sm">
+                  ✅ Band recorded!
+                </div>
+              ) : (
+                <button onClick={async () => {
+                  if (!naplanBandStudent.trim()) return
+                  setNaplanBandSaving(true)
+                  try {
+                    await axios.post(`${API}/api/naplan-band`, {
+                      teacherId: profile.id,
+                      studentName: naplanBandStudent,
+                      subject: naplanBandSubject,
+                      band: naplanBandLevel,
+                      yearLevel: naplanBandYear,
+                      date: naplanBandDate,
+                      note: naplanBandNote
+                    })
+                    setNaplanBandSaved(true)
+                    setNaplanBandStudent(''); setNaplanBandNote('')
+                    setTimeout(() => setNaplanBandSaved(false), 3000)
+                    const res = await axios.get(`${API}/api/naplan-progress/${profile.id}`)
+                    if (res.data.success) setNaplanProgress(res.data.data)
+                    setNaplanProgressLoaded(true)
+                  } catch(e) {
+                    alert('Error saving band: ' + (e.response?.data?.error || e.message))
+                  }
+                  setNaplanBandSaving(false)
+                }} disabled={naplanBandSaving || !naplanBandStudent.trim()} className="btn-primary w-full">
+                  {naplanBandSaving ? 'Saving...' : '💾 Record Band'}
+                </button>
+              )}
+            </div>
+
+            {/* Progress Chart */}
+            <div className="card p-5 space-y-4">
+              <div className="flex justify-between items-center">
+                <p className="eyebrow">Progress Over Time</p>
+                <button onClick={async () => {
+                  try {
+                    const res = await axios.get(`${API}/api/naplan-progress/${profile.id}`)
+                    if (res.data.success) { setNaplanProgress(res.data.data); setNaplanProgressLoaded(true) }
+                    else { alert('Load failed: ' + JSON.stringify(res.data)) }
+                  } catch(e) {
+                    alert('Load error: ' + e.message)
+                  }
+                }} className="btn-ghost text-xs px-3 py-1.5">🔄 Load</button>
+              </div>
+
+              {!naplanProgressLoaded ? (
+                <div className="text-center py-6">
+                  <p className="text-4xl mb-2">📊</p>
+                  <p className="text-xs text-gray-400">Click Load to view student bands over time.</p>
+                </div>
+              ) : naplanProgress.length === 0 ? (
+                <div className="text-center py-6">
+                  <p className="text-4xl mb-2">📭</p>
+                  <p className="text-xs text-gray-400">No bands recorded yet — use the tracker above to add your first entry.</p>
+                </div>
+              ) : (() => {
+                const grouped = naplanProgress.reduce((acc, entry) => {
+                  const key = `${entry.student_name} — ${entry.subject}`
+                  if (!acc[key]) acc[key] = []
+                  acc[key].push(entry)
+                  return acc
+                }, {})
+
+                return (
+                  <div className="space-y-6">
+                    {Object.entries(grouped).map(([key, entries]) => {
+                      const latestBand = entries[entries.length - 1]?.band || 0
+                      const firstBand = entries[0]?.band || 0
+                      const improvement = latestBand - firstBand
+                      const bandColor = latestBand >= 7 ? '#10B981' : latestBand >= 5 ? '#6C47FF' : latestBand >= 3 ? '#F59E0B' : '#EF4444'
+
+                      return (
+                        <div key={key} className="space-y-3">
+
+                          {/* Header row */}
+                          <div className="flex justify-between items-center">
+                            <p className="text-sm font-semibold text-gray-800">{key}</p>
+                            <div className="flex items-center gap-2">
+                              <span className="badge font-bold" style={{ background: '#EDE9FF', color: '#6C47FF' }}>
+                                Band {latestBand}
+                              </span>
+                              {improvement > 0 && (
+                                <span className="badge bg-emerald-100 text-emerald-700 font-bold">+{improvement} ↑</span>
+                              )}
+                              {improvement < 0 && (
+                                <span className="badge bg-red-100 text-red-700 font-bold">{improvement} ↓</span>
+                              )}
+                              {improvement === 0 && entries.length > 1 && (
+                                <span className="badge bg-gray-100 text-gray-500">→ Stable</span>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Band progress bar */}
+                          <div>
+                            <div className="progress-bar">
+                              <div className="progress-fill transition-all duration-700"
+                                style={{ width: `${(latestBand / 10) * 100}%`, background: bandColor }}/>
+                            </div>
+                            <div className="flex justify-between text-xs text-gray-400 mt-1">
+                              <span>Band 1</span>
+                              <span>Band 5</span>
+                              <span>Band 10</span>
+                            </div>
+                          </div>
+
+                          {/* Timeline dots */}
+                          <div className="flex gap-3 flex-wrap">
+                            {entries.map((e, i) => {
+                              const dotColor = e.band >= 7 ? '#10B981' : e.band >= 5 ? '#6C47FF' : e.band >= 3 ? '#F59E0B' : '#EF4444'
+                              const isLatest = i === entries.length - 1
+                              return (
+                                <div key={i} className="flex flex-col items-center gap-1">
+                                  <div className={`w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold text-white shadow-sm ${isLatest ? 'ring-2 ring-offset-2' : ''}`}
+                                    style={{ background: dotColor, ringColor: dotColor }}>
+                                    {e.band}
+                                  </div>
+                                  <p className="text-xs text-gray-400 whitespace-nowrap">
+                                    {new Date(e.recorded_date).toLocaleDateString('en-AU', { month: 'short', year: '2-digit' })}
+                                  </p>
+                                  {isLatest && <p className="text-xs font-semibold" style={{ color: '#6C47FF' }}>Latest</p>}
+                                </div>
+                              )
+                            })}
+                          </div>
+
+                          {/* Insight line */}
+                          <div className="rounded-xl px-3 py-2 text-xs" style={{ background: '#F5F3FF', color: '#4B0FA8' }}>
+                            {improvement > 1 ? `🚀 Strong improvement of ${improvement} bands — celebrate this with the family!` :
+                             improvement === 1 ? `📈 1 band improvement — keep encouraging home practice.` :
+                             improvement < 0 ? `⚠️ Band dropped by ${Math.abs(improvement)} — consider a parent conversation.` :
+                             entries.length === 1 ? `📋 First entry recorded. Add more over time to track progress.` :
+                             `➡️ Band stable at ${latestBand} — consistent performance.`}
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                )
+              })()}
+            </div>
+
           </div>
         )}
 
