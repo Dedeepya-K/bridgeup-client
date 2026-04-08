@@ -1255,7 +1255,7 @@ export default function ParentDashboard({ supabase, profile }) {
             ) : expandedSubject ? (
               renderSubjectContent(expandedSubject, groupedMessages[expandedSubject] || [])
             ) : (
-              <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
+              <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 items-start">
                 {Object.entries(groupedMessages).map(([subject, subjectMessages]) => {
                   const cfg = SUBJECT_CONFIG[subject] || SUBJECT_CONFIG['General']
                   const todosRemaining = subjectMessages.filter(m => !m.tried_activity).length
@@ -1266,11 +1266,11 @@ export default function ParentDashboard({ supabase, profile }) {
                   })
                   return (
                     <button key={subject} onClick={() => {
-                      setExpandedSubject(subject)
-                      setLastReadSubject(prev => ({ ...prev, [subject]: new Date().toISOString() }))
-                      axios.post(`${API}/api/mark-read`, { parentId: profile.id, subject }).catch(() => {})
-                    }} className={`rounded-xl border-2 overflow-hidden shadow hover:shadow-md transition text-left ${cfg.border}`}>
-                      <div className={`${cfg.header} text-white px-4 py-3`}>
+  setExpandedSubject(subject)
+  setLastReadSubject(prev => ({ ...prev, [subject]: new Date().toISOString() }))
+  axios.post(`${API}/api/mark-read`, { parentId: profile.id, subject }).catch(() => {})
+}} className={`rounded-xl border-2 overflow-hidden shadow hover:shadow-md transition text-left flex flex-col ${cfg.border}`}>
+                      <div className={`${cfg.header} text-white px-4 py-3 flex flex-col justify-between`} style={{ minHeight: '100px' }}>
                         <div className="flex justify-between items-start">
                           <span className="text-3xl">{cfg.icon}</span>
                           <div className="flex flex-col items-end gap-1">
@@ -1282,16 +1282,28 @@ export default function ParentDashboard({ supabase, profile }) {
                             )}
                           </div>
                         </div>
-                        <p className="font-bold text-lg mt-2">{subject}</p>
-                        <p className="text-xs opacity-75">{subjectMessages.length} update{subjectMessages.length !== 1 ? 's' : ''}</p>
+                        <p className="font-bold text-base mt-2 line-clamp-1">{subject}</p>
+<p className="text-xs opacity-75">{subjectMessages.length} update{subjectMessages.length !== 1 ? 's' : ''}</p>
                       </div>
-                      <div className="bg-white px-4 py-2">
-                        <p className="text-xs text-gray-500">{todosRemaining > 0 ? `${todosRemaining} activities to try` : 'All done! 🎉'}</p>
-                        <p className="text-xs text-blue-600 font-medium mt-0.5">Tap to view →</p>
-                      </div>
+                      <div className="bg-white px-4 py-2 mt-auto">
+  <p className="text-xs text-gray-500 line-clamp-1">{todosRemaining > 0 ? `${todosRemaining} activities to try` : 'All done! 🎉'}</p>
+  <p className="text-xs font-semibold mt-0.5" style={{ color: '#6C47FF' }}>Tap to view →</p>
+</div>
                     </button>
                   )
                 })}
+                {Object.keys(groupedMessages).length % 2 !== 0 && (
+                  <div className="rounded-xl border-2 border-dashed border-gray-200 overflow-hidden opacity-40 flex flex-col">
+                    <div className="bg-gray-100 px-4 py-3 flex flex-col justify-between" style={{ minHeight: '100px' }}>
+                      <span className="text-2xl">📬</span>
+                      <p className="font-bold text-base mt-2 text-gray-400">More coming</p>
+                      <p className="text-xs text-gray-400">New updates soon</p>
+                    </div>
+                    <div className="bg-white px-4 py-2 mt-auto">
+                      <p className="text-xs text-gray-300">Stay tuned</p>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </>
