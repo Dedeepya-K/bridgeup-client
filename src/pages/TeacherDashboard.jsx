@@ -69,8 +69,8 @@ function TeacherReplyBox({ messageId, parentId, teacherName, suggestedResponse }
 
 export default function TeacherDashboard({ supabase, profile }) {
   const [teacherConsentGiven, setTeacherConsentGiven] = useState(
-  () => localStorage.getItem(`teacher_consent_${profile.id}`) === 'true'
-)
+    () => localStorage.getItem(`teacher_consent_${profile.id}`) === 'true'
+  )
   const [tab, setTab] = useState('compose')
   const [subject, setSubject] = useState('Science')
   const [yearLevel, setYearLevel] = useState('8')
@@ -100,21 +100,22 @@ export default function TeacherDashboard({ supabase, profile }) {
   const [feedAverage, setFeedAverage] = useState(0)
   const [nudges, setNudges] = useState({})
   const [nudgeLoading, setNudgeLoading] = useState({})
-const [naplanNote, setNaplanNote] = useState('')
-const [naplanResult, setNaplanResult] = useState('')
-const [naplanLoading, setNaplanLoading] = useState(false)
-const [naplanSubject, setNaplanSubject] = useState('English')
-const [naplanYear, setNaplanYear] = useState('8')
-const [naplanBandStudent, setNaplanBandStudent] = useState('')
-const [naplanBandSubject, setNaplanBandSubject] = useState('English')
-const [naplanBandLevel, setNaplanBandLevel] = useState('5')
-const [naplanBandYear, setNaplanBandYear] = useState('8')
-const [naplanBandDate, setNaplanBandDate] = useState(new Date().toISOString().split('T')[0])
-const [naplanBandNote, setNaplanBandNote] = useState('')
-const [naplanBandSaving, setNaplanBandSaving] = useState(false)
-const [naplanBandSaved, setNaplanBandSaved] = useState(false)
-const [naplanProgress, setNaplanProgress] = useState([])
-const [naplanProgressLoaded, setNaplanProgressLoaded] = useState(false)
+  const [naplanNote, setNaplanNote] = useState('')
+  const [naplanResult, setNaplanResult] = useState('')
+  const [naplanLoading, setNaplanLoading] = useState(false)
+  const [naplanSubject, setNaplanSubject] = useState('English')
+  const [naplanYear, setNaplanYear] = useState('8')
+  const [naplanBandStudent, setNaplanBandStudent] = useState('')
+  const [naplanBandSubject, setNaplanBandSubject] = useState('English')
+  const [naplanBandLevel, setNaplanBandLevel] = useState('5')
+  const [naplanBandYear, setNaplanBandYear] = useState('8')
+  const [naplanBandDate, setNaplanBandDate] = useState(new Date().toISOString().split('T')[0])
+  const [naplanBandNote, setNaplanBandNote] = useState('')
+  const [naplanBandSaving, setNaplanBandSaving] = useState(false)
+  const [naplanBandSaved, setNaplanBandSaved] = useState(false)
+  const [naplanProgress, setNaplanProgress] = useState([])
+  const [naplanProgressLoaded, setNaplanProgressLoaded] = useState(false)
+  const [selectedNaplanStudent, setSelectedNaplanStudent] = useState('')
   const [emojiInsights, setEmojiInsights] = useState([])
   const [engagementScores, setEngagementScores] = useState([])
   const [parentActivity, setParentActivity] = useState([])
@@ -279,6 +280,12 @@ const [naplanProgressLoaded, setNaplanProgressLoaded] = useState(false)
     'General':     { icon: '📚', color: 'bg-gray-600' },
   }
 
+  const SUBJECT_COLORS = {
+    'English':     '#3B82F6',
+    'Mathematics': '#6C47FF',
+    'Science':     '#10B981',
+  }
+
   const ReminderForm = () => (
     <div className="card p-6 space-y-4">
       <p className="eyebrow">Send Reminder</p>
@@ -380,8 +387,6 @@ const [naplanProgressLoaded, setNaplanProgressLoaded] = useState(false)
         {/* ── COMPOSE ── */}
         {tab === 'compose' && (
           <div className="space-y-5">
-
-            {/* H-AI-H Info Card */}
             <div className="card p-5 text-white" style={{ background: '#4B0FA8' }}>
               <p className="eyebrow" style={{ color: '#C4B5FD' }}>CURRICULLM AI · H-AI-H FRAMEWORK</p>
               <p className="text-white font-semibold mt-1">Write your lesson notes naturally — CurricuLLM transforms them into parent-friendly messages.</p>
@@ -393,7 +398,6 @@ const [naplanProgressLoaded, setNaplanProgressLoaded] = useState(false)
               </div>
             </div>
 
-            {/* Compose Form */}
             <div className="card p-6 space-y-4">
               <p className="eyebrow">New Learning Update</p>
               <div className="grid grid-cols-2 gap-4">
@@ -432,7 +436,6 @@ const [naplanProgressLoaded, setNaplanProgressLoaded] = useState(false)
               </button>
             </div>
 
-            {/* Preview with editable fields */}
             {preview && (
               <div className="card p-6 space-y-4" style={{ borderColor: '#C4B5FD', borderWidth: 2 }}>
                 <div className="flex justify-between items-center flex-wrap gap-2">
@@ -447,7 +450,6 @@ const [naplanProgressLoaded, setNaplanProgressLoaded] = useState(false)
                     <span className="badge" style={{ background: '#EDE9FF', color: '#6C47FF' }}>⚡ CurricuLLM</span>
                   </div>
                 </div>
-
                 {showRaw ? (
                   <div className="bg-gray-50 rounded-xl p-4 border border-gray-200">
                     <p className="eyebrow mb-2">Before — raw notes</p>
@@ -461,51 +463,31 @@ const [naplanProgressLoaded, setNaplanProgressLoaded] = useState(false)
                         <p className="text-xs font-semibold" style={{ color: '#6C47FF' }}>{preview.curriculumLabel}</p>
                       </div>
                     )}
-
-                    {/* Editable: What your child is learning */}
                     <div className="bg-gray-50 rounded-xl p-4 space-y-1">
                       <p className="text-xs font-semibold text-gray-500">📚 What your child is learning <span className="font-normal text-gray-400">(editable)</span></p>
-                      <textarea
-                        value={preview.parentSummary}
-                        onChange={e => setPreview(p => ({ ...p, parentSummary: e.target.value }))}
-                        rows={3}
-                        className="input-base text-sm mt-1"
-                      />
+                      <textarea value={preview.parentSummary} onChange={e => setPreview(p => ({ ...p, parentSummary: e.target.value }))}
+                        rows={3} className="input-base text-sm mt-1"/>
                     </div>
-
-                    {/* Editable: Why it matters */}
                     <div className="bg-amber-50 rounded-xl p-4 space-y-1">
                       <p className="text-xs font-semibold text-amber-700">💡 Why it matters <span className="font-normal text-gray-400">(editable)</span></p>
-                      <textarea
-                        value={preview.whyItMatters}
-                        onChange={e => setPreview(p => ({ ...p, whyItMatters: e.target.value }))}
-                        rows={2}
-                        className="input-base text-sm mt-1"
-                      />
+                      <textarea value={preview.whyItMatters} onChange={e => setPreview(p => ({ ...p, whyItMatters: e.target.value }))}
+                        rows={2} className="input-base text-sm mt-1"/>
                     </div>
-
-                    {/* Editable: At-home tips */}
                     <div className="bg-emerald-50 rounded-xl p-4">
                       <p className="text-xs font-semibold text-emerald-700 mb-2">🏠 At-home tips <span className="font-normal text-gray-400">(click each to edit)</span></p>
                       <div className="space-y-2">
                         {preview.atHomeTips.map((tip, i) => (
                           <div key={i} className="flex gap-2 items-start">
                             <span className="font-bold text-emerald-600 mt-2.5 flex-shrink-0 text-sm">{i+1}.</span>
-                            <textarea
-                              value={tip}
-                              onChange={e => {
-                                const newTips = [...preview.atHomeTips]
-                                newTips[i] = e.target.value
-                                setPreview(p => ({ ...p, atHomeTips: newTips }))
-                              }}
-                              rows={2}
-                              className="input-base text-sm flex-1"
-                            />
+                            <textarea value={tip} onChange={e => {
+                              const newTips = [...preview.atHomeTips]
+                              newTips[i] = e.target.value
+                              setPreview(p => ({ ...p, atHomeTips: newTips }))
+                            }} rows={2} className="input-base text-sm flex-1"/>
                           </div>
                         ))}
                       </div>
                     </div>
-
                     {preview.pedagogyNote && (
                       <div className="rounded-xl px-4 py-2.5 border" style={{ background: '#EDE9FF', borderColor: '#C4B5FD' }}>
                         <p className="text-xs" style={{ color: '#4B0FA8' }}>
@@ -515,17 +497,12 @@ const [naplanProgressLoaded, setNaplanProgressLoaded] = useState(false)
                     )}
                   </div>
                 )}
-
-                {/* H-AI-H Human Review Notice */}
                 <div className="rounded-xl px-4 py-3 text-xs space-y-1" style={{ background: '#EDE9FF', color: '#4B0FA8' }}>
                   <p className="font-semibold">✏️ Human review required — H-AI-H Framework</p>
                   <p className="opacity-75">Please review and edit the AI-generated content above before sending. You are responsible for the accuracy of this message as the qualified educator. CurricuLLM may occasionally produce inaccurate information.</p>
                 </div>
-
                 {sent ? (
-                  <div className="bg-emerald-50 border border-emerald-200 text-emerald-700 text-center py-3 rounded-xl font-semibold text-sm">
-                    ✅ Sent to all parents!
-                  </div>
+                  <div className="bg-emerald-50 border border-emerald-200 text-emerald-700 text-center py-3 rounded-xl font-semibold text-sm">✅ Sent to all parents!</div>
                 ) : (
                   <button onClick={handleSend} disabled={sending || showRaw} className="btn-primary w-full">
                     {sending ? 'Sending to all parents...' : '📤 Approve & Send to All Parents'}
@@ -546,7 +523,6 @@ const [naplanProgressLoaded, setNaplanProgressLoaded] = useState(false)
               </div>
               <button onClick={() => { fetchMessages(); fetchEngagement() }} className="btn-ghost text-xs px-3 py-1.5">🔄 Refresh</button>
             </div>
-
             {messages.length === 0 ? (
               <div className="card p-12 text-center text-gray-400">
                 <p className="text-4xl mb-3">📭</p>
@@ -559,50 +535,33 @@ const [naplanProgressLoaded, setNaplanProgressLoaded] = useState(false)
                 acc[subj].push(msg)
                 return acc
               }, {})
-
               return (
                 <>
                   {!expandedSubjectTeacher && (
                     <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 items-stretch">
-  {Object.entries(grouped).map(([subj, msgs]) => {
-    const cfg = SUBJ_CFG[subj] || SUBJ_CFG['General']
-    const totalReplies = msgs.reduce((s, m) => s + (m.replies?.length || 0), 0)
-    const concerns = msgs.reduce((s, m) => s + (m.replies?.filter(r => r.sentiment === 'concern' || r.urgency === 'high').length || 0), 0)
-    return (
-      <button key={subj} onClick={() => setExpandedSubjectTeacher(subj)}
-        className="card overflow-hidden text-left hover:shadow-md transition flex flex-col">
-        
-        {/* Fixed height header — prevents title length affecting card size */}
-        <div className={`${cfg.color} p-4 text-white relative flex flex-col justify-end`} style={{ minHeight: '112px' }}>
-          
-          {/* Badge — always top right, shown when replies exist */}
-          {concerns > 0 && (
-            <span className="absolute top-3 right-3 badge bg-red-400 text-white animate-pulse">⚠️ {concerns}</span>
-          )}
-          {totalReplies > 0 && concerns === 0 && (
-            <span className="absolute top-3 right-3 badge bg-yellow-300 text-yellow-900">💬 {totalReplies}</span>
-          )}
-
-          <span className="text-2xl mb-2">{cfg.icon}</span>
-
-          {/* line-clamp-2 prevents title from growing the card */}
-          <p className="font-semibold text-sm leading-snug line-clamp-2">{subj}</p>
-          <p className="text-xs opacity-75 mt-0.5">{msgs.length} update{msgs.length > 1 ? 's' : ''}</p>
-        </div>
-
-        {/* Body — flex-1 + justify-between pins View → to bottom */}
-        <div className="flex-1 bg-white px-4 py-3 flex flex-col justify-between">
-          <p className="text-xs text-gray-500">
-            {totalReplies > 0 ? `${totalReplies} repl${totalReplies > 1 ? 'ies' : 'y'}` : 'No replies yet'}
-          </p>
-          <p className="text-xs font-semibold mt-2" style={{ color: '#6C47FF' }}>View →</p>
-        </div>
-      </button>
-    )
-  })}
-</div>
+                      {Object.entries(grouped).map(([subj, msgs]) => {
+                        const cfg = SUBJ_CFG[subj] || SUBJ_CFG['General']
+                        const totalReplies = msgs.reduce((s, m) => s + (m.replies?.length || 0), 0)
+                        const concerns = msgs.reduce((s, m) => s + (m.replies?.filter(r => r.sentiment === 'concern' || r.urgency === 'high').length || 0), 0)
+                        return (
+                          <button key={subj} onClick={() => setExpandedSubjectTeacher(subj)}
+                            className="card overflow-hidden text-left hover:shadow-md transition flex flex-col">
+                            <div className={`${cfg.color} p-4 text-white relative flex flex-col justify-end`} style={{ minHeight: '112px' }}>
+                              {concerns > 0 && <span className="absolute top-3 right-3 badge bg-red-400 text-white animate-pulse">⚠️ {concerns}</span>}
+                              {totalReplies > 0 && concerns === 0 && <span className="absolute top-3 right-3 badge bg-yellow-300 text-yellow-900">💬 {totalReplies}</span>}
+                              <span className="text-2xl mb-2">{cfg.icon}</span>
+                              <p className="font-semibold text-sm leading-snug line-clamp-2">{subj}</p>
+                              <p className="text-xs opacity-75 mt-0.5">{msgs.length} update{msgs.length > 1 ? 's' : ''}</p>
+                            </div>
+                            <div className="flex-1 bg-white px-4 py-3 flex flex-col justify-between">
+                              <p className="text-xs text-gray-500">{totalReplies > 0 ? `${totalReplies} repl${totalReplies > 1 ? 'ies' : 'y'}` : 'No replies yet'}</p>
+                              <p className="text-xs font-semibold mt-2" style={{ color: '#6C47FF' }}>View →</p>
+                            </div>
+                          </button>
+                        )
+                      })}
+                    </div>
                   )}
-
                   {expandedSubjectTeacher && (() => {
                     const cfg = SUBJ_CFG[expandedSubjectTeacher] || SUBJ_CFG['General']
                     const subjectMsgs = grouped[expandedSubjectTeacher] || []
@@ -617,18 +576,14 @@ const [naplanProgressLoaded, setNaplanProgressLoaded] = useState(false)
                             </div>
                           </div>
                           <button onClick={() => setExpandedSubjectTeacher(null)}
-                            className="text-sm bg-white bg-opacity-20 px-3 py-1 rounded-lg hover:bg-opacity-30 transition">
-                            ← Back
-                          </button>
+                            className="text-sm bg-white bg-opacity-20 px-3 py-1 rounded-lg hover:bg-opacity-30 transition">← Back</button>
                         </div>
                         <div className="divide-y divide-gray-100">
                           {subjectMsgs.map(message => (
                             <div key={message.id} className="p-5 space-y-3">
                               <div className="flex items-center gap-2 flex-wrap">
                                 <span className="badge" style={{ background: '#EDE9FF', color: '#6C47FF' }}>⚡ CurricuLLM</span>
-                                <span className="text-xs text-gray-400">
-                                  {new Date(message.created_at).toLocaleDateString('en-AU', { weekday: 'short', day: 'numeric', month: 'short' })}
-                                </span>
+                                <span className="text-xs text-gray-400">{new Date(message.created_at).toLocaleDateString('en-AU', { weekday: 'short', day: 'numeric', month: 'short' })}</span>
                               </div>
                               <p className="text-sm text-gray-700">{message.transformed_content}</p>
                               {message.replies?.length > 0 && (
@@ -666,10 +621,7 @@ const [naplanProgressLoaded, setNaplanProgressLoaded] = useState(false)
                                           </div>
                                         )}
                                         {!r.parent_name?.includes('(Teacher)') && (
-                                          <TeacherReplyBox
-                                            messageId={r.message_id} parentId={r.parent_id}
-                                            teacherName={profile.name} suggestedResponse={r.suggested_response}
-                                          />
+                                          <TeacherReplyBox messageId={r.message_id} parentId={r.parent_id} teacherName={profile.name} suggestedResponse={r.suggested_response}/>
                                         )}
                                       </div>
                                     )
@@ -695,7 +647,6 @@ const [naplanProgressLoaded, setNaplanProgressLoaded] = useState(false)
               <p className="eyebrow">Analytics</p>
               <h2 className="text-lg font-semibold text-gray-900">Parent Engagement Insights</h2>
             </div>
-
             {engagement && (
               <div className="card p-5 text-white" style={{ background: '#4B0FA8' }}>
                 <p className="eyebrow" style={{ color: '#C4B5FD' }}>BRIDGE INSIGHTS</p>
@@ -714,7 +665,6 @@ const [naplanProgressLoaded, setNaplanProgressLoaded] = useState(false)
                 </div>
               </div>
             )}
-
             {!engagement ? (
               <div className="card p-12 text-center text-gray-400">Loading...</div>
             ) : (
@@ -733,67 +683,60 @@ const [naplanProgressLoaded, setNaplanProgressLoaded] = useState(false)
                     </div>
                   ))}
                 </div>
-
                 {engagement.totalReplies > 0 && (
                   <div className="card p-5">
                     <p className="eyebrow mb-3">Reply Sentiment</p>
                     <div className="space-y-2.5">
-                      {Object.entries(engagement.sentiments)
-                        .filter(([key]) => ['positive', 'question', 'concern'].includes(key))
-                        .map(([key, val]) => {
-                          const s = SENTIMENT_CONFIG[key]
-                          const pct = Math.round((val / engagement.totalReplies) * 100)
-                          return (
-                            <div key={key} className="flex items-center gap-3">
-                              <span className="text-sm w-24 text-gray-600">{s?.emoji} {s?.label}</span>
-                              <div className="progress-bar flex-1">
-                                <div className="progress-fill" style={{ width: `${pct}%`, background: key === 'positive' ? '#10B981' : key === 'question' ? '#F59E0B' : '#EF4444' }}/>
-                              </div>
-                              <span className="text-xs text-gray-500 w-16">{val} ({pct}%)</span>
+                      {Object.entries(engagement.sentiments).filter(([key]) => ['positive','question','concern'].includes(key)).map(([key, val]) => {
+                        const s = SENTIMENT_CONFIG[key]
+                        const pct = Math.round((val / engagement.totalReplies) * 100)
+                        return (
+                          <div key={key} className="flex items-center gap-3">
+                            <span className="text-sm w-24 text-gray-600">{s?.emoji} {s?.label}</span>
+                            <div className="progress-bar flex-1">
+                              <div className="progress-fill" style={{ width: `${pct}%`, background: key==='positive'?'#10B981':key==='question'?'#F59E0B':'#EF4444' }}/>
                             </div>
-                          )
-                        })}
+                            <span className="text-xs text-gray-500 w-16">{val} ({pct}%)</span>
+                          </div>
+                        )
+                      })}
                     </div>
                   </div>
                 )}
-
                 {engagement.languages && (
                   <div className="card p-5">
                     <p className="eyebrow mb-3">Languages Reached</p>
                     <div className="flex flex-wrap gap-2">
                       {Object.entries(engagement.languages).map(([lang, count]) => (
                         <span key={lang} className="badge" style={{ background: '#EDE9FF', color: '#6C47FF' }}>
-                          {lang === 'en' ? '🇦🇺 English' : lang === 'hi' ? '🇮🇳 Hindi' : lang === 'zh-Hans' ? '🇨🇳 Mandarin' : lang}: {count}
+                          {lang==='en'?'🇦🇺 English':lang==='hi'?'🇮🇳 Hindi':lang==='zh-Hans'?'🇨🇳 Mandarin':lang}: {count}
                         </span>
                       ))}
                     </div>
                   </div>
                 )}
-
                 {engagement.highUrgency > 0 && (
                   <div className="card p-4 bg-red-50 border-red-200">
-                    <p className="text-sm font-semibold text-red-700">⚠️ {engagement.highUrgency} high-urgency {engagement.highUrgency === 1 ? 'reply' : 'replies'} — check inbox immediately.</p>
+                    <p className="text-sm font-semibold text-red-700">⚠️ {engagement.highUrgency} high-urgency {engagement.highUrgency===1?'reply':'replies'} — check inbox immediately.</p>
                   </div>
                 )}
-
                 {unengaged.length > 0 && (
                   <div className="card p-5 space-y-3">
                     <p className="eyebrow">Not Yet Engaged</p>
-                    <p className="text-sm font-semibold text-gray-900">📭 {unengaged.length} {unengaged.length === 1 ? 'family has' : 'families have'} not replied</p>
+                    <p className="text-sm font-semibold text-gray-900">📭 {unengaged.length} {unengaged.length===1?'family has':'families have'} not replied</p>
                     <div className="space-y-1.5">
                       {unengaged.map((p, i) => (
                         <div key={i} className="flex items-center gap-2 bg-gray-50 rounded-xl px-3 py-2">
                           <span className="text-sm">👤</span>
                           <span className="text-sm text-gray-700 flex-1">{p.name} {p.childName && <span className="text-gray-400 text-xs">({p.childName})</span>}</span>
                           <span className="badge" style={{ background: '#EDE9FF', color: '#6C47FF', fontSize: 10 }}>
-                            {p.language === 'hi' ? '🇮🇳' : p.language === 'zh-Hans' ? '🇨🇳' : '🇦🇺'} {p.language}
+                            {p.language==='hi'?'🇮🇳':p.language==='zh-Hans'?'🇨🇳':'🇦🇺'} {p.language}
                           </span>
                         </div>
                       ))}
                     </div>
                   </div>
                 )}
-
                 {frictionData.length > 0 && (
                   <div className="card p-5 space-y-3">
                     <p className="eyebrow">Friction Forecast</p>
@@ -802,81 +745,66 @@ const [naplanProgressLoaded, setNaplanProgressLoaded] = useState(false)
                       <div key={i} className="bg-gray-50 rounded-xl p-3 space-y-1">
                         <div className="flex justify-between items-center">
                           <p className="text-sm font-semibold text-gray-800">{f.subject}</p>
-                          <span className={`badge ${f.percentage >= 40 ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700'}`}>{f.percentage}% struggled</span>
+                          <span className={`badge ${f.percentage>=40?'bg-red-100 text-red-700':'bg-amber-100 text-amber-700'}`}>{f.percentage}% struggled</span>
                         </div>
                         <p className="text-xs text-gray-500">{f.recommendation}</p>
                       </div>
                     ))}
                   </div>
                 )}
-
                 {familyFeed.length > 0 && (
                   <div className="card p-5 space-y-3">
                     <div className="flex justify-between items-center">
                       <p className="eyebrow">Live Activity Feed</p>
                       <span className="badge bg-emerald-100 text-emerald-700">{feedAverage}% engaged</span>
                     </div>
-                    {familyFeed.slice(0, 5).map((f, i) => (
+                    {familyFeed.slice(0,5).map((f,i) => (
                       <div key={i} className="flex items-center gap-2 bg-gray-50 rounded-xl px-3 py-2">
-                        <span>{f.feedback === 'tried' ? '✅' : '😕'}</span>
-                        <span className="text-sm text-gray-700">
-                          <strong>{f.childName || f.parentName}</strong> {f.feedback === 'tried' ? 'completed' : 'struggled with'} {f.subject}
-                        </span>
+                        <span>{f.feedback==='tried'?'✅':'😕'}</span>
+                        <span className="text-sm text-gray-700"><strong>{f.childName||f.parentName}</strong> {f.feedback==='tried'?'completed':'struggled with'} {f.subject}</span>
                       </div>
                     ))}
                   </div>
                 )}
-
                 <div className="card p-5 space-y-3">
                   <p className="eyebrow">Smart Nudges</p>
-                  {unengaged.length === 0 ? (
+                  {unengaged.length===0 ? (
                     <p className="text-sm text-emerald-600 font-medium">🎉 All families are engaged!</p>
-                  ) : unengaged.map((p, i) => (
+                  ) : unengaged.map((p,i) => (
                     <div key={i} className="bg-gray-50 rounded-xl p-3 space-y-2">
                       <p className="text-sm font-semibold text-gray-800">{p.name} <span className="text-gray-400 font-normal text-xs">({p.childName})</span></p>
                       {nudges[p.parentId] ? (
                         <div className="space-y-2 rounded-xl p-3" style={{ background: '#EDE9FF' }}>
                           <p className="text-xs" style={{ color: '#4B0FA8' }}>💡 {nudges[p.parentId]}</p>
                           <button onClick={() => { setDmParentId(p.parentId); setDmContent(nudges[p.parentId]); setDmSubject('A quick note about your child'); setTab('direct') }}
-                            className="btn-primary text-xs px-3 py-1.5 w-full">
-                            📤 Send as Direct Message
-                          </button>
+                            className="btn-primary text-xs px-3 py-1.5 w-full">📤 Send as Direct Message</button>
                         </div>
                       ) : (
                         <button onClick={async () => {
                           setNudgeLoading(n => ({ ...n, [p.parentId]: true }))
                           try {
-                            const res = await axios.post(`${API}/api/engagement-nudge`, {
-                              parentName: p.name, childName: p.childName, language: p.language,
-                              availability: 'evening', confidence: 'medium', lastSubject: messages[0]?.subject || 'Mathematics'
-                            })
+                            const res = await axios.post(`${API}/api/engagement-nudge`, { parentName: p.name, childName: p.childName, language: p.language, availability: 'evening', confidence: 'medium', lastSubject: messages[0]?.subject||'Mathematics' })
                             setNudges(n => ({ ...n, [p.parentId]: res.data.nudge }))
                           } catch(e) {}
                           setNudgeLoading(n => ({ ...n, [p.parentId]: false }))
                         }} disabled={nudgeLoading[p.parentId]} className="btn-ghost text-xs px-3 py-1.5">
-                          {nudgeLoading[p.parentId] ? '✨ Generating...' : '✨ Generate Nudge'}
+                          {nudgeLoading[p.parentId]?'✨ Generating...':'✨ Generate Nudge'}
                         </button>
                       )}
                     </div>
                   ))}
                 </div>
-
                 <div className="card p-5 space-y-3">
                   <div className="flex justify-between items-center">
                     <p className="eyebrow">Weekly Report</p>
-                    <button onClick={async () => {
-                      setReportLoading(true)
-                      try { const res = await axios.get(`${API}/api/weekly-report/${profile.id}`); if (res.data.success) setWeeklyReport(res.data.data) } catch(e) {}
-                      setReportLoading(false)
-                    }} disabled={reportLoading} className="btn-ghost text-xs px-3 py-1.5">
-                      {reportLoading ? '⏳ Generating...' : '📊 Generate'}
+                    <button onClick={async () => { setReportLoading(true); try { const res = await axios.get(`${API}/api/weekly-report/${profile.id}`); if(res.data.success) setWeeklyReport(res.data.data) } catch(e) {} setReportLoading(false) }}
+                      disabled={reportLoading} className="btn-ghost text-xs px-3 py-1.5">
+                      {reportLoading?'⏳ Generating...':'📊 Generate'}
                     </button>
                   </div>
                   {weeklyReport && (
                     <div className="space-y-3">
-                      <div className="bg-gray-50 rounded-xl p-3">
-                        <p className="text-sm text-gray-700">{weeklyReport.summary}</p>
-                      </div>
+                      <div className="bg-gray-50 rounded-xl p-3"><p className="text-sm text-gray-700">{weeklyReport.summary}</p></div>
                       <div className="grid grid-cols-3 gap-2 text-center text-xs">
                         <div className="bg-violet-50 rounded-xl p-2"><p className="font-bold text-violet-700">{weeklyReport.totalMessages}</p><p className="text-gray-500">Updates</p></div>
                         <div className="bg-emerald-50 rounded-xl p-2"><p className="font-bold text-emerald-700">{weeklyReport.tried}</p><p className="text-gray-500">Activities</p></div>
@@ -886,11 +814,10 @@ const [naplanProgressLoaded, setNaplanProgressLoaded] = useState(false)
                     </div>
                   )}
                 </div>
-
                 {emojiInsights.length > 0 && (
                   <div className="card p-5 space-y-3">
                     <p className="eyebrow">Parent Feedback Insights</p>
-                    {emojiInsights.map((e, i) => (
+                    {emojiInsights.map((e,i) => (
                       <div key={i} className="bg-gray-50 rounded-xl p-3 space-y-1.5">
                         <div className="flex justify-between items-center">
                           <span className="text-sm font-semibold text-gray-700">{e.subject}</span>
@@ -899,67 +826,51 @@ const [naplanProgressLoaded, setNaplanProgressLoaded] = useState(false)
                             <span className="badge bg-orange-100 text-orange-700">😕 {e.struggled}</span>
                           </div>
                         </div>
-                        <div className="progress-bar">
-                          <div className="progress-fill" style={{ width: `${e.pct}%` }}/>
-                        </div>
+                        <div className="progress-bar"><div className="progress-fill" style={{ width: `${e.pct}%` }}/></div>
                         <p className="text-xs text-gray-500 italic">💡 {e.insight}</p>
                       </div>
                     ))}
                   </div>
                 )}
-
                 {engagementScores.length > 0 && (
                   <div className="card p-5 space-y-3">
                     <p className="eyebrow">Engagement Scores</p>
                     <p className="text-xs text-gray-500">Based on activities tried, messages read and replies sent</p>
-                    {engagementScores.map((p, i) => (
+                    {engagementScores.map((p,i) => (
                       <div key={i} className="flex items-center gap-3 bg-gray-50 rounded-xl p-3">
                         <span className="text-lg">{p.emoji}</span>
                         <div className="flex-1">
                           <div className="flex justify-between items-center">
                             <p className="text-sm font-semibold text-gray-800">{p.name} <span className="text-gray-400 font-normal text-xs">({p.childName})</span></p>
-                            <span className={`badge font-bold ${p.level === 'High' ? 'bg-emerald-100 text-emerald-700' : p.level === 'Medium' ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-700'}`}>{p.score}/100</span>
+                            <span className={`badge font-bold ${p.level==='High'?'bg-emerald-100 text-emerald-700':p.level==='Medium'?'bg-amber-100 text-amber-700':'bg-red-100 text-red-700'}`}>{p.score}/100</span>
                           </div>
                           <div className="progress-bar mt-1.5">
-                            <div className="progress-fill" style={{ width: `${p.score}%`, background: p.level === 'High' ? '#10B981' : p.level === 'Medium' ? '#F59E0B' : '#EF4444' }}/>
+                            <div className="progress-fill" style={{ width: `${p.score}%`, background: p.level==='High'?'#10B981':p.level==='Medium'?'#F59E0B':'#EF4444' }}/>
                           </div>
-                          <p className="text-xs text-gray-400 mt-1">
-                            ✅ {p.tried} · 💬 {p.replies} · 👁 {p.read} · {p.language === 'hi' ? '🇮🇳' : p.language === 'zh-Hans' ? '🇨🇳' : '🇦🇺'} {p.language}
-                          </p>
+                          <p className="text-xs text-gray-400 mt-1">✅ {p.tried} · 💬 {p.replies} · 👁 {p.read} · {p.language==='hi'?'🇮🇳':p.language==='zh-Hans'?'🇨🇳':'🇦🇺'} {p.language}</p>
                         </div>
                       </div>
                     ))}
                   </div>
                 )}
-
                 {parentActivity.length > 0 && (
                   <div className="card p-5 space-y-3">
                     <div className="flex justify-between items-center">
                       <p className="eyebrow">Family Engagement Tracker</p>
                       <span className="text-xs text-gray-400">Support tool — not surveillance</span>
                     </div>
-                    {parentActivity.map((p, i) => (
+                    {parentActivity.map((p,i) => (
                       <div key={i} className="flex items-center gap-3 bg-gray-50 rounded-xl p-3">
-                        <div className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${
-                          p.statusColor === 'green' ? 'bg-emerald-500 animate-pulse' :
-                          p.statusColor === 'yellow' ? 'bg-amber-400' :
-                          p.statusColor === 'orange' ? 'bg-orange-400' :
-                          p.statusColor === 'red' ? 'bg-red-400' : 'bg-gray-300'
-                        }`}/>
+                        <div className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${p.statusColor==='green'?'bg-emerald-500 animate-pulse':p.statusColor==='yellow'?'bg-amber-400':p.statusColor==='orange'?'bg-orange-400':p.statusColor==='red'?'bg-red-400':'bg-gray-300'}`}/>
                         <div className="flex-1">
                           <div className="flex justify-between items-center">
                             <p className="text-sm font-semibold text-gray-800">{p.name} <span className="text-gray-400 font-normal text-xs">({p.childName})</span></p>
-                            <span className={`badge text-xs ${
-                              p.statusColor === 'green' ? 'bg-emerald-100 text-emerald-700' :
-                              p.statusColor === 'yellow' ? 'bg-amber-100 text-amber-700' :
-                              p.statusColor === 'orange' ? 'bg-orange-100 text-orange-700' :
-                              p.statusColor === 'red' ? 'bg-red-100 text-red-700' : 'bg-gray-100 text-gray-500'
-                            }`}>{p.status}</span>
+                            <span className={`badge text-xs ${p.statusColor==='green'?'bg-emerald-100 text-emerald-700':p.statusColor==='yellow'?'bg-amber-100 text-amber-700':p.statusColor==='orange'?'bg-orange-100 text-orange-700':p.statusColor==='red'?'bg-red-100 text-red-700':'bg-gray-100 text-gray-500'}`}>{p.status}</span>
                           </div>
                           <p className="text-xs text-gray-400 mt-0.5">
-                            {p.language === 'hi' ? '🇮🇳' : p.language === 'zh-Hans' ? '🇨🇳' : '🇦🇺'} {p.language}
-                            {p.loginCount > 0 && ` · ${p.loginCount} login${p.loginCount > 1 ? 's' : ''}`}
-                            {p.lastSeen && ` · ${new Date(p.lastSeen).toLocaleDateString('en-AU', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}`}
+                            {p.language==='hi'?'🇮🇳':p.language==='zh-Hans'?'🇨🇳':'🇦🇺'} {p.language}
+                            {p.loginCount>0&&` · ${p.loginCount} login${p.loginCount>1?'s':''}`}
+                            {p.lastSeen&&` · ${new Date(p.lastSeen).toLocaleDateString('en-AU',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}`}
                           </p>
                         </div>
                       </div>
@@ -967,7 +878,6 @@ const [naplanProgressLoaded, setNaplanProgressLoaded] = useState(false)
                     <p className="text-xs text-gray-400 text-center">Parents are informed of this tracking and can opt out in their profile.</p>
                   </div>
                 )}
-
                 <div className="card p-4 bg-gray-50">
                   <p className="eyebrow mb-1">About Insights</p>
                   <p className="text-xs text-gray-500">Sentiment auto-detected from parent replies via CurricuLLM. Always apply professional judgement when following up. Compliant with H-AI-H Human-Centered AI Principles.</p>
@@ -984,17 +894,13 @@ const [naplanProgressLoaded, setNaplanProgressLoaded] = useState(false)
               <p className="eyebrow">Messaging</p>
               <h2 className="text-lg font-semibold text-gray-900">Direct & Broadcast</h2>
             </div>
-
-            {/* Direct Message */}
             <div className="card p-6 space-y-4">
               <p className="eyebrow">Direct Message</p>
               <p className="text-sm text-gray-500">Send a private message to one parent — auto-translated to their language.</p>
               <select value={dmParentId} onChange={e => setDmParentId(e.target.value)} className="input-base">
                 <option value="">— Select a parent —</option>
                 {allParents.map(p => (
-                  <option key={p.id} value={p.id}>
-                    {p.name} {p.child_name ? `(${p.child_name})` : ''} — {p.language === 'hi' ? '🇮🇳 Hindi' : p.language === 'zh-Hans' ? '🇨🇳 Mandarin' : '🇦🇺 English'}
-                  </option>
+                  <option key={p.id} value={p.id}>{p.name} {p.child_name?`(${p.child_name})`:''} — {p.language==='hi'?'🇮🇳 Hindi':p.language==='zh-Hans'?'🇨🇳 Mandarin':'🇦🇺 English'}</option>
                 ))}
               </select>
               <input value={dmSubject} onChange={e => setDmSubject(e.target.value)} className="input-base" placeholder="Subject"/>
@@ -1005,13 +911,11 @@ const [naplanProgressLoaded, setNaplanProgressLoaded] = useState(false)
               {dmSent ? (
                 <div className="bg-emerald-50 border border-emerald-200 text-emerald-700 text-center py-3 rounded-xl font-semibold text-sm">✅ Message sent!</div>
               ) : (
-                <button onClick={handleDmSend} disabled={dmSending || !dmParentId || !dmContent.trim()} className="btn-primary w-full">
-                  {dmSending ? 'Sending...' : '📤 Send Direct Message'}
+                <button onClick={handleDmSend} disabled={dmSending||!dmParentId||!dmContent.trim()} className="btn-primary w-full">
+                  {dmSending?'Sending...':'📤 Send Direct Message'}
                 </button>
               )}
             </div>
-
-            {/* Broadcast */}
             <div className="card p-6 space-y-4">
               <div className="flex items-center gap-3">
                 <div className="w-9 h-9 rounded-xl bg-red-100 flex items-center justify-center text-xl">📢</div>
@@ -1022,8 +926,8 @@ const [naplanProgressLoaded, setNaplanProgressLoaded] = useState(false)
               </div>
               <div className="flex items-center gap-3 bg-red-50 border border-red-200 rounded-xl p-3">
                 <button onClick={() => setBroadcastUrgent(!broadcastUrgent)}
-                  className={`relative w-11 h-6 rounded-full transition-colors flex-shrink-0 ${broadcastUrgent ? 'bg-red-500' : 'bg-gray-300'}`}>
-                  <span className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-all ${broadcastUrgent ? 'left-5' : 'left-0.5'}`}/>
+                  className={`relative w-11 h-6 rounded-full transition-colors flex-shrink-0 ${broadcastUrgent?'bg-red-500':'bg-gray-300'}`}>
+                  <span className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-all ${broadcastUrgent?'left-5':'left-0.5'}`}/>
                 </button>
                 <div>
                   <p className="text-sm font-semibold text-red-700">🚨 Mark as Urgent</p>
@@ -1038,9 +942,9 @@ const [naplanProgressLoaded, setNaplanProgressLoaded] = useState(false)
               {broadcastSent ? (
                 <div className="bg-emerald-50 border border-emerald-200 text-emerald-700 text-center py-3 rounded-xl font-semibold text-sm">✅ Sent to {broadcastCount} families!</div>
               ) : (
-                <button onClick={handleBroadcast} disabled={broadcastSending || !broadcastContent.trim()}
-                  className={`w-full py-3 rounded-xl font-semibold text-sm text-white transition disabled:opacity-50 ${broadcastUrgent ? 'bg-red-600 hover:bg-red-700' : 'bg-orange-500 hover:bg-orange-600'}`}>
-                  {broadcastSending ? 'Sending to all families...' : `📢 ${broadcastUrgent ? '🚨 Urgent Broadcast' : 'Send Broadcast'} to All ${allParents.length} Families`}
+                <button onClick={handleBroadcast} disabled={broadcastSending||!broadcastContent.trim()}
+                  className={`w-full py-3 rounded-xl font-semibold text-sm text-white transition disabled:opacity-50 ${broadcastUrgent?'bg-red-600 hover:bg-red-700':'bg-orange-500 hover:bg-orange-600'}`}>
+                  {broadcastSending?'Sending to all families...':`📢 ${broadcastUrgent?'🚨 Urgent Broadcast':'Send Broadcast'} to All ${allParents.length} Families`}
                 </button>
               )}
             </div>
@@ -1055,58 +959,48 @@ const [naplanProgressLoaded, setNaplanProgressLoaded] = useState(false)
               <h2 className="text-lg font-semibold text-gray-900">Reminders & Appointments</h2>
             </div>
             <ReminderForm />
-
             {ptmRequests.length > 0 && (
               <div className="card p-5 space-y-3">
                 <p className="eyebrow">Meeting Requests</p>
-                <p className="text-sm font-semibold text-gray-900">📅 {ptmRequests.length} Pending Request{ptmRequests.length > 1 ? 's' : ''}</p>
-                {ptmRequests.map((r, i) => (
+                <p className="text-sm font-semibold text-gray-900">📅 {ptmRequests.length} Pending Request{ptmRequests.length>1?'s':''}</p>
+                {ptmRequests.map((r,i) => (
                   <div key={i} className="bg-gray-50 rounded-xl p-3 flex justify-between items-start">
                     <div>
                       <p className="text-sm font-semibold text-gray-800">{r.parent_name} <span className="text-gray-400 font-normal text-xs">({r.child_name})</span></p>
                       <p className="text-xs text-gray-500">🕐 {r.preferred_time}</p>
-                      {r.reason && <p className="text-xs text-gray-400 mt-0.5">"{r.reason}"</p>}
+                      {r.reason&&<p className="text-xs text-gray-400 mt-0.5">"{r.reason}"</p>}
                     </div>
                     <span className="badge bg-amber-100 text-amber-700">Pending</span>
                   </div>
                 ))}
               </div>
             )}
-
             {appointments.length > 0 ? (
               <div className="card p-5 space-y-3">
                 <p className="eyebrow">Appointments ({appointments.length})</p>
-                {appointments.map((a, i) => (
+                {appointments.map((a,i) => (
                   <div key={i} className="bg-gray-50 rounded-xl p-3 space-y-2">
                     <div className="flex justify-between items-start">
                       <div>
                         <p className="text-sm font-semibold text-gray-800">{a.parent_name} <span className="text-gray-400 font-normal text-xs">({a.child_name})</span></p>
                         <p className="text-xs text-gray-500">📋 {a.appointment_type}</p>
-                        <p className="text-xs text-gray-500">📅 {new Date(a.preferred_date).toLocaleDateString('en-AU', { weekday: 'long', day: 'numeric', month: 'long' })} at {a.preferred_time}</p>
-                        {a.note && <p className="text-xs text-gray-400 italic">"{a.note}"</p>}
+                        <p className="text-xs text-gray-500">📅 {new Date(a.preferred_date).toLocaleDateString('en-AU',{weekday:'long',day:'numeric',month:'long'})} at {a.preferred_time}</p>
+                        {a.note&&<p className="text-xs text-gray-400 italic">"{a.note}"</p>}
                       </div>
-                      <span className={`badge ${a.status === 'confirmed' ? 'bg-emerald-100 text-emerald-700' : a.status === 'cancelled' ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700'}`}>
-                        {a.status === 'confirmed' ? '✅ Confirmed' : a.status === 'cancelled' ? '❌ Cancelled' : '⏳ Pending'}
+                      <span className={`badge ${a.status==='confirmed'?'bg-emerald-100 text-emerald-700':a.status==='cancelled'?'bg-red-100 text-red-700':'bg-amber-100 text-amber-700'}`}>
+                        {a.status==='confirmed'?'✅ Confirmed':a.status==='cancelled'?'❌ Cancelled':'⏳ Pending'}
                       </span>
                     </div>
-                    {a.status === 'pending' && (
+                    {a.status==='pending'&&(
                       <div className="flex gap-2">
-                        <button onClick={async () => {
-                          await axios.post(`${API}/api/update-appointment-status`, { appointmentId: a.id, status: 'confirmed' })
-                          const res = await axios.get(`${API}/api/appointments/teacher/${profile.id}`)
-                          if (res.data.success) setAppointments(res.data.data)
-                        }} className="flex-1 text-xs btn-primary py-1.5">✅ Confirm</button>
-                        <button onClick={async () => {
-                          await axios.post(`${API}/api/update-appointment-status`, { appointmentId: a.id, status: 'cancelled' })
-                          const res = await axios.get(`${API}/api/appointments/teacher/${profile.id}`)
-                          if (res.data.success) setAppointments(res.data.data)
-                        }} className="flex-1 text-xs btn-danger py-1.5">❌ Decline</button>
+                        <button onClick={async()=>{ await axios.post(`${API}/api/update-appointment-status`,{appointmentId:a.id,status:'confirmed'}); const res=await axios.get(`${API}/api/appointments/teacher/${profile.id}`); if(res.data.success) setAppointments(res.data.data) }} className="flex-1 text-xs btn-primary py-1.5">✅ Confirm</button>
+                        <button onClick={async()=>{ await axios.post(`${API}/api/update-appointment-status`,{appointmentId:a.id,status:'cancelled'}); const res=await axios.get(`${API}/api/appointments/teacher/${profile.id}`); if(res.data.success) setAppointments(res.data.data) }} className="flex-1 text-xs btn-danger py-1.5">❌ Decline</button>
                       </div>
                     )}
                   </div>
                 ))}
               </div>
-            ) : ptmRequests.length === 0 && (
+            ) : ptmRequests.length===0&&(
               <div className="card p-10 text-center text-gray-400">
                 <p className="text-4xl mb-2">📋</p>
                 <p className="text-sm">No appointment requests yet.</p>
@@ -1115,7 +1009,6 @@ const [naplanProgressLoaded, setNaplanProgressLoaded] = useState(false)
           </div>
         )}
 
-        {/* ── NAPLAN ── */}
         {/* ── NAPLAN ── */}
         {tab === 'naplan' && (
           <div className="space-y-5">
@@ -1175,16 +1068,16 @@ const [naplanProgressLoaded, setNaplanProgressLoaded] = useState(false)
               <p className="text-xs text-gray-500">Track progress over time. Parents see their child's improvement visually in their dashboard.</p>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-  <label className="block text-xs font-semibold text-gray-500 mb-1.5">Student name</label>
-  <select value={naplanBandStudent} onChange={e => setNaplanBandStudent(e.target.value)} className="input-base">
-    <option value="">— Select a student —</option>
-    {allParents.map(p => (
-      <option key={p.id} value={p.child_name || p.name}>
-        {p.child_name || p.name} {p.child_name ? `(parent: ${p.name})` : ''}
-      </option>
-    ))}
-  </select>
-</div>
+                  <label className="block text-xs font-semibold text-gray-500 mb-1.5">Student name</label>
+                  <select value={naplanBandStudent} onChange={e => setNaplanBandStudent(e.target.value)} className="input-base">
+                    <option value="">— Select a student —</option>
+                    {allParents.map(p => (
+                      <option key={p.id} value={p.child_name || p.name}>
+                        {p.child_name || p.name} {p.child_name ? `(parent: ${p.name})` : ''}
+                      </option>
+                    ))}
+                  </select>
+                </div>
                 <div>
                   <label className="block text-xs font-semibold text-gray-500 mb-1.5">Subject</label>
                   <select value={naplanBandSubject} onChange={e => setNaplanBandSubject(e.target.value)} className="input-base">
@@ -1211,29 +1104,22 @@ const [naplanProgressLoaded, setNaplanProgressLoaded] = useState(false)
               <textarea value={naplanBandNote} onChange={e => setNaplanBandNote(e.target.value)} rows={2}
                 className="input-base" placeholder="Optional note for your records..."/>
               {naplanBandSaved ? (
-                <div className="bg-emerald-50 border border-emerald-200 text-emerald-700 text-center py-3 rounded-xl font-semibold text-sm">
-                  ✅ Band recorded!
-                </div>
+                <div className="bg-emerald-50 border border-emerald-200 text-emerald-700 text-center py-3 rounded-xl font-semibold text-sm">✅ Band recorded!</div>
               ) : (
                 <button onClick={async () => {
                   if (!naplanBandStudent.trim()) return
                   setNaplanBandSaving(true)
                   try {
                     await axios.post(`${API}/api/naplan-band`, {
-                      teacherId: profile.id,
-                      studentName: naplanBandStudent,
-                      subject: naplanBandSubject,
-                      band: naplanBandLevel,
-                      yearLevel: naplanBandYear,
-                      date: naplanBandDate,
-                      note: naplanBandNote
+                      teacherId: profile.id, studentName: naplanBandStudent,
+                      subject: naplanBandSubject, band: naplanBandLevel,
+                      yearLevel: naplanBandYear, date: naplanBandDate, note: naplanBandNote
                     })
                     setNaplanBandSaved(true)
                     setNaplanBandStudent(''); setNaplanBandNote('')
                     setTimeout(() => setNaplanBandSaved(false), 3000)
                     const res = await axios.get(`${API}/api/naplan-progress/${profile.id}`)
-                    if (res.data.success) setNaplanProgress(res.data.data)
-                    setNaplanProgressLoaded(true)
+                    if (res.data.success) { setNaplanProgress(res.data.data); setNaplanProgressLoaded(true) }
                   } catch(e) {
                     alert('Error saving band: ' + (e.response?.data?.error || e.message))
                   }
@@ -1251,11 +1137,14 @@ const [naplanProgressLoaded, setNaplanProgressLoaded] = useState(false)
                 <button onClick={async () => {
                   try {
                     const res = await axios.get(`${API}/api/naplan-progress/${profile.id}`)
-                    if (res.data.success) { setNaplanProgress(res.data.data); setNaplanProgressLoaded(true) }
-                    else { alert('Load failed: ' + JSON.stringify(res.data)) }
-                  } catch(e) {
-                    alert('Load error: ' + e.message)
-                  }
+                    if (res.data.success) {
+                      setNaplanProgress(res.data.data)
+                      setNaplanProgressLoaded(true)
+                      if (res.data.data.length > 0 && !selectedNaplanStudent) {
+                        setSelectedNaplanStudent(res.data.data[0].student_name)
+                      }
+                    }
+                  } catch(e) { alert('Load error: ' + e.message) }
                 }} className="btn-ghost text-xs px-3 py-1.5">🔄 Load</button>
               </div>
 
@@ -1270,7 +1159,6 @@ const [naplanProgressLoaded, setNaplanProgressLoaded] = useState(false)
                   <p className="text-xs text-gray-400">No bands recorded yet — use the tracker above to add your first entry.</p>
                 </div>
               ) : (() => {
-                // Group by student first, then by subject within each student
                 const byStudent = naplanProgress.reduce((acc, entry) => {
                   if (!acc[entry.student_name]) acc[entry.student_name] = {}
                   if (!acc[entry.student_name][entry.subject]) acc[entry.student_name][entry.subject] = []
@@ -1279,19 +1167,11 @@ const [naplanProgressLoaded, setNaplanProgressLoaded] = useState(false)
                 }, {})
 
                 const allStudents = Object.keys(byStudent)
-                const [selectedNaplanStudent, setSelectedNaplanStudent] = React.useState(allStudents[0] || '')
                 const activeStudent = selectedNaplanStudent || allStudents[0]
                 const studentSubjects = byStudent[activeStudent] || {}
 
-                const SUBJECT_COLORS = {
-                  'English':     '#3B82F6',
-                  'Mathematics': '#6C47FF',
-                  'Science':     '#10B981',
-                }
-
                 return (
                   <div className="space-y-4">
-
                     {/* Student selector tabs */}
                     <div className="flex gap-2 flex-wrap">
                       {allStudents.map(student => (
@@ -1303,21 +1183,19 @@ const [naplanProgressLoaded, setNaplanProgressLoaded] = useState(false)
                       ))}
                     </div>
 
-                    {/* Student overview header */}
+                    {/* Student overview */}
                     <div className="rounded-xl p-4" style={{ background: '#4B0FA8' }}>
-                      <p className="text-white font-semibold">{activeStudent}</p>
+                      <p className="text-white font-semibold text-sm">{activeStudent}</p>
                       <div className="flex gap-3 mt-2 flex-wrap">
                         {Object.entries(studentSubjects).map(([subj, entries]) => {
                           const latest = entries[entries.length - 1]?.band || 0
                           const first = entries[0]?.band || 0
                           const imp = latest - first
                           return (
-                            <div key={subj} className="bg-white bg-opacity-15 rounded-xl px-3 py-2 text-center">
+                            <div key={subj} className="bg-white bg-opacity-15 rounded-xl px-3 py-2 text-center min-w-16">
                               <p className="text-white text-xs font-semibold">{subj}</p>
                               <p className="text-white text-xl font-bold">{latest}</p>
-                              <p className="text-xs opacity-75 text-white">
-                                {imp > 0 ? `+${imp} ↑` : imp < 0 ? `${imp} ↓` : '→'}
-                              </p>
+                              <p className="text-xs opacity-75 text-white">{imp > 0 ? `+${imp} ↑` : imp < 0 ? `${imp} ↓` : '→'}</p>
                             </div>
                           )
                         })}
@@ -1330,40 +1208,28 @@ const [naplanProgressLoaded, setNaplanProgressLoaded] = useState(false)
                       const firstBand = entries[0]?.band || 0
                       const improvement = latestBand - firstBand
                       const subjColor = SUBJECT_COLORS[subj] || '#6C47FF'
-
                       return (
                         <div key={subj} className="bg-gray-50 rounded-xl p-4 space-y-3">
-
-                          {/* Subject header */}
                           <div className="flex justify-between items-center">
                             <div className="flex items-center gap-2">
                               <div className="w-3 h-3 rounded-full" style={{ background: subjColor }}/>
                               <p className="text-sm font-semibold text-gray-800">{subj}</p>
                             </div>
                             <div className="flex items-center gap-2">
-                              <span className="badge font-bold text-white" style={{ background: subjColor }}>
-                                Band {latestBand}
-                              </span>
+                              <span className="badge font-bold text-white" style={{ background: subjColor }}>Band {latestBand}</span>
                               {improvement > 0 && <span className="badge bg-emerald-100 text-emerald-700 font-bold">+{improvement} ↑</span>}
                               {improvement < 0 && <span className="badge bg-red-100 text-red-700 font-bold">{improvement} ↓</span>}
                               {improvement === 0 && entries.length > 1 && <span className="badge bg-gray-200 text-gray-500">→ Stable</span>}
                             </div>
                           </div>
-
-                          {/* Progress bar */}
                           <div>
                             <div className="progress-bar">
-                              <div className="progress-fill transition-all duration-700"
-                                style={{ width: `${(latestBand / 10) * 100}%`, background: subjColor }}/>
+                              <div className="progress-fill transition-all duration-700" style={{ width: `${(latestBand / 10) * 100}%`, background: subjColor }}/>
                             </div>
                             <div className="flex justify-between text-xs text-gray-400 mt-1">
-                              <span>Band 1</span>
-                              <span>Band 5</span>
-                              <span>Band 10</span>
+                              <span>Band 1</span><span>Band 5</span><span>Band 10</span>
                             </div>
                           </div>
-
-                          {/* Timeline dots */}
                           <div className="flex gap-3 flex-wrap items-end">
                             {entries.map((e, i) => {
                               const isLatest = i === entries.length - 1
@@ -1377,7 +1243,7 @@ const [naplanProgressLoaded, setNaplanProgressLoaded] = useState(false)
                                     </p>
                                   )}
                                   <div className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold text-white shadow ${isLatest ? 'ring-2 ring-offset-1' : 'opacity-75'}`}
-                                    style={{ background: subjColor, outlineColor: subjColor }}>
+                                    style={{ background: subjColor }}>
                                     {e.band}
                                   </div>
                                   <p className="text-xs text-gray-400 whitespace-nowrap">
@@ -1388,8 +1254,6 @@ const [naplanProgressLoaded, setNaplanProgressLoaded] = useState(false)
                               )
                             })}
                           </div>
-
-                          {/* Insight */}
                           <div className="rounded-lg px-3 py-2 text-xs" style={{ background: '#F5F3FF', color: '#4B0FA8' }}>
                             {improvement > 1 ? `🚀 ${improvement} band improvement — celebrate this with the family!` :
                              improvement === 1 ? `📈 1 band improvement — keep encouraging home practice.` :
@@ -1397,13 +1261,9 @@ const [naplanProgressLoaded, setNaplanProgressLoaded] = useState(false)
                              entries.length === 1 ? `📋 First entry. Add more over time to track progress.` :
                              `➡️ Stable at Band ${latestBand} — consistent performance.`}
                           </div>
-
-                          {/* Entry history */}
-                          {entries.length > 0 && (
+                          {entries.length > 1 && (
                             <details className="text-xs">
-                              <summary className="text-gray-400 cursor-pointer hover:text-gray-600">
-                                View all {entries.length} entries
-                              </summary>
+                              <summary className="text-gray-400 cursor-pointer hover:text-gray-600">View all {entries.length} entries</summary>
                               <div className="mt-2 space-y-1">
                                 {[...entries].reverse().map((e, i) => (
                                   <div key={i} className="flex justify-between items-center bg-white rounded-lg px-3 py-1.5">
@@ -1422,7 +1282,6 @@ const [naplanProgressLoaded, setNaplanProgressLoaded] = useState(false)
                 )
               })()}
             </div>
-
           </div>
         )}
 
