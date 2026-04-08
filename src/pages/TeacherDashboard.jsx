@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import React, { useState, useEffect } from 'react'
 import axios from 'axios'
 
 const API = 'https://bridgeup-server-production.up.railway.app'
@@ -1270,48 +1270,91 @@ const [naplanProgressLoaded, setNaplanProgressLoaded] = useState(false)
                   <p className="text-xs text-gray-400">No bands recorded yet — use the tracker above to add your first entry.</p>
                 </div>
               ) : (() => {
-                const grouped = naplanProgress.reduce((acc, entry) => {
-                  const key = `${entry.student_name} — ${entry.subject}`
-                  if (!acc[key]) acc[key] = []
-                  acc[key].push(entry)
+                // Group by student first, then by subject within each student
+                const byStudent = naplanProgress.reduce((acc, entry) => {
+                  if (!acc[entry.student_name]) acc[entry.student_name] = {}
+                  if (!acc[entry.student_name][entry.subject]) acc[entry.student_name][entry.subject] = []
+                  acc[entry.student_name][entry.subject].push(entry)
                   return acc
                 }, {})
 
+                const allStudents = Object.keys(byStudent)
+                const [selectedNaplanStudent, setSelectedNaplanStudent] = React.useState(allStudents[0] || '')
+                const activeStudent = selectedNaplanStudent || allStudents[0]
+                const studentSubjects = byStudent[activeStudent] || {}
+
+                const SUBJECT_COLORS = {
+                  'English':     '#3B82F6',
+                  'Mathematics': '#6C47FF',
+                  'Science':     '#10B981',
+                }
+
                 return (
-                  <div className="space-y-6">
-                    {Object.entries(grouped).map(([key, entries]) => {
+                  <div className="space-y-4">
+
+                    {/* Student selector tabs */}
+                    <div className="flex gap-2 flex-wrap">
+                      {allStudents.map(student => (
+                        <button key={student} onClick={() => setSelectedNaplanStudent(student)}
+                          className={`px-3 py-1.5 rounded-xl text-sm font-medium border transition ${activeStudent === student ? 'text-white border-violet-600' : 'bg-white text-gray-600 border-gray-200 hover:border-violet-300'}`}
+                          style={activeStudent === student ? { background: '#6C47FF' } : {}}>
+                          👤 {student}
+                        </button>
+                      ))}
+                    </div>
+
+                    {/* Student overview header */}
+                    <div className="rounded-xl p-4" style={{ background: '#4B0FA8' }}>
+                      <p className="text-white font-semibold">{activeStudent}</p>
+                      <div className="flex gap-3 mt-2 flex-wrap">
+                        {Object.entries(studentSubjects).map(([subj, entries]) => {
+                          const latest = entries[entries.length - 1]?.band || 0
+                          const first = entries[0]?.band || 0
+                          const imp = latest - first
+                          return (
+                            <div key={subj} className="bg-white bg-opacity-15 rounded-xl px-3 py-2 text-center">
+                              <p className="text-white text-xs font-semibold">{subj}</p>
+                              <p className="text-white text-xl font-bold">{latest}</p>
+                              <p className="text-xs opacity-75 text-white">
+                                {imp > 0 ? `+${imp} ↑` : imp < 0 ? `${imp} ↓` : '→'}
+                              </p>
+                            </div>
+                          )
+                        })}
+                      </div>
+                    </div>
+
+                    {/* Per-subject breakdown */}
+                    {Object.entries(studentSubjects).map(([subj, entries]) => {
                       const latestBand = entries[entries.length - 1]?.band || 0
                       const firstBand = entries[0]?.band || 0
                       const improvement = latestBand - firstBand
-                      const bandColor = latestBand >= 7 ? '#10B981' : latestBand >= 5 ? '#6C47FF' : latestBand >= 3 ? '#F59E0B' : '#EF4444'
+                      const subjColor = SUBJECT_COLORS[subj] || '#6C47FF'
 
                       return (
-                        <div key={key} className="space-y-3">
+                        <div key={subj} className="bg-gray-50 rounded-xl p-4 space-y-3">
 
-                          {/* Header row */}
+                          {/* Subject header */}
                           <div className="flex justify-between items-center">
-                            <p className="text-sm font-semibold text-gray-800">{key}</p>
                             <div className="flex items-center gap-2">
-                              <span className="badge font-bold" style={{ background: '#EDE9FF', color: '#6C47FF' }}>
+                              <div className="w-3 h-3 rounded-full" style={{ background: subjColor }}/>
+                              <p className="text-sm font-semibold text-gray-800">{subj}</p>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <span className="badge font-bold text-white" style={{ background: subjColor }}>
                                 Band {latestBand}
                               </span>
-                              {improvement > 0 && (
-                                <span className="badge bg-emerald-100 text-emerald-700 font-bold">+{improvement} ↑</span>
-                              )}
-                              {improvement < 0 && (
-                                <span className="badge bg-red-100 text-red-700 font-bold">{improvement} ↓</span>
-                              )}
-                              {improvement === 0 && entries.length > 1 && (
-                                <span className="badge bg-gray-100 text-gray-500">→ Stable</span>
-                              )}
+                              {improvement > 0 && <span className="badge bg-emerald-100 text-emerald-700 font-bold">+{improvement} ↑</span>}
+                              {improvement < 0 && <span className="badge bg-red-100 text-red-700 font-bold">{improvement} ↓</span>}
+                              {improvement === 0 && entries.length > 1 && <span className="badge bg-gray-200 text-gray-500">→ Stable</span>}
                             </div>
                           </div>
 
-                          {/* Band progress bar */}
+                          {/* Progress bar */}
                           <div>
                             <div className="progress-bar">
                               <div className="progress-fill transition-all duration-700"
-                                style={{ width: `${(latestBand / 10) * 100}%`, background: bandColor }}/>
+                                style={{ width: `${(latestBand / 10) * 100}%`, background: subjColor }}/>
                             </div>
                             <div className="flex justify-between text-xs text-gray-400 mt-1">
                               <span>Band 1</span>
@@ -1321,33 +1364,57 @@ const [naplanProgressLoaded, setNaplanProgressLoaded] = useState(false)
                           </div>
 
                           {/* Timeline dots */}
-                          <div className="flex gap-3 flex-wrap">
+                          <div className="flex gap-3 flex-wrap items-end">
                             {entries.map((e, i) => {
-                              const dotColor = e.band >= 7 ? '#10B981' : e.band >= 5 ? '#6C47FF' : e.band >= 3 ? '#F59E0B' : '#EF4444'
                               const isLatest = i === entries.length - 1
+                              const prev = i > 0 ? entries[i-1].band : null
+                              const changed = prev !== null ? e.band - prev : 0
                               return (
                                 <div key={i} className="flex flex-col items-center gap-1">
-                                  <div className={`w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold text-white shadow-sm ${isLatest ? 'ring-2 ring-offset-2' : ''}`}
-                                    style={{ background: dotColor, ringColor: dotColor }}>
+                                  {prev !== null && (
+                                    <p className={`text-xs font-bold ${changed > 0 ? 'text-emerald-600' : changed < 0 ? 'text-red-500' : 'text-gray-400'}`}>
+                                      {changed > 0 ? `+${changed}` : changed < 0 ? `${changed}` : '—'}
+                                    </p>
+                                  )}
+                                  <div className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold text-white shadow ${isLatest ? 'ring-2 ring-offset-1' : 'opacity-75'}`}
+                                    style={{ background: subjColor, outlineColor: subjColor }}>
                                     {e.band}
                                   </div>
                                   <p className="text-xs text-gray-400 whitespace-nowrap">
-                                    {new Date(e.recorded_date).toLocaleDateString('en-AU', { month: 'short', year: '2-digit' })}
+                                    {new Date(e.recorded_date).toLocaleDateString('en-AU', { day: 'numeric', month: 'short' })}
                                   </p>
-                                  {isLatest && <p className="text-xs font-semibold" style={{ color: '#6C47FF' }}>Latest</p>}
+                                  {isLatest && <p className="text-xs font-semibold" style={{ color: subjColor }}>Now</p>}
                                 </div>
                               )
                             })}
                           </div>
 
-                          {/* Insight line */}
-                          <div className="rounded-xl px-3 py-2 text-xs" style={{ background: '#F5F3FF', color: '#4B0FA8' }}>
-                            {improvement > 1 ? `🚀 Strong improvement of ${improvement} bands — celebrate this with the family!` :
+                          {/* Insight */}
+                          <div className="rounded-lg px-3 py-2 text-xs" style={{ background: '#F5F3FF', color: '#4B0FA8' }}>
+                            {improvement > 1 ? `🚀 ${improvement} band improvement — celebrate this with the family!` :
                              improvement === 1 ? `📈 1 band improvement — keep encouraging home practice.` :
-                             improvement < 0 ? `⚠️ Band dropped by ${Math.abs(improvement)} — consider a parent conversation.` :
-                             entries.length === 1 ? `📋 First entry recorded. Add more over time to track progress.` :
-                             `➡️ Band stable at ${latestBand} — consistent performance.`}
+                             improvement < 0 ? `⚠️ Dropped ${Math.abs(improvement)} — consider a parent conversation.` :
+                             entries.length === 1 ? `📋 First entry. Add more over time to track progress.` :
+                             `➡️ Stable at Band ${latestBand} — consistent performance.`}
                           </div>
+
+                          {/* Entry history */}
+                          {entries.length > 0 && (
+                            <details className="text-xs">
+                              <summary className="text-gray-400 cursor-pointer hover:text-gray-600">
+                                View all {entries.length} entries
+                              </summary>
+                              <div className="mt-2 space-y-1">
+                                {[...entries].reverse().map((e, i) => (
+                                  <div key={i} className="flex justify-between items-center bg-white rounded-lg px-3 py-1.5">
+                                    <span className="text-gray-600">{new Date(e.recorded_date).toLocaleDateString('en-AU', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })}</span>
+                                    <span className="font-bold" style={{ color: subjColor }}>Band {e.band}</span>
+                                    {e.note && <span className="text-gray-400 italic truncate max-w-24">"{e.note}"</span>}
+                                  </div>
+                                ))}
+                              </div>
+                            </details>
+                          )}
                         </div>
                       )
                     })}
