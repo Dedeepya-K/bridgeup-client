@@ -823,6 +823,114 @@ function AchievementBadges({ profile }) {
   )
 }
 
+function ProgressSummary({ profile, messages, triedTips }) {
+  const totalMessages = messages.length
+  const totalTips = messages.reduce((acc, m) => {
+    const tips = m.translated_tips ? m.translated_tips.split(' | ') : []
+    return acc + tips.length
+  }, 0)
+  const totalTried = Object.values(triedTips).filter(v => v === 'tried').length
+  const totalStruggled = Object.values(triedTips).filter(v => v === 'struggled').length
+
+  const getEncouragement = () => {
+    if (totalTried >= 5) return "You're an amazing learning partner! 🌟"
+    if (totalTried >= 3) return "Great effort supporting learning at home! 💪"
+    if (totalTried >= 1) return "You've made a great start! Keep going! 😊"
+    return "Try an activity today to get started! 🚀"
+  }
+
+  return (
+    <div className="bg-gradient-to-r from-blue-50 to-teal-50 border border-teal-200 rounded-xl p-4 space-y-3">
+      <div className="flex justify-between items-start">
+        <div>
+          <p className="text-sm font-bold text-teal-800">📊 Your Learning Partnership</p>
+          <p className="text-xs text-teal-600 mt-0.5">{getEncouragement()}</p>
+        </div>
+        <span className="text-2xl">👨‍👩‍👧</span>
+      </div>
+      <div className="grid grid-cols-3 gap-2 text-center">
+        <div className="bg-white rounded-lg p-2 shadow-sm">
+          <p className="text-xl font-bold text-blue-700">{totalMessages}</p>
+          <p className="text-xs text-gray-500">Updates received</p>
+        </div>
+        <div className="bg-white rounded-lg p-2 shadow-sm">
+          <p className="text-xl font-bold text-green-700">{totalTried}</p>
+          <p className="text-xs text-gray-500">Activities tried</p>
+        </div>
+        <div className="bg-white rounded-lg p-2 shadow-sm">
+          <p className="text-xl font-bold text-purple-700">{totalTips}</p>
+          <p className="text-xs text-gray-500">Tips available</p>
+        </div>
+      </div>
+      {totalTried > 0 && (
+        <div className="bg-white rounded-lg p-2">
+          <div className="flex justify-between text-xs text-gray-500 mb-1">
+            <span>Activity completion</span>
+            <span>{totalTips > 0 ? Math.round((totalTried/totalTips)*100) : 0}%</span>
+          </div>
+          <div className="w-full bg-gray-100 rounded-full h-2">
+            <div className="bg-gradient-to-r from-teal-400 to-blue-500 h-2 rounded-full transition-all"
+              style={{ width: `${totalTips > 0 ? Math.min(Math.round((totalTried/totalTips)*100), 100) : 0}%` }}/>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+function ShareWithPartner({ profile, currentChild, messages }) {
+  const [copied, setCopied] = useState(false)
+
+  const generateSummary = () => {
+    const childName = currentChild?.name || profile.child_name || 'your child'
+    const subjects = [...new Set(messages.map(m => m.messages?.subject).filter(Boolean))]
+    const tips = []
+    messages.slice(0, 2).forEach(m => {
+      if (m.translated_tips) {
+        const t = m.translated_tips.split(' | ')[0]
+        if (t) tips.push(`• ${t}`)
+      }
+    })
+    return `📚 BridgeUp Update for ${childName}
+
+This week ${childName} is learning: ${subjects.join(', ')}
+
+🏠 How you can help at home:
+${tips.slice(0, 2).join('\n')}
+
+Sent via BridgeUp — bridging school and home 🌉`
+  }
+
+  const handleShare = async () => {
+    const text = generateSummary()
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: 'BridgeUp Update', text })
+      } catch(e) {}
+    } else {
+      navigator.clipboard.writeText(text)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 3000)
+    }
+  }
+
+  if (messages.length === 0) return null
+
+  return (
+    <button onClick={handleShare}
+      className="w-full bg-white border border-gray-200 rounded-xl p-3 flex items-center gap-3 hover:bg-gray-50 transition shadow-sm">
+      <span className="text-2xl">📤</span>
+      <div className="text-left flex-1">
+        <p className="text-sm font-semibold text-gray-800">
+          {copied ? '✅ Copied to clipboard!' : 'Share this week\'s update'}
+        </p>
+        <p className="text-xs text-gray-500">Send to your partner or family via WhatsApp, SMS or email</p>
+      </div>
+      <span className="text-gray-400">→</span>
+    </button>
+  )
+}
+
 export default function ParentDashboard({ supabase, profile }) {
   const [tab, setTab] = useState('updates')
   const [messages, setMessages] = useState([])
@@ -1188,6 +1296,8 @@ export default function ParentDashboard({ supabase, profile }) {
             <WelcomeBanner profile={profile} currentChild={currentChild} language={profile.language} />
             <CommunityStats />
             <AchievementBadges profile={profile} />
+            <ProgressSummary profile={profile} messages={messages} triedTips={triedTips} />
+            <ShareWithPartner profile={profile} currentChild={currentChild} messages={messages} />
             {(() => {
               const allTodos = []
               Object.entries(groupedMessages).forEach(([subject, msgs]) => {

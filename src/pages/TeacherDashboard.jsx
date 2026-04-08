@@ -106,6 +106,7 @@ export default function TeacherDashboard({ supabase, profile }) {
   const [naplanSubject, setNaplanSubject] = useState('English')
   const [naplanYear, setNaplanYear] = useState('8')
   const [emojiInsights, setEmojiInsights] = useState([])
+  const [engagementScores, setEngagementScores] = useState([])
   const [appointments, setAppointments] = useState([])
   const [reminderType, setReminderType] = useState('exam')
   const [reminderTitle, setReminderTitle] = useState('')
@@ -141,6 +142,8 @@ export default function TeacherDashboard({ supabase, profile }) {
     if (res6.data.success) setEmojiInsights(res6.data.data)
     const res7 = await axios.get(`${API}/api/appointments/teacher/${profile.id}`)
     if (res7.data.success) setAppointments(res7.data.data)
+    const res8 = await axios.get(`${API}/api/parent-engagement-scores/${profile.id}`)
+    if (res8.data.success) setEngagementScores(res8.data.data)
   }
 
   const handleTransform = async () => {
@@ -833,6 +836,38 @@ export default function TeacherDashboard({ supabase, profile }) {
                     </div>
                   </div>
                 )}
+
+                {engagementScores.length > 0 && (
+  <div className="bg-white rounded-xl shadow p-5 space-y-3">
+    <p className="text-sm font-bold text-gray-800">📊 Parent Engagement Scores</p>
+    <p className="text-xs text-gray-500">Based on activities tried, messages read and replies sent</p>
+    <div className="space-y-2">
+      {engagementScores.map((p, i) => (
+        <div key={i} className="flex items-center gap-3 bg-gray-50 rounded-lg p-3">
+          <span className="text-lg">{p.emoji}</span>
+          <div className="flex-1">
+            <div className="flex justify-between items-center">
+              <p className="text-sm font-semibold text-gray-800">{p.name}
+                <span className="text-gray-400 font-normal text-xs ml-1">({p.childName})</span>
+              </p>
+              <span className={`text-xs px-2 py-0.5 rounded-full font-bold ${p.level === 'High' ? 'bg-green-100 text-green-700' : p.level === 'Medium' ? 'bg-yellow-100 text-yellow-700' : 'bg-red-100 text-red-700'}`}>
+                {p.score}/100
+              </span>
+            </div>
+            <div className="w-full bg-gray-200 rounded-full h-1.5 mt-1">
+              <div className={`h-1.5 rounded-full ${p.level === 'High' ? 'bg-green-500' : p.level === 'Medium' ? 'bg-yellow-400' : 'bg-red-400'}`}
+                style={{ width: `${p.score}%` }}/>
+            </div>
+            <p className="text-xs text-gray-400 mt-0.5">
+              ✅ {p.tried} activities · 💬 {p.replies} replies · 👁 {p.read} read
+              · {p.language === 'hi' ? '🇮🇳' : p.language === 'zh-Hans' ? '🇨🇳' : '🇦🇺'} {p.language}
+            </p>
+          </div>
+        </div>
+      ))}
+    </div>
+  </div>
+)}
                 <div className="bg-gray-50 rounded-xl p-4 text-xs text-gray-500">
                   <p className="font-semibold mb-1">⚡ Powered by CurricuLLM AI Analysis</p>
                   <p>Sentiment auto-detected from parent replies to help prioritise responses. Always use professional judgment when following up.</p>
