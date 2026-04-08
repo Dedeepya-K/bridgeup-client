@@ -87,7 +87,7 @@ function WelcomeBanner({ profile, currentChild, language }) {
       .catch(() => setText(english))
   }, [currentChild])
   return (
-    <div className="btn-primary w-full">
+    <div className="rounded-xl p-4 text-sm font-medium" style={{ background: '#EDE9FF', color: '#4B0FA8' }}>
       {text || `Hi ${profile.name}!`}
     </div>
   )
@@ -114,15 +114,15 @@ function PersonalMessageBanner({ item, profile, children, selectedChildIdx }) {
   }
 
   if (message) return (
-    <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-3">
-      <p className="text-xs font-semibold text-indigo-700 mb-1">👤 What this means for {currentChild?.name || profile.child_name}:</p>
-      <p className="text-sm text-indigo-800">{message}</p>
-      <p className="text-xs text-indigo-400 mt-1">Powered by CurricuLLM</p>
+    <div className="rounded-xl p-3 border" style={{ background: '#EDE9FF', borderColor: '#C4B5FD' }}>
+      <p className="text-xs font-semibold mb-1" style={{ color: '#6C47FF' }}>👤 What this means for {currentChild?.name || profile.child_name}:</p>
+      <p className="text-sm" style={{ color: '#4B0FA8' }}>{message}</p>
+      <p className="text-xs mt-1 opacity-60" style={{ color: '#6C47FF' }}>Powered by CurricuLLM</p>
     </div>
   )
 
   return (
-    <button onClick={generate} disabled={loading} className="text-xs text-indigo-600 hover:text-indigo-800 underline disabled:opacity-50">
+    <button onClick={generate} disabled={loading} className="text-xs underline disabled:opacity-50" style={{ color: '#6C47FF' }}>
       {loading ? '✨ Personalising...' : `✨ What does this mean for ${currentChild?.name || profile.child_name}?`}
     </button>
   )
@@ -155,19 +155,19 @@ function FAQItem({ questionEn, language }) {
   }
 
   return (
-    <div className="border rounded-xl overflow-hidden">
+    <div className="border border-gray-200 rounded-xl overflow-hidden">
       <button onClick={handleClick} className="w-full text-left px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50 flex justify-between items-center">
         <span>{translatedQ}</span>
         <span className="text-gray-400 ml-2">{open ? '▲' : '▼'}</span>
       </button>
       {open && (
-        <div className="px-4 pb-3 bg-blue-50">
+        <div className="px-4 pb-3 bg-gray-50">
           {loading ? (
             <p className="text-sm text-gray-400">⏳ Getting answer from CurricuLLM...</p>
           ) : (
             <>
               <p className="text-sm text-gray-700">{answer}</p>
-              <p className="text-xs text-blue-400 mt-1">Powered by CurricuLLM 🎓</p>
+              <p className="text-xs mt-1" style={{ color: '#6C47FF' }}>Powered by CurricuLLM 🎓</p>
             </>
           )}
         </div>
@@ -198,17 +198,16 @@ function CustomFAQ({ language }) {
       <div className="flex gap-2">
         <input value={question} onChange={e => setQuestion(e.target.value)}
           onKeyDown={e => e.key === 'Enter' && handleAsk()}
-          className="flex-1 border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+          className="input-base flex-1"
           placeholder="Type any question about your child's learning..."/>
-        <button onClick={handleAsk} disabled={loading || !question.trim()}
-          className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-50">
+        <button onClick={handleAsk} disabled={loading || !question.trim()} className="btn-primary px-4 py-2">
           {loading ? '...' : 'Ask'}
         </button>
       </div>
       {answer && (
-        <div className="bg-blue-50 rounded-lg p-3">
+        <div className="rounded-xl p-3" style={{ background: '#EDE9FF' }}>
           <p className="text-sm text-gray-700">{answer}</p>
-          <p className="text-xs text-blue-400 mt-1">Powered by CurricuLLM 🎓</p>
+          <p className="text-xs mt-1" style={{ color: '#6C47FF' }}>Powered by CurricuLLM 🎓</p>
         </div>
       )}
     </div>
@@ -225,13 +224,13 @@ const LANGUAGES = [
 ]
 
 const SUBJECT_CONFIG = {
-  'Science':     { icon: '🔬', header: 'bg-green-700',  border: 'border-green-300',  bg: 'bg-green-50' },
-  'English':     { icon: '📖', header: 'bg-blue-700',   border: 'border-blue-300',   bg: 'bg-blue-50' },
-  'Mathematics': { icon: '🔢', header: 'bg-purple-700', border: 'border-purple-300', bg: 'bg-purple-50' },
-  'History':     { icon: '🏛️', header: 'bg-amber-700',  border: 'border-amber-300',  bg: 'bg-amber-50' },
-  'Geography':   { icon: '🌍', header: 'bg-teal-700',   border: 'border-teal-300',   bg: 'bg-teal-50' },
-  'PDHPE':       { icon: '⚽', header: 'bg-red-700',    border: 'border-red-300',    bg: 'bg-red-50' },
-  'General':     { icon: '📚', header: 'bg-gray-700',   border: 'border-gray-300',   bg: 'bg-gray-50' },
+  'Science':     { icon: '🔬', header: 'bg-emerald-600', border: 'border-emerald-300', bg: 'bg-emerald-50' },
+  'English':     { icon: '📖', header: 'bg-blue-600',    border: 'border-blue-300',    bg: 'bg-blue-50' },
+  'Mathematics': { icon: '🔢', header: 'bg-violet-600',  border: 'border-violet-300',  bg: 'bg-violet-50' },
+  'History':     { icon: '🏛️', header: 'bg-amber-600',   border: 'border-amber-300',   bg: 'bg-amber-50' },
+  'Geography':   { icon: '🌍', header: 'bg-teal-600',    border: 'border-teal-300',    bg: 'bg-teal-50' },
+  'PDHPE':       { icon: '⚽', header: 'bg-red-600',     border: 'border-red-300',     bg: 'bg-red-50' },
+  'General':     { icon: '📚', header: 'bg-gray-600',    border: 'border-gray-300',    bg: 'bg-gray-50' },
 }
 
 function WeekendSpark({ item, profile, children, selectedChildIdx }) {
@@ -259,7 +258,7 @@ function WeekendSpark({ item, profile, children, selectedChildIdx }) {
       <div className="flex items-center gap-2">
         <span className="text-xl">🌟</span>
         <p className="text-sm font-bold text-orange-800">Weekend Mission!</p>
-        <span className="text-xs bg-orange-200 text-orange-700 px-2 py-0.5 rounded-full">Powered by CurricuLLM</span>
+        <span className="text-xs bg-orange-200 text-orange-700 px-2 py-0.5 rounded-full">CurricuLLM</span>
       </div>
       <p className="text-sm text-gray-700">{spark}</p>
     </div>
@@ -296,7 +295,8 @@ function AudioPlayer({ text, language }) {
 
   return (
     <button onClick={handlePlay}
-      className={`flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full border transition ${playing ? 'bg-teal-600 text-white border-teal-600' : 'bg-white text-teal-700 border-teal-300 hover:bg-teal-50'}`}>
+      className={`flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full border transition ${playing ? 'text-white border-violet-600' : 'bg-white border-gray-200 text-gray-600 hover:border-violet-300'}`}
+      style={playing ? { background: '#6C47FF' } : {}}>
       {playing ? '⏹ Stop' : '🔊 Listen'}
       <span>{playing ? 'Playing...' : 'Hear this'}</span>
     </button>
@@ -319,7 +319,7 @@ function ConfidenceBadge({ tip, subject, yearLevel }) {
     setLoading(false)
   }
 
-  const color = !data ? 'bg-gray-200' : data.confidence >= 80 ? 'bg-green-500' : data.confidence >= 60 ? 'bg-yellow-400' : 'bg-red-400'
+  const color = !data ? 'bg-gray-200' : data.confidence >= 80 ? 'bg-emerald-500' : data.confidence >= 60 ? 'bg-amber-400' : 'bg-red-400'
 
   return (
     <div className="relative flex-shrink-0">
@@ -335,11 +335,11 @@ function ConfidenceBadge({ tip, subject, yearLevel }) {
       {show && data && (
         <div className="absolute right-0 top-6 z-40 bg-white border border-gray-200 rounded-xl p-3 shadow-xl w-56 text-xs space-y-1">
           <div className="flex justify-between items-center">
-            <span className="font-semibold text-gray-700">AI Confidence</span>
+            <span className="font-semibold text-gray-700">ACARA Alignment</span>
             <span className={`px-2 py-0.5 rounded-full text-white text-xs ${color}`}>{data.confidence}%</span>
           </div>
           <p className="text-gray-500">{data.reason}</p>
-          <p className="text-teal-600 font-medium">{data.acara_ref}</p>
+          <p className="font-medium" style={{ color: '#6C47FF' }}>{data.acara_ref}</p>
           <button onClick={() => setShow(false)} className="text-gray-400 hover:text-gray-600">Close</button>
         </div>
       )}
@@ -366,17 +366,18 @@ function GrowthMindsetPrompt({ tip, childName, subject, language }) {
   return (
     <div className="mt-2">
       <button onClick={generate} disabled={loading}
-        className="text-xs text-purple-600 hover:text-purple-800 flex items-center gap-1 disabled:opacity-50">
+        className="text-xs flex items-center gap-1 disabled:opacity-50" style={{ color: '#6C47FF' }}>
         {loading ? '✨ Generating...' : show ? '▲ Hide mindset script' : '🧠 What to say if they get stuck?'}
       </button>
       {show && prompt && (
-        <div className="mt-2 bg-purple-50 border border-purple-200 rounded-lg p-3 space-y-1">
+        <div className="mt-2 rounded-xl p-3 space-y-1" style={{ background: '#EDE9FF', border: '1px solid #C4B5FD' }}>
           {prompt.split('\n').map((line, i) => (
-            <p key={i} className={`text-xs ${line.toLowerCase().includes('instead') ? 'text-red-600' : 'text-purple-800 font-medium'}`}>
+            <p key={i} className={`text-xs ${line.toLowerCase().includes('instead') ? 'text-red-600' : 'font-medium'}`}
+              style={!line.toLowerCase().includes('instead') ? { color: '#4B0FA8' } : {}}>
               {line}
             </p>
           ))}
-          <p className="text-xs text-purple-400 mt-1">🧠 Dweck Growth Mindset • Powered by CurricuLLM</p>
+          <p className="text-xs mt-1 opacity-60" style={{ color: '#6C47FF' }}>🧠 Dweck Growth Mindset • CurricuLLM</p>
         </div>
       )}
     </div>
@@ -395,27 +396,27 @@ function CommunityStats() {
   if (!stats) return null
 
   return (
-    <div className="bg-gradient-to-r from-blue-600 to-teal-600 rounded-xl p-4 text-white space-y-3">
-      <p className="text-xs font-semibold opacity-75 uppercase tracking-wide">🌏 This Week's Community Impact</p>
-      <div className="grid grid-cols-2 gap-2">
-        <div className="bg-white bg-opacity-20 rounded-lg p-2 text-center">
+    <div className="card p-4 text-white" style={{ background: '#4B0FA8' }}>
+      <p className="eyebrow" style={{ color: '#C4B5FD' }}>THIS WEEK'S COMMUNITY IMPACT</p>
+      <div className="grid grid-cols-2 gap-2 mt-3">
+        <div className="bg-white bg-opacity-10 rounded-xl p-2 text-center">
           <p className="text-xl font-bold">{stats.totalActivities}</p>
-          <p className="text-xs opacity-80">Activities completed</p>
+          <p className="text-xs opacity-75">Activities completed</p>
         </div>
-        <div className="bg-white bg-opacity-20 rounded-lg p-2 text-center">
+        <div className="bg-white bg-opacity-10 rounded-xl p-2 text-center">
           <p className="text-xl font-bold">{stats.totalFamilies}</p>
-          <p className="text-xs opacity-80">Families engaged</p>
+          <p className="text-xs opacity-75">Families engaged</p>
         </div>
-        <div className="bg-white bg-opacity-20 rounded-lg p-2 text-center">
+        <div className="bg-white bg-opacity-10 rounded-xl p-2 text-center">
           <p className="text-xl font-bold">{stats.totalLanguages}</p>
-          <p className="text-xs opacity-80">Languages supported</p>
+          <p className="text-xs opacity-75">Languages supported</p>
         </div>
-        <div className="bg-white bg-opacity-20 rounded-lg p-2 text-center">
+        <div className="bg-white bg-opacity-10 rounded-xl p-2 text-center">
           <p className="text-xl font-bold">{stats.topSubject}</p>
-          <p className="text-xs opacity-80">Most active subject</p>
+          <p className="text-xs opacity-75">Most active subject</p>
         </div>
       </div>
-      <p className="text-xs opacity-60 text-center">Powered by CurricuLLM 🎓</p>
+      <p className="text-xs opacity-50 text-center mt-2">Powered by CurricuLLM 🎓</p>
     </div>
   )
 }
@@ -435,7 +436,7 @@ function RemindersWidget({ profile }) {
   const typeConfig = {
     exam:       { emoji: '📝', color: 'bg-red-50 border-red-200 text-red-800' },
     absent:     { emoji: '🏠', color: 'bg-orange-50 border-orange-200 text-orange-800' },
-    assessment: { emoji: '📊', color: 'bg-purple-50 border-purple-200 text-purple-800' },
+    assessment: { emoji: '📊', color: 'bg-violet-50 border-violet-200 text-violet-800' },
     event:      { emoji: '🎉', color: 'bg-blue-50 border-blue-200 text-blue-800' },
   }
 
@@ -448,15 +449,15 @@ function RemindersWidget({ profile }) {
   }
 
   if (reminders.length === 0) return (
-    <div className="bg-white rounded-xl shadow p-5">
-      <h3 className="text-sm font-bold text-gray-800 mb-2">🔔 Reminders from Teacher</h3>
+    <div className="card p-5">
+      <p className="eyebrow mb-2">Reminders</p>
       <p className="text-xs text-gray-400 text-center py-3">No upcoming reminders from your teacher.</p>
     </div>
   )
 
   return (
-    <div className="bg-white rounded-xl shadow p-5 space-y-3">
-      <h3 className="text-sm font-bold text-gray-800">🔔 Reminders from Teacher</h3>
+    <div className="card p-5 space-y-3">
+      <p className="eyebrow">Reminders from Teacher</p>
       <div className="space-y-2">
         {reminders.map((r, i) => {
           const cfg = typeConfig[r.type] || typeConfig.event
@@ -499,9 +500,7 @@ function AppointmentBooking({ profile, currentChild, children }) {
   }, [])
 
   useEffect(() => {
-    if (!selectedChild) {
-      setSelectedChild(currentChild?.name || profile.child_name || '')
-    }
+    if (!selectedChild) setSelectedChild(currentChild?.name || profile.child_name || '')
   }, [currentChild])
 
   const fetchAppointments = async () => {
@@ -516,14 +515,8 @@ function AppointmentBooking({ profile, currentChild, children }) {
     setSaving(true)
     try {
       await axios.post(`${API}/api/book-appointment`, {
-        parentId: profile.id,
-        parentName: profile.name,
-        childName: selectedChild,
-        teacherId: TEACHER_ID,
-        appointmentType,
-        preferredDate,
-        preferredTime,
-        note
+        parentId: profile.id, parentName: profile.name, childName: selectedChild,
+        teacherId: TEACHER_ID, appointmentType, preferredDate, preferredTime, note
       })
       setSaved(true)
       setPreferredDate(''); setPreferredTime(''); setNote(''); setBooking(false)
@@ -534,30 +527,33 @@ function AppointmentBooking({ profile, currentChild, children }) {
   }
 
   return (
-    <div className="bg-white rounded-xl shadow p-5 space-y-4">
+    <div className="card p-5 space-y-4">
       <div className="flex justify-between items-center">
-        <h3 className="text-sm font-bold text-gray-800">📋 Book an Appointment</h3>
-        <button onClick={() => setBooking(!booking)}
-          className="text-xs bg-teal-600 text-white px-3 py-1.5 rounded-lg hover:bg-teal-700 transition">
+        <div>
+          <p className="eyebrow">Appointments</p>
+          <h3 className="text-sm font-semibold text-gray-900">📋 Book an Appointment</h3>
+        </div>
+        <button onClick={() => setBooking(!booking)} className="btn-ghost text-xs px-3 py-1.5">
           {booking ? '✕ Cancel' : '+ Book'}
         </button>
       </div>
 
       {saved && (
-        <div className="bg-green-100 text-green-800 text-center py-2 rounded-lg text-sm font-semibold">
+        <div className="bg-emerald-50 border border-emerald-200 text-emerald-700 text-center py-2 rounded-xl text-sm font-semibold">
           ✅ Request sent! Teacher will confirm.
         </div>
       )}
 
       {booking && (
-        <div className="bg-teal-50 rounded-xl p-4 space-y-3">
+        <div className="rounded-xl p-4 space-y-3" style={{ background: '#F5F3FF' }}>
           {children && children.length > 1 && (
             <div>
-              <label className="block text-xs font-semibold text-gray-700 mb-1">Which child is this for?</label>
+              <label className="block text-xs font-semibold text-gray-600 mb-1">Which child is this for?</label>
               <div className="flex gap-2 flex-wrap">
                 {children.map((child) => (
                   <button key={child.id} onClick={() => setSelectedChild(child.name)}
-                    className={`px-3 py-2 rounded-lg text-xs border transition ${selectedChild === child.name ? 'bg-teal-600 text-white border-teal-600' : 'bg-white text-gray-700 border-gray-300 hover:border-teal-400'}`}>
+                    className={`px-3 py-2 rounded-xl text-xs font-medium border transition ${selectedChild === child.name ? 'text-white border-violet-600' : 'bg-white text-gray-700 border-gray-200 hover:border-violet-300'}`}
+                    style={selectedChild === child.name ? { background: '#6C47FF' } : {}}>
                     👤 {child.name} — Yr {child.year_level}
                   </button>
                 ))}
@@ -565,46 +561,45 @@ function AppointmentBooking({ profile, currentChild, children }) {
             </div>
           )}
           <div>
-            <label className="block text-xs font-semibold text-gray-700 mb-1">What is this about?</label>
+            <label className="block text-xs font-semibold text-gray-600 mb-1">What is this about?</label>
             <div className="grid grid-cols-2 gap-2">
               {['Academic Progress', 'Behaviour Concern', 'Learning Support', 'General Check-in'].map(t => (
                 <button key={t} onClick={() => setAppointmentType(t)}
-                  className={`px-3 py-2 rounded-lg text-xs border transition text-left ${appointmentType === t ? 'bg-teal-600 text-white border-teal-600' : 'bg-white text-gray-700 border-gray-300 hover:border-teal-400'}`}>
+                  className={`px-3 py-2 rounded-xl text-xs font-medium border transition text-left ${appointmentType === t ? 'text-white border-violet-600' : 'bg-white text-gray-700 border-gray-200 hover:border-violet-300'}`}
+                  style={appointmentType === t ? { background: '#6C47FF' } : {}}>
                   {t}
                 </button>
               ))}
             </div>
           </div>
           <div>
-            <label className="block text-xs font-semibold text-gray-700 mb-1">Preferred date</label>
+            <label className="block text-xs font-semibold text-gray-600 mb-1">Preferred date</label>
             <input type="date" value={preferredDate} onChange={e => setPreferredDate(e.target.value)}
-              min={new Date().toISOString().split('T')[0]}
-              className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400"/>
+              min={new Date().toISOString().split('T')[0]} className="input-base"/>
           </div>
           <div>
-            <label className="block text-xs font-semibold text-gray-700 mb-1">Preferred time</label>
+            <label className="block text-xs font-semibold text-gray-600 mb-1">Preferred time</label>
             <div className="grid grid-cols-3 gap-2">
               {['8:00 AM','9:00 AM','10:00 AM','11:00 AM','1:00 PM','2:00 PM','3:00 PM','After school','Phone call'].map(t => (
                 <button key={t} onClick={() => setPreferredTime(t)}
-                  className={`px-2 py-2 rounded-lg text-xs border transition ${preferredTime === t ? 'bg-teal-600 text-white border-teal-600' : 'bg-white text-gray-700 border-gray-300 hover:border-teal-400'}`}>
+                  className={`px-2 py-2 rounded-xl text-xs font-medium border transition ${preferredTime === t ? 'text-white border-violet-600' : 'bg-white text-gray-700 border-gray-200 hover:border-violet-300'}`}
+                  style={preferredTime === t ? { background: '#6C47FF' } : {}}>
                   {t}
                 </button>
               ))}
             </div>
           </div>
-          <textarea value={note} onChange={e => setNote(e.target.value)} rows={2}
-            className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400"
+          <textarea value={note} onChange={e => setNote(e.target.value)} rows={2} className="input-base"
             placeholder="What would you like to discuss? (optional)"/>
-          <div className="bg-amber-50 rounded-lg p-2 text-xs text-amber-700">
+          <div className="rounded-xl p-2 text-xs bg-amber-50 border border-amber-200 text-amber-700">
             ⚠️ For urgent welfare concerns contact the school directly.
           </div>
           {selectedChild && (
-            <div className="bg-teal-100 rounded-lg p-2 text-xs text-teal-800">
+            <div className="rounded-xl p-2 text-xs" style={{ background: '#EDE9FF', color: '#4B0FA8' }}>
               📋 Booking for: <strong>{selectedChild}</strong>
             </div>
           )}
-          <button onClick={handleBook} disabled={saving || !preferredDate || !preferredTime}
-            className="w-full bg-teal-600 text-white py-2 rounded-lg text-sm font-semibold hover:bg-teal-700 disabled:opacity-50">
+          <button onClick={handleBook} disabled={saving || !preferredDate || !preferredTime} className="btn-primary w-full">
             {saving ? 'Booking...' : '📅 Request Appointment'}
           </button>
         </div>
@@ -612,15 +607,15 @@ function AppointmentBooking({ profile, currentChild, children }) {
 
       {appointments.length > 0 && (
         <div className="space-y-2">
-          <p className="text-xs font-semibold text-gray-600">Your appointments:</p>
+          <p className="text-xs font-semibold text-gray-500">Your appointments:</p>
           {appointments.map((a, i) => (
-            <div key={i} className="bg-gray-50 rounded-lg p-3 space-y-1">
+            <div key={i} className="bg-gray-50 rounded-xl p-3 space-y-1">
               <div className="flex justify-between items-center">
                 <div>
                   <p className="text-sm font-semibold text-gray-800">{a.appointment_type}</p>
-                  {a.child_name && <p className="text-xs text-teal-600">👤 {a.child_name}</p>}
+                  {a.child_name && <p className="text-xs" style={{ color: '#6C47FF' }}>👤 {a.child_name}</p>}
                 </div>
-                <span className={`text-xs px-2 py-0.5 rounded-full ${a.status === 'confirmed' ? 'bg-green-100 text-green-700' : a.status === 'cancelled' ? 'bg-red-100 text-red-700' : 'bg-yellow-100 text-yellow-700'}`}>
+                <span className={`badge ${a.status === 'confirmed' ? 'bg-emerald-100 text-emerald-700' : a.status === 'cancelled' ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700'}`}>
                   {a.status === 'confirmed' ? '✅ Confirmed' : a.status === 'cancelled' ? '❌ Cancelled' : '⏳ Pending'}
                 </span>
               </div>
@@ -649,15 +644,13 @@ function AchievementBadges({ profile }) {
   if (!badges) return null
 
   return (
-    <div className="bg-white rounded-xl shadow p-5 space-y-3">
+    <div className="card p-5 space-y-3">
       <div className="flex justify-between items-center">
         <div className="flex items-center gap-2">
-          <h3 className="text-sm font-bold text-gray-800">🏆 Your Achievements</h3>
-          <span className="text-xs bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded-full font-bold">
-            {badges.earned.length} earned
-          </span>
+          <p className="eyebrow">Achievements</p>
+          <span className="badge bg-amber-100 text-amber-700">{badges.earned.length} earned</span>
         </div>
-        <button onClick={() => setShow(!show)} className="text-xs text-teal-600 hover:text-teal-800">
+        <button onClick={() => setShow(!show)} className="text-xs font-medium" style={{ color: '#6C47FF' }}>
           {show ? '▲ Hide' : '▼ Show all'}
         </button>
       </div>
@@ -672,15 +665,14 @@ function AchievementBadges({ profile }) {
           </div>
         ))}
         {!show && badges.earned.length > 3 && (
-          <button onClick={() => setShow(true)}
-            className="rounded-xl border border-gray-200 px-3 py-2 text-xs text-gray-500 hover:bg-gray-50">
+          <button onClick={() => setShow(true)} className="rounded-xl border border-gray-200 px-3 py-2 text-xs text-gray-500 hover:bg-gray-50">
             +{badges.earned.length - 3} more
           </button>
         )}
       </div>
       {show && badges.locked.length > 0 && (
         <div className="space-y-2">
-          <p className="text-xs font-semibold text-gray-500 mt-2">🔒 Still to earn:</p>
+          <p className="text-xs font-semibold text-gray-400 mt-2">🔒 Still to earn:</p>
           <div className="flex gap-2 flex-wrap">
             {badges.locked.map((badge, i) => (
               <div key={i} className="rounded-xl border border-gray-200 px-3 py-2 flex items-center gap-2 bg-gray-50 opacity-60">
@@ -715,37 +707,36 @@ function ProgressSummary({ profile, messages, triedTips }) {
   }
 
   return (
-    <div className="bg-gradient-to-r from-blue-50 to-teal-50 border border-teal-200 rounded-xl p-4 space-y-3">
+    <div className="card p-4 space-y-3">
       <div className="flex justify-between items-start">
         <div>
-          <p className="text-sm font-bold text-teal-800">📊 Your Learning Partnership</p>
-          <p className="text-xs text-teal-600 mt-0.5">{getEncouragement()}</p>
+          <p className="eyebrow">Your Progress</p>
+          <p className="text-sm font-semibold text-gray-900 mt-0.5">{getEncouragement()}</p>
         </div>
         <span className="text-2xl">👨‍👩‍👧</span>
       </div>
       <div className="grid grid-cols-3 gap-2 text-center">
-        <div className="bg-white rounded-lg p-2 shadow-sm">
-          <p className="text-xl font-bold text-blue-700">{totalMessages}</p>
-          <p className="text-xs text-gray-500">Updates received</p>
+        <div className="bg-gray-50 rounded-xl p-2">
+          <p className="text-xl font-bold" style={{ color: '#6C47FF' }}>{totalMessages}</p>
+          <p className="text-xs text-gray-500">Updates</p>
         </div>
-        <div className="bg-white rounded-lg p-2 shadow-sm">
-          <p className="text-xl font-bold text-green-700">{totalTried}</p>
-          <p className="text-xs text-gray-500">Activities tried</p>
+        <div className="bg-gray-50 rounded-xl p-2">
+          <p className="text-xl font-bold text-emerald-600">{totalTried}</p>
+          <p className="text-xs text-gray-500">Tried</p>
         </div>
-        <div className="bg-white rounded-lg p-2 shadow-sm">
-          <p className="text-xl font-bold text-purple-700">{totalTips}</p>
-          <p className="text-xs text-gray-500">Tips available</p>
+        <div className="bg-gray-50 rounded-xl p-2">
+          <p className="text-xl font-bold text-amber-600">{totalTips}</p>
+          <p className="text-xs text-gray-500">Available</p>
         </div>
       </div>
       {totalTried > 0 && (
-        <div className="bg-white rounded-lg p-2">
+        <div>
           <div className="flex justify-between text-xs text-gray-500 mb-1">
-            <span>Activity completion</span>
+            <span>Completion</span>
             <span>{totalTips > 0 ? Math.round((totalTried/totalTips)*100) : 0}%</span>
           </div>
-          <div className="w-full bg-gray-100 rounded-full h-2">
-            <div className="bg-gradient-to-r from-teal-400 to-blue-500 h-2 rounded-full transition-all"
-              style={{ width: `${totalTips > 0 ? Math.min(Math.round((totalTried/totalTips)*100), 100) : 0}%` }}/>
+          <div className="progress-bar">
+            <div className="progress-fill" style={{ width: `${totalTips > 0 ? Math.min(Math.round((totalTried/totalTips)*100), 100) : 0}%` }}/>
           </div>
         </div>
       )}
@@ -784,9 +775,9 @@ function ShareWithPartner({ profile, currentChild, messages }) {
 
   return (
     <button onClick={handleShare}
-      className="w-full bg-white border border-gray-200 rounded-xl p-3 flex items-center gap-3 hover:bg-gray-50 transition shadow-sm">
+      className="card w-full p-3 flex items-center gap-3 hover:bg-gray-50 transition text-left">
       <span className="text-2xl">📤</span>
-      <div className="text-left flex-1">
+      <div className="flex-1">
         <p className="text-sm font-semibold text-gray-800">
           {copied ? '✅ Copied to clipboard!' : "Share this week's update"}
         </p>
@@ -816,7 +807,7 @@ function PrintableSummary({ profile, currentChild, messages, triedTips }) {
     const tried = allTips.filter(t => t.status === 'tried').length
     const total = allTips.length
     const printWindow = window.open('', '_blank')
-    printWindow.document.write(`<!DOCTYPE html><html><head><title>BridgeUp — ${childName}'s Learning Summary</title><style>body{font-family:Arial,sans-serif;max-width:700px;margin:30px auto;color:#333;padding:20px}.header{background:linear-gradient(135deg,#1d4ed8,#0d9488);color:white;padding:24px;border-radius:12px;margin-bottom:24px}.header h1{margin:0 0 4px 0;font-size:24px}.header p{margin:0;opacity:.85;font-size:14px}.section{background:#f8fafc;border-radius:10px;padding:16px;margin-bottom:16px;border-left:4px solid #0d9488}.section h2{margin:0 0 12px 0;font-size:16px;color:#0d9488}.tip{background:white;border-radius:8px;padding:10px 14px;margin-bottom:8px;border:1px solid #e5e7eb}.tip-subject{font-size:11px;font-weight:bold;color:#6366f1;text-transform:uppercase;margin-bottom:4px}.tip-text{font-size:13px;color:#374151}.tip-status{font-size:11px;margin-top:4px}.tried{color:#16a34a}.struggled{color:#ea580c}.pending{color:#9ca3af}.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px}.stat{background:white;border:1px solid #e5e7eb;border-radius:8px;padding:12px;text-align:center}.stat-value{font-size:28px;font-weight:bold;color:#0d9488}.stat-label{font-size:11px;color:#6b7280;margin-top:2px}.subjects{display:flex;gap:8px;flex-wrap:wrap}.subject-tag{background:#dbeafe;color:#1e40af;padding:4px 10px;border-radius:20px;font-size:12px;font-weight:bold}.footer{text-align:center;margin-top:24px;padding-top:16px;border-top:1px solid #e5e7eb;font-size:11px;color:#9ca3af}</style></head><body><div class="header"><h1>🌉 BridgeUp Learning Summary</h1><p>${childName}'s Weekly Update · ${new Date().toLocaleDateString('en-AU',{weekday:'long',day:'numeric',month:'long',year:'numeric'})}</p><p style="margin-top:6px;font-size:13px;">Prepared for ${profile.name}</p></div><div class="stats"><div class="stat"><div class="stat-value">${messages.length}</div><div class="stat-label">Updates this week</div></div><div class="stat"><div class="stat-value">${tried}</div><div class="stat-label">Activities tried</div></div><div class="stat"><div class="stat-value">${total}</div><div class="stat-label">Total activities</div></div></div><div class="section"><h2>📚 Subjects This Week</h2><div class="subjects">${subjects.map(s=>`<span class="subject-tag">${s}</span>`).join('')}</div></div><div class="section"><h2>🏠 At-Home Activities</h2>${allTips.slice(0,10).map(t=>`<div class="tip"><div class="tip-subject">${t.subject}</div><div class="tip-text">${t.tip}</div><div class="tip-status ${t.status==='tried'?'tried':t.status==='struggled'?'struggled':'pending'}">${t.status==='tried'?'✅ Completed!':t.status==='struggled'?'😕 Needs support':'⏳ Not yet tried'}</div></div>`).join('')}</div><div class="footer"><p>Generated by BridgeUp — Powered by CurricuLLM 🎓</p><p>Compliant with the Australian Privacy Act 1988 · Not for distribution outside the family</p></div></body></html>`)
+    printWindow.document.write(`<!DOCTYPE html><html><head><title>BridgeUp — ${childName}'s Learning Summary</title><style>body{font-family:Arial,sans-serif;max-width:700px;margin:30px auto;color:#333;padding:20px}.header{background:linear-gradient(135deg,#6C47FF,#4B0FA8);color:white;padding:24px;border-radius:12px;margin-bottom:24px}.header h1{margin:0 0 4px 0;font-size:24px}.header p{margin:0;opacity:.85;font-size:14px}.section{background:#f8fafc;border-radius:10px;padding:16px;margin-bottom:16px;border-left:4px solid #6C47FF}.section h2{margin:0 0 12px 0;font-size:16px;color:#6C47FF}.tip{background:white;border-radius:8px;padding:10px 14px;margin-bottom:8px;border:1px solid #e5e7eb}.tip-subject{font-size:11px;font-weight:bold;color:#6C47FF;text-transform:uppercase;margin-bottom:4px}.tip-text{font-size:13px;color:#374151}.tip-status{font-size:11px;margin-top:4px}.tried{color:#16a34a}.struggled{color:#ea580c}.pending{color:#9ca3af}.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px}.stat{background:white;border:1px solid #e5e7eb;border-radius:8px;padding:12px;text-align:center}.stat-value{font-size:28px;font-weight:bold;color:#6C47FF}.stat-label{font-size:11px;color:#6b7280;margin-top:2px}.subjects{display:flex;gap:8px;flex-wrap:wrap}.subject-tag{background:#EDE9FF;color:#6C47FF;padding:4px 10px;border-radius:20px;font-size:12px;font-weight:bold}.footer{text-align:center;margin-top:24px;padding-top:16px;border-top:1px solid #e5e7eb;font-size:11px;color:#9ca3af}</style></head><body><div class="header"><h1>🌉 BridgeUp Learning Summary</h1><p>${childName}'s Weekly Update · ${new Date().toLocaleDateString('en-AU',{weekday:'long',day:'numeric',month:'long',year:'numeric'})}</p><p style="margin-top:6px;font-size:13px;">Prepared for ${profile.name}</p></div><div class="stats"><div class="stat"><div class="stat-value">${messages.length}</div><div class="stat-label">Updates this week</div></div><div class="stat"><div class="stat-value">${tried}</div><div class="stat-label">Activities tried</div></div><div class="stat"><div class="stat-value">${total}</div><div class="stat-label">Total activities</div></div></div><div class="section"><h2>📚 Subjects This Week</h2><div class="subjects">${subjects.map(s=>`<span class="subject-tag">${s}</span>`).join('')}</div></div><div class="section"><h2>🏠 At-Home Activities</h2>${allTips.slice(0,10).map(t=>`<div class="tip"><div class="tip-subject">${t.subject}</div><div class="tip-text">${t.tip}</div><div class="tip-status ${t.status==='tried'?'tried':t.status==='struggled'?'struggled':'pending'}">${t.status==='tried'?'✅ Completed!':t.status==='struggled'?'😕 Needs support':'⏳ Not yet tried'}</div></div>`).join('')}</div><div class="footer"><p>Generated by BridgeUp — Powered by CurricuLLM 🎓</p><p>Compliant with the Australian Privacy Act 1988 · H-AI-H Human-Centered AI Principles</p></div></body></html>`)
     printWindow.document.close()
     setTimeout(() => { printWindow.print(); setGenerating(false) }, 500)
   }
@@ -825,11 +816,11 @@ function PrintableSummary({ profile, currentChild, messages, triedTips }) {
 
   return (
     <button onClick={handlePrint} disabled={generating}
-      className="w-full bg-white border border-gray-200 rounded-xl p-3 flex items-center gap-3 hover:bg-gray-50 transition shadow-sm disabled:opacity-50">
+      className="card w-full p-3 flex items-center gap-3 hover:bg-gray-50 transition text-left disabled:opacity-50">
       <span className="text-2xl">🖨️</span>
-      <div className="text-left flex-1">
+      <div className="flex-1">
         <p className="text-sm font-semibold text-gray-800">{generating ? '⏳ Generating...' : "Print this week's summary"}</p>
-        <p className="text-xs text-gray-500">Download a PDF with all tips, activities and progress for {currentChild?.name || profile.child_name}</p>
+        <p className="text-xs text-gray-500">PDF with all tips, activities and progress for {currentChild?.name || profile.child_name}</p>
       </div>
       <span className="text-gray-400">→</span>
     </button>
@@ -973,7 +964,6 @@ export default function ParentDashboard({ supabase, profile }) {
   }
 
   const handleLogout = () => supabase.auth.signOut()
-  const lang = LANGUAGES.find(l => l.code === profile.language) || LANGUAGES[0]
   const currentChild = children[selectedChildIdx]
 
   const renderSubjectContent = (subject, subjectMessages) => {
@@ -998,20 +988,30 @@ export default function ParentDashboard({ supabase, profile }) {
             const tips = item.translated_tips ? item.translated_tips.split(' | ') : []
             return (
               <div key={item.id} className="p-5 space-y-4">
-                <div className="flex justify-between items-start">
+                <div className="flex justify-between items-start flex-wrap gap-2">
                   <div className="flex items-center gap-2">
                     <div className="w-3 h-3 rounded-full bg-white border-2 border-current mt-1"/>
                     <span className="text-sm font-medium text-gray-600">
                       📅 {new Date(item.created_at).toLocaleDateString('en-AU', { weekday: 'long', day: 'numeric', month: 'long' })}
                     </span>
                   </div>
-                  <div className="flex items-center gap-2 flex-wrap justify-end">
-                    {flagged[item.message_id] && <span className="text-xs bg-red-100 text-red-700 px-2 py-0.5 rounded-full">🚩 Flagged</span>}
-                    <span className="text-xs bg-teal-100 text-teal-700 px-2 py-0.5 rounded-full font-medium">🤖 AI-generated • ✅ Teacher-approved</span>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    {flagged[item.message_id] && (
+                      <span className="badge bg-red-100 text-red-700">🚩 Flagged</span>
+                    )}
+                    <span className="badge text-xs font-medium" style={{ background: '#EDE9FF', color: '#6C47FF' }}>
+                      🤖 CurricuLLM • ✅ Teacher reviewed
+                    </span>
+                    {profile.language !== 'en' && (
+                      <span className="badge bg-amber-100 text-amber-700 text-xs">
+                        🌐 Machine translated
+                      </span>
+                    )}
                   </div>
                 </div>
+
                 <div className="bg-white rounded-xl p-4 shadow-sm space-y-3">
-                  <p className="text-sm font-semibold text-gray-700">📚 This week's learning</p>
+                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">📚 This week's learning</p>
                   <p className="text-sm text-gray-700 leading-relaxed">
                     <JargonText text={displayContent} language={profile.language} />
                   </p>
@@ -1019,13 +1019,19 @@ export default function ParentDashboard({ supabase, profile }) {
                   <AudioPlayer text={displayContent} language={profile.language} />
                   <WeekendSpark item={item} profile={profile} children={children} selectedChildIdx={selectedChildIdx} />
                   {profile.language !== 'en' && (
-                    <p className="text-xs text-gray-400 mt-2 italic">🔍 Tap highlighted terms for explanations</p>
+                    <p className="text-xs text-gray-400 italic">🔍 Tap highlighted terms for explanations in your language</p>
+                  )}
+                  {profile.language !== 'en' && (
+                    <div className="rounded-xl px-3 py-2 text-xs" style={{ background: '#FEF3C7', color: '#92400E' }}>
+                      ⚠️ This message was machine-translated. For critical school matters please contact your teacher or school office directly.
+                    </div>
                   )}
                   <div className="flex gap-2 flex-wrap pt-1">
                     <span className="text-xs text-gray-400 self-center">Reading level:</span>
                     {[{ key: 'simple', label: '🟢 Simpler' }, { key: 'standard', label: '🔵 Standard' }, { key: 'detailed', label: '🟣 More detail' }].map(lvl => (
                       <button key={lvl.key} onClick={() => handleSimplify(item.message_id, originalContent, lvl.key)} disabled={simplifying[item.message_id]}
-                        className={`text-xs px-3 py-1 rounded-full border transition ${readingLevel[item.message_id] === lvl.key ? 'bg-teal-600 text-white border-teal-600' : 'bg-white text-gray-600 border-gray-300 hover:border-teal-400'}`}>
+                        className={`text-xs px-3 py-1 rounded-full border transition ${readingLevel[item.message_id] === lvl.key ? 'text-white border-violet-600' : 'bg-white text-gray-600 border-gray-200 hover:border-violet-300'}`}
+                        style={readingLevel[item.message_id] === lvl.key ? { background: '#6C47FF' } : {}}>
                         {simplifying[item.message_id] ? '...' : lvl.label}
                       </button>
                     ))}
@@ -1035,17 +1041,20 @@ export default function ParentDashboard({ supabase, profile }) {
                     )}
                   </div>
                 </div>
+
                 {tips.length > 0 && (
                   <div className="bg-white rounded-xl p-4 shadow-sm">
-                    <p className="text-sm font-semibold text-green-800 mb-3">🏠 How you can help at home</p>
+                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">🏠 How you can help at home</p>
                     <div className="space-y-3">
                       {tips.map((tip, i) => {
                         const tipKey = `${item.message_id}_${i}`
                         const fb = triedTips[tipKey]
                         return (
-                          <div key={i} className={`rounded-lg p-3 transition ${fb === 'tried' ? 'bg-green-50 border border-green-200' : fb === 'struggled' ? 'bg-orange-50 border border-orange-200' : 'bg-gray-50'}`}>
+                          <div key={i} className={`rounded-xl p-3 transition ${fb === 'tried' ? 'bg-emerald-50 border border-emerald-200' : fb === 'struggled' ? 'bg-orange-50 border border-orange-200' : 'bg-gray-50'}`}>
                             <div className="flex items-start justify-between gap-2">
-                              <p className="text-sm text-gray-700 flex-1"><span className="font-bold text-green-600">{i+1}.</span> {tip}</p>
+                              <p className="text-sm text-gray-700 flex-1">
+                                <span className="font-bold text-emerald-600">{i+1}.</span> {tip}
+                              </p>
                               <ConfidenceBadge tip={tip} subject={item.messages?.subject} yearLevel="8" />
                             </div>
                             <GrowthMindsetPrompt
@@ -1056,11 +1065,19 @@ export default function ParentDashboard({ supabase, profile }) {
                             />
                             {!fb ? (
                               <div className="flex gap-2 mt-2">
-                                <button onClick={() => handleTried(item.id, item.message_id, i, 'tried')} className="text-xs px-3 py-1 bg-green-100 text-green-700 rounded-full hover:bg-green-200 transition">✅ We tried this!</button>
-                                <button onClick={() => handleTried(item.id, item.message_id, i, 'struggled')} className="text-xs px-3 py-1 bg-orange-100 text-orange-700 rounded-full hover:bg-orange-200 transition">😕 We struggled</button>
+                                <button onClick={() => handleTried(item.id, item.message_id, i, 'tried')}
+                                  className="text-xs px-3 py-1 bg-emerald-100 text-emerald-700 rounded-full hover:bg-emerald-200 transition">
+                                  ✅ We tried this!
+                                </button>
+                                <button onClick={() => handleTried(item.id, item.message_id, i, 'struggled')}
+                                  className="text-xs px-3 py-1 bg-orange-100 text-orange-700 rounded-full hover:bg-orange-200 transition">
+                                  😕 We struggled
+                                </button>
                               </div>
                             ) : (
-                              <p className="text-xs mt-2 text-gray-500 italic">{fb === 'tried' ? '✅ Great! Your teacher can see this.' : '😕 Noted — your teacher will follow up.'}</p>
+                              <p className="text-xs mt-2 text-gray-500 italic">
+                                {fb === 'tried' ? '✅ Great! Your teacher can see this.' : '😕 Noted — your teacher will follow up.'}
+                              </p>
                             )}
                           </div>
                         )
@@ -1068,19 +1085,20 @@ export default function ParentDashboard({ supabase, profile }) {
                     </div>
                   </div>
                 )}
+
                 <div className="bg-white rounded-xl p-4 shadow-sm space-y-3">
                   <div className="flex justify-between items-center">
-                    <p className="text-sm font-semibold text-gray-700">💬 Reply to teacher</p>
+                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">💬 Reply to teacher</p>
                     <button onClick={() => handleFlag(item.message_id)} disabled={flagged[item.message_id]}
                       className={`text-xs transition ${flagged[item.message_id] ? 'text-red-500' : 'text-gray-400 hover:text-red-500'}`}>
-                      🚩 {flagged[item.message_id] ? 'Flagged' : 'Flag this message'}
+                      🚩 {flagged[item.message_id] ? 'Flagged' : 'Flag'}
                     </button>
                   </div>
-                  <div className="bg-amber-50 rounded-lg p-2 text-xs text-amber-700">
-                    ⚠️ Not for urgent welfare issues — contact the school directly for emergencies.
+                  <div className="rounded-xl p-2 text-xs bg-amber-50 border border-amber-200 text-amber-700">
+                    ⚠️ Not for urgent welfare issues — contact the school directly.
                   </div>
                   <div className="flex gap-2 flex-wrap">
-                    <span className="text-xs text-gray-500 self-center">Quick reply:</span>
+                    <span className="text-xs text-gray-400 self-center">Quick:</span>
                     {[
                       { emoji: '👍', textEn: 'Thanks, got it!' },
                       { emoji: '😕', textEn: "I'm not sure how to help with this" },
@@ -1104,17 +1122,16 @@ export default function ParentDashboard({ supabase, profile }) {
                     ))}
                   </div>
                   <textarea value={replyText[item.message_id] || ''} onChange={e => setReplyText(r => ({ ...r, [item.message_id]: e.target.value }))} rows={2}
-                    className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+                    className="input-base"
                     placeholder="Write in any language — translated automatically for your teacher..."/>
                   {sentReplies[item.message_id] ? (
-                    <p className="text-green-600 text-sm font-medium">✅ Reply sent!</p>
+                    <p className="text-emerald-600 text-sm font-medium">✅ Reply sent!</p>
                   ) : (
-                    <button onClick={() => handleReply(item.message_id)} disabled={sending[item.message_id]}
-                      className="btn-primary">
+                    <button onClick={() => handleReply(item.message_id)} disabled={sending[item.message_id]} className="btn-primary">
                       {sending[item.message_id] ? 'Sending...' : 'Send Reply'}
                     </button>
                   )}
-                  <p className="text-xs text-gray-400 mt-1">You can send multiple replies to your teacher.</p>
+                  <p className="text-xs text-gray-400">You can send multiple replies to your teacher.</p>
                 </div>
               </div>
             )
@@ -1126,22 +1143,24 @@ export default function ParentDashboard({ supabase, profile }) {
 
   if (!consentGiven) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-teal-50 to-blue-100 flex items-center justify-center p-4">
+      <div className="min-h-screen flex items-center justify-center p-4" style={{ background: '#F5F3FF' }}>
         <div className="bg-white rounded-2xl shadow-xl p-8 max-w-md w-full space-y-5">
           <div className="text-center">
-            <span className="text-5xl">🌉</span>
-            <h1 className="text-2xl font-bold text-teal-700 mt-3">Welcome to BridgeUp</h1>
+            <div className="w-16 h-16 rounded-2xl flex items-center justify-center text-3xl mx-auto mb-3" style={{ background: '#6C47FF' }}>🌉</div>
+            <h1 className="text-2xl font-bold text-gray-900">Welcome to BridgeUp</h1>
             <p className="text-gray-500 text-sm mt-1">Before you continue, please read this</p>
           </div>
-          <div className="bg-blue-50 rounded-xl p-4 space-y-3 text-sm text-gray-700">
+          <div className="rounded-xl p-4 space-y-3 text-sm text-gray-700" style={{ background: '#F5F3FF' }}>
             <p><strong>What BridgeUp does:</strong> We turn your child's teacher updates into plain language and personalised home support tips.</p>
-            <p><strong>AI usage:</strong> Messages use CurricuLLM (curriculum-trained AI). Your teacher always reviews and approves every message before it reaches you.</p>
-            <p><strong>Your data:</strong> Your language preference and child profile are stored securely and never sold or shared with third parties.</p>
-            <p><strong>Your rights:</strong> Update or delete your profile at any time. Flag any message that concerns you.</p>
-            <p><strong>Activity tracking:</strong> Your last login time is visible to your teacher to help them support your family better.</p>
-            <p className="text-xs text-gray-400">Compliant with the Australian Privacy Act 1988.</p>
+            <p><strong>AI usage:</strong> Messages are generated by CurricuLLM, a curriculum-trained AI. Your teacher always reviews and approves every message. AI may occasionally produce inaccurate content — contact the school directly for critical matters.</p>
+            <p><strong>Machine translation:</strong> Messages are translated using Azure AI Translator. Translation quality may vary. For important communications please contact the school directly.</p>
+            <p><strong>Your data:</strong> Your language preference and child profile are stored securely on Australian servers and never sold or shared. Data is retained for the school year and deleted upon request.</p>
+            <p><strong>Your rights:</strong> Update or delete your profile at any time. Flag any message that concerns you. You may opt out of activity tracking in your profile settings.</p>
+            <p><strong>Activity tracking:</strong> Your last login time is visible to your teacher to help them support your family. You can turn this off in your profile.</p>
+            <p><strong>Child data:</strong> Information about your child is used solely to personalise learning tips and is never shared outside your school.</p>
+            <p className="text-xs text-gray-400 pt-1 border-t border-gray-200">Compliant with the Australian Privacy Act 1988 · Australian Framework for Generative AI in Schools (2023) · H-AI-H Human-Centered AI Principles</p>
           </div>
-          <button onClick={handleConsent} className="w-full bg-teal-600 text-white py-3 rounded-xl font-semibold hover:bg-teal-700 transition">
+          <button onClick={handleConsent} className="btn-primary w-full py-3">
             I understand and agree to continue
           </button>
         </div>
@@ -1150,13 +1169,13 @@ export default function ParentDashboard({ supabase, profile }) {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen" style={{ background: '#F9FAFB' }}>
       <header className="bg-white border-b border-gray-100 px-6 py-4 flex justify-between items-center">
         <div className="flex items-center gap-3">
-          <span className="text-2xl">🌉</span>
+          <div className="w-9 h-9 rounded-xl flex items-center justify-center text-white text-lg" style={{ background: '#6C47FF' }}>🌉</div>
           <div>
             <h1 className="text-base font-bold text-gray-900">BridgeUp</h1>
-<p className="eyebrow" style={{ marginTop: 0 }}>Family Portal</p>
+            <p className="eyebrow" style={{ marginTop: 0 }}>Family Portal</p>
           </div>
         </div>
         <div className="flex items-center gap-3">
@@ -1169,7 +1188,8 @@ export default function ParentDashboard({ supabase, profile }) {
                   window.location.reload()
                 } catch(e) {}
               }}
-              className="bg-blue-600 text-white text-xs border border-blue-400 rounded-lg px-2 py-1.5 cursor-pointer hover:bg-blue-500 transition appearance-none pr-6">
+              className="text-white text-xs border rounded-lg px-2 py-1.5 cursor-pointer transition appearance-none pr-6"
+              style={{ background: '#6C47FF', borderColor: '#7C3AED' }}>
               {LANGUAGES.map(l => (
                 <option key={l.code} value={l.code} className="bg-white text-gray-800">{l.label}</option>
               ))}
@@ -1177,17 +1197,17 @@ export default function ParentDashboard({ supabase, profile }) {
             <span className="absolute right-1.5 top-1.5 text-white text-xs pointer-events-none">▼</span>
           </div>
           <span className="text-sm text-gray-600 font-medium">👋 {profile.name}</span>
-<button onClick={handleLogout} className="text-sm text-gray-400 hover:text-gray-600 transition">Sign out</button>
+          <button onClick={handleLogout} className="text-sm text-gray-400 hover:text-gray-600 transition">Sign out</button>
         </div>
       </header>
 
       {children.length > 1 && (
-        <div className="bg-white border-b px-6 py-3 flex gap-3 items-center overflow-x-auto">
-          <span className="text-sm text-gray-500 font-medium whitespace-nowrap">Viewing:</span>
+        <div className="bg-white border-b border-gray-100 px-6 py-3 flex gap-3 items-center overflow-x-auto">
+          <span className="text-xs font-semibold text-gray-400 uppercase tracking-wide whitespace-nowrap">Viewing:</span>
           {children.map((child, idx) => (
             <button key={child.id} onClick={() => setSelectedChildIdx(idx)}
-  className={`px-4 py-1.5 rounded-full text-sm font-medium transition whitespace-nowrap ${selectedChildIdx === idx ? 'text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
-  style={selectedChildIdx === idx ? { background: '#6C47FF' } : {}}>
+              className={`px-4 py-1.5 rounded-full text-sm font-medium transition whitespace-nowrap ${selectedChildIdx === idx ? 'text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
+              style={selectedChildIdx === idx ? { background: '#6C47FF' } : {}}>
               👤 {child.name} — Yr {child.year_level}
             </button>
           ))}
@@ -1227,35 +1247,41 @@ export default function ParentDashboard({ supabase, profile }) {
               })
               if (allTodos.length === 0) return null
               return (
-                <div className="bg-yellow-50 border-2 border-yellow-300 rounded-xl p-4 space-y-3">
-                  <p className="font-bold text-yellow-800 text-sm">📋 To-Do: {allTodos.length} activities</p>
+                <div className="card p-4 space-y-3" style={{ borderColor: '#FCD34D', borderWidth: 2, background: '#FFFBEB' }}>
+                  <p className="eyebrow text-amber-700">To-Do List</p>
+                  <p className="text-sm font-semibold text-amber-800">📋 {allTodos.length} activities to try</p>
                   <div className="space-y-2">
                     {allTodos.slice(0, 5).map((todo, i) => (
-                      <div key={i} className="flex items-start gap-3 bg-white rounded-lg p-3 shadow-sm">
+                      <div key={i} className="flex items-start gap-3 bg-white rounded-xl p-3 shadow-sm">
                         <div className="flex-1">
-                          <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${todo.subject==='English'?'bg-blue-100 text-blue-700':todo.subject==='Science'?'bg-green-100 text-green-700':todo.subject==='Mathematics'?'bg-purple-100 text-purple-700':'bg-gray-100 text-gray-600'}`}>{todo.subject}</span>
-                          <p className="text-sm text-gray-700 mt-0.5">{todo.tip}</p>
+                          <span className={`badge text-xs ${todo.subject==='English'?'bg-blue-100 text-blue-700':todo.subject==='Science'?'bg-emerald-100 text-emerald-700':todo.subject==='Mathematics'?'bg-violet-100 text-violet-700':'bg-gray-100 text-gray-600'}`}>
+                            {todo.subject}
+                          </span>
+                          <p className="text-sm text-gray-700 mt-1">{todo.tip}</p>
                         </div>
                         <div className="flex flex-col gap-1 flex-shrink-0">
-                          <button onClick={() => handleTried(todo.recipientId, todo.messageId, todo.tipIdx, 'tried')} className="text-xs px-2 py-1 bg-green-100 text-green-700 rounded-full hover:bg-green-200 whitespace-nowrap">✅ Done</button>
-                          <button onClick={() => handleTried(todo.recipientId, todo.messageId, todo.tipIdx, 'struggled')} className="text-xs px-2 py-1 bg-orange-100 text-orange-700 rounded-full hover:bg-orange-200 whitespace-nowrap">😕 Hard</button>
+                          <button onClick={() => handleTried(todo.recipientId, todo.messageId, todo.tipIdx, 'tried')}
+                            className="text-xs px-2 py-1 bg-emerald-100 text-emerald-700 rounded-full hover:bg-emerald-200 whitespace-nowrap">✅ Done</button>
+                          <button onClick={() => handleTried(todo.recipientId, todo.messageId, todo.tipIdx, 'struggled')}
+                            className="text-xs px-2 py-1 bg-orange-100 text-orange-700 rounded-full hover:bg-orange-200 whitespace-nowrap">😕 Hard</button>
                         </div>
                       </div>
                     ))}
-                    {allTodos.length > 5 && <p className="text-xs text-yellow-600 text-center">+{allTodos.length - 5} more — open a subject card to see all</p>}
+                    {allTodos.length > 5 && <p className="text-xs text-amber-600 text-center">+{allTodos.length - 5} more — open a subject card to see all</p>}
                   </div>
                 </div>
               )
             })()}
+
             {Object.keys(groupedMessages).length === 0 ? (
-              <div className="text-center py-12 text-gray-400">
+              <div className="card p-12 text-center text-gray-400">
                 <p className="text-4xl mb-3">📬</p>
                 <p>No messages yet. Check back soon!</p>
               </div>
             ) : expandedSubject ? (
               renderSubjectContent(expandedSubject, groupedMessages[expandedSubject] || [])
             ) : (
-              <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 items-start">
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 items-start">
                 {Object.entries(groupedMessages).map(([subject, subjectMessages]) => {
                   const cfg = SUBJECT_CONFIG[subject] || SUBJECT_CONFIG['General']
                   const todosRemaining = subjectMessages.filter(m => !m.tried_activity).length
@@ -1266,29 +1292,29 @@ export default function ParentDashboard({ supabase, profile }) {
                   })
                   return (
                     <button key={subject} onClick={() => {
-  setExpandedSubject(subject)
-  setLastReadSubject(prev => ({ ...prev, [subject]: new Date().toISOString() }))
-  axios.post(`${API}/api/mark-read`, { parentId: profile.id, subject }).catch(() => {})
-}} className={`rounded-xl border-2 overflow-hidden shadow hover:shadow-md transition text-left flex flex-col ${cfg.border}`}>
+                      setExpandedSubject(subject)
+                      setLastReadSubject(prev => ({ ...prev, [subject]: new Date().toISOString() }))
+                      axios.post(`${API}/api/mark-read`, { parentId: profile.id, subject }).catch(() => {})
+                    }} className={`rounded-xl border-2 overflow-hidden shadow hover:shadow-md transition text-left flex flex-col ${cfg.border}`}>
                       <div className={`${cfg.header} text-white px-4 py-3 flex flex-col justify-between`} style={{ minHeight: '100px' }}>
                         <div className="flex justify-between items-start">
-                          <span className="text-3xl">{cfg.icon}</span>
+                          <span className="text-2xl">{cfg.icon}</span>
                           <div className="flex flex-col items-end gap-1">
-                            {hasNew && <span className="w-3 h-3 bg-red-400 rounded-full animate-pulse"/>}
+                            {hasNew && <span className="w-2.5 h-2.5 bg-red-400 rounded-full animate-pulse"/>}
                             {todosRemaining > 0 && (
-                              <span className="bg-yellow-300 text-yellow-900 text-xs px-2 py-0.5 rounded-full font-bold">
-                                {todosRemaining} to-do
-                              </span>
+                              <span className="badge bg-yellow-300 text-yellow-900 text-xs">{todosRemaining} to-do</span>
                             )}
                           </div>
                         </div>
-                        <p className="font-bold text-base mt-2 line-clamp-1">{subject}</p>
-<p className="text-xs opacity-75">{subjectMessages.length} update{subjectMessages.length !== 1 ? 's' : ''}</p>
+                        <div>
+                          <p className="font-bold text-sm mt-2 line-clamp-1">{subject}</p>
+                          <p className="text-xs opacity-75">{subjectMessages.length} update{subjectMessages.length !== 1 ? 's' : ''}</p>
+                        </div>
                       </div>
                       <div className="bg-white px-4 py-2 mt-auto">
-  <p className="text-xs text-gray-500 line-clamp-1">{todosRemaining > 0 ? `${todosRemaining} activities to try` : 'All done! 🎉'}</p>
-  <p className="text-xs font-semibold mt-0.5" style={{ color: '#6C47FF' }}>Tap to view →</p>
-</div>
+                        <p className="text-xs text-gray-500 line-clamp-1">{todosRemaining > 0 ? `${todosRemaining} activities` : 'All done! 🎉'}</p>
+                        <p className="text-xs font-semibold mt-0.5" style={{ color: '#6C47FF' }}>Tap to view →</p>
+                      </div>
                     </button>
                   )
                 })}
@@ -1296,8 +1322,10 @@ export default function ParentDashboard({ supabase, profile }) {
                   <div className="rounded-xl border-2 border-dashed border-gray-200 overflow-hidden opacity-40 flex flex-col">
                     <div className="bg-gray-100 px-4 py-3 flex flex-col justify-between" style={{ minHeight: '100px' }}>
                       <span className="text-2xl">📬</span>
-                      <p className="font-bold text-base mt-2 text-gray-400">More coming</p>
-                      <p className="text-xs text-gray-400">New updates soon</p>
+                      <div>
+                        <p className="font-bold text-sm mt-2 text-gray-400">More coming</p>
+                        <p className="text-xs text-gray-400">New updates soon</p>
+                      </div>
                     </div>
                     <div className="bg-white px-4 py-2 mt-auto">
                       <p className="text-xs text-gray-300">Stay tuned</p>
@@ -1312,12 +1340,12 @@ export default function ParentDashboard({ supabase, profile }) {
         {/* ── FAQ TAB ── */}
         {tab === 'faq' && (
           <div className="space-y-4">
-            <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 text-sm text-blue-800">
-              <strong>❓ Ask anything about your child's learning</strong>
-              <p className="mt-1">Powered by CurricuLLM — curriculum-aware answers for Australian parents.</p>
+            <div>
+              <p className="eyebrow">Help Centre</p>
+              <h2 className="text-lg font-semibold text-gray-900">Ask anything about your child's learning</h2>
             </div>
-            <div className="bg-white rounded-xl shadow p-5 space-y-3">
-              <p className="text-sm font-semibold text-gray-700">Common questions — tap to get an answer:</p>
+            <div className="card p-5 space-y-3">
+              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Common questions</p>
               <div className="space-y-2">
                 {[
                   'What is NAPLAN and how can I help my child prepare?',
@@ -1338,9 +1366,9 @@ export default function ParentDashboard({ supabase, profile }) {
         {/* ── SCHEDULE TAB ── */}
         {tab === 'schedule' && (
           <div className="space-y-5">
-            <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 text-sm text-blue-800">
-              <strong>📅 Your Schedule</strong>
-              <p className="mt-1">View reminders from your teacher and book appointments.</p>
+            <div>
+              <p className="eyebrow">Scheduling</p>
+              <h2 className="text-lg font-semibold text-gray-900">Reminders & Appointments</h2>
             </div>
             <RemindersWidget profile={profile} />
             <AppointmentBooking profile={profile} currentChild={currentChild} children={children} />
@@ -1350,80 +1378,86 @@ export default function ParentDashboard({ supabase, profile }) {
         {/* ── PROFILE TAB ── */}
         {tab === 'profile' && (
           <div className="space-y-5">
-            <div className="bg-purple-50 border border-purple-200 rounded-xl p-4 text-sm text-purple-800">
-              <strong>🌟 Personalise {currentChild?.name || profile.child_name || "your child"}'s tips!</strong>
-              <p className="mt-1">BridgeUp uses this to generate at-home tips tailored to your child — not generic advice.</p>
+            <div>
+              <p className="eyebrow">Settings</p>
+              <h2 className="text-lg font-semibold text-gray-900">
+                {currentChild?.name || profile.child_name || "Your Child"}'s Learning Profile
+              </h2>
+            </div>
+            <div className="card p-5 rounded-xl p-3 text-sm font-medium" style={{ background: '#EDE9FF', color: '#4B0FA8', border: 'none' }}>
+              🌟 BridgeUp uses this profile to generate personalised at-home tips — not generic advice.
             </div>
             <div className="card p-6 space-y-5">
-              <h2 className="text-lg font-semibold text-gray-800">👤 {currentChild?.name || profile.child_name || "Your Child"}'s Learning Profile</h2>
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1">🎮 What do they love?</label>
-                <textarea value={interests} onChange={e => setInterests(e.target.value)} rows={2}
-                  className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400"
+                <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">🎮 What do they love?</label>
+                <textarea value={interests} onChange={e => setInterests(e.target.value)} rows={2} className="input-base"
                   placeholder="e.g. Minecraft, Roblox, cricket, cooking..."/>
               </div>
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1">📉 What do they find difficult?</label>
-                <textarea value={struggles} onChange={e => setStruggles(e.target.value)} rows={2}
-                  className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400"
+                <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">📉 What do they find difficult?</label>
+                <textarea value={struggles} onChange={e => setStruggles(e.target.value)} rows={2} className="input-base"
                   placeholder="e.g. grammar, essay writing, maths..."/>
               </div>
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">🧠 How do they learn best?</label>
+                <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">🧠 How do they learn best?</label>
                 <div className="grid grid-cols-2 gap-2">
                   {[{ value: 'visual', label: '👁️ Visual' }, { value: 'hands-on', label: '🙌 Hands-on' }, { value: 'reading', label: '📖 Reading & writing' }, { value: 'talking', label: '💬 Talking it through' }].map(opt => (
                     <button key={opt.value} onClick={() => setLearningStyle(opt.value)}
-                      className={`text-left px-3 py-2 rounded-lg text-sm border transition ${learningStyle === opt.value ? 'bg-purple-600 text-white border-purple-600' : 'bg-white text-gray-700 border-gray-300 hover:border-purple-400'}`}>
+                      className={`text-left px-3 py-2 rounded-xl text-sm font-medium border transition ${learningStyle === opt.value ? 'text-white border-violet-600' : 'bg-white text-gray-700 border-gray-200 hover:border-violet-300'}`}
+                      style={learningStyle === opt.value ? { background: '#6C47FF' } : {}}>
                       {opt.label}
                     </button>
                   ))}
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">💪 How confident are you supporting their learning?</label>
+                <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">💪 Confidence supporting their learning?</label>
                 <div className="flex gap-2">
-                  {[{ value: 'low', label: '😟 Not very' }, { value: 'medium', label: '🙂 Somewhat' }, { value: 'high', label: '😄 Very confident' }].map(opt => (
+                  {[{ value: 'low', label: '😟 Not very' }, { value: 'medium', label: '🙂 Somewhat' }, { value: 'high', label: '😄 Confident' }].map(opt => (
                     <button key={opt.value} onClick={() => setConfidenceLevel(opt.value)}
-                      className={`flex-1 px-2 py-2 rounded-lg text-xs border transition ${confidenceLevel === opt.value ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-700 border-gray-300 hover:border-blue-400'}`}>
+                      className={`flex-1 px-2 py-2 rounded-xl text-xs font-medium border transition ${confidenceLevel === opt.value ? 'text-white border-violet-600' : 'bg-white text-gray-700 border-gray-200 hover:border-violet-300'}`}
+                      style={confidenceLevel === opt.value ? { background: '#6C47FF' } : {}}>
                       {opt.label}
                     </button>
                   ))}
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">🕐 When do you have time?</label>
+                <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">🕐 Best time for activities?</label>
                 <div className="grid grid-cols-3 gap-2">
                   {[{ value: 'morning', label: '🌅 Mornings' }, { value: 'evening', label: '🌙 Evenings' }, { value: 'weekend', label: '📅 Weekends' }].map(opt => (
                     <button key={opt.value} onClick={() => setAvailabilityWindow(opt.value)}
-                      className={`px-2 py-2 rounded-lg text-sm border transition ${availabilityWindow === opt.value ? 'bg-green-600 text-white border-green-600' : 'bg-white text-gray-700 border-gray-300 hover:border-green-400'}`}>
+                      className={`px-2 py-2 rounded-xl text-sm font-medium border transition ${availabilityWindow === opt.value ? 'text-white border-violet-600' : 'bg-white text-gray-700 border-gray-200 hover:border-violet-300'}`}
+                      style={availabilityWindow === opt.value ? { background: '#6C47FF' } : {}}>
                       {opt.label}
                     </button>
                   ))}
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">⏱️ How long for activities?</label>
+                <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">⏱️ Activity duration?</label>
                 <div className="flex gap-2">
                   {['5', '10', '15'].map(min => (
                     <button key={min} onClick={() => setActivityLength(min)}
-                      className={`flex-1 py-2 rounded-lg text-sm border transition ${activityLength === min ? 'bg-teal-600 text-white border-teal-600' : 'bg-white text-gray-700 border-gray-300 hover:border-teal-400'}`}>
+                      className={`flex-1 py-2 rounded-xl text-sm font-medium border transition ${activityLength === min ? 'text-white border-violet-600' : 'bg-white text-gray-700 border-gray-200 hover:border-violet-300'}`}
+                      style={activityLength === min ? { background: '#6C47FF' } : {}}>
                       {min} mins
                     </button>
                   ))}
                 </div>
               </div>
               {profileSaved ? (
-                <div className="bg-green-100 text-green-800 text-center py-3 rounded-lg font-semibold">✅ Profile saved!</div>
+                <div className="bg-emerald-50 border border-emerald-200 text-emerald-700 text-center py-3 rounded-xl font-semibold text-sm">✅ Profile saved!</div>
               ) : (
-                <button onClick={handleSaveProfile} disabled={savingProfile}
-                  className="w-full bg-purple-600 text-white py-3 rounded-lg font-semibold hover:bg-purple-700 transition disabled:opacity-50">
+                <button onClick={handleSaveProfile} disabled={savingProfile} className="btn-primary w-full">
                   {savingProfile ? 'Saving...' : '💾 Save Profile'}
                 </button>
               )}
             </div>
-            <div className="bg-gray-50 rounded-xl p-4 text-xs text-gray-500 space-y-3">
-              <p className="font-semibold text-gray-700">🔐 Privacy Settings</p>
-              <div className="bg-white rounded-xl border border-gray-200 p-4 space-y-2">
+
+            <div className="card p-5 space-y-3">
+              <p className="eyebrow">Privacy Settings</p>
+              <div className="space-y-2">
                 <div className="flex justify-between items-center">
                   <div>
                     <p className="text-sm font-semibold text-gray-700">👁️ Show my last active time</p>
@@ -1438,15 +1472,19 @@ export default function ParentDashboard({ supabase, profile }) {
                     } catch(e) {}
                     setSavingVisibility(false)
                   }}
-                    className={`relative w-12 h-6 rounded-full transition-colors ${activityVisible ? 'bg-teal-500' : 'bg-gray-300'} ${savingVisibility ? 'opacity-50' : ''}`}>
+                    className={`relative w-12 h-6 rounded-full transition-colors flex-shrink-0 ${savingVisibility ? 'opacity-50' : ''}`}
+                    style={{ background: activityVisible ? '#6C47FF' : '#D1D5DB' }}>
                     <span className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-all ${activityVisible ? 'left-6' : 'left-0.5'}`}/>
                   </button>
                 </div>
-                <p className={`text-xs font-medium ${activityVisible ? 'text-teal-600' : 'text-gray-400'}`}>
+                <p className={`text-xs font-medium ${activityVisible ? '' : 'text-gray-400'}`}
+                  style={activityVisible ? { color: '#6C47FF' } : {}}>
                   {activityVisible ? '✅ Visible to teacher — helps them support your family' : '🔒 Hidden — teacher cannot see your activity'}
                 </p>
               </div>
-              <p className="text-xs text-gray-400">Stored securely. Never shared or used for advertising. Compliant with the Australian Privacy Act 1988.</p>
+              <p className="text-xs text-gray-400 pt-2 border-t border-gray-100">
+                Stored securely · Never shared or used for advertising · Australian Privacy Act 1988 compliant
+              </p>
             </div>
           </div>
         )}
@@ -1455,8 +1493,8 @@ export default function ParentDashboard({ supabase, profile }) {
       {/* ── FLOATING CHAT ── */}
       <div className="fixed bottom-6 right-6 z-50">
         {chatOpen && (
-          <div className="bg-white rounded-2xl shadow-2xl border border-gray-200 mb-4 w-80 flex flex-col overflow-hidden" style={{ height: '420px' }}>
-            <div className="bg-teal-700 text-white px-4 py-3 flex justify-between items-center flex-shrink-0">
+          <div className="bg-white rounded-2xl shadow-2xl border border-gray-100 mb-4 w-80 flex flex-col overflow-hidden" style={{ height: '420px' }}>
+            <div className="text-white px-4 py-3 flex justify-between items-center flex-shrink-0" style={{ background: '#6C47FF' }}>
               <div>
                 <p className="font-semibold text-sm">💬 Ask BridgeUp</p>
                 <p className="text-xs opacity-75">Powered by CurricuLLM 🎓</p>
@@ -1466,7 +1504,8 @@ export default function ParentDashboard({ supabase, profile }) {
             <div className="flex-1 overflow-y-auto p-3 space-y-3 bg-gray-50">
               {chatMessages.map((msg, i) => (
                 <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                  <div className={`max-w-xs px-3 py-2 rounded-2xl text-sm leading-relaxed ${msg.role === 'user' ? 'bg-blue-600 text-white rounded-br-none' : 'bg-white text-gray-800 shadow rounded-bl-none'}`}>
+                  <div className={`max-w-xs px-3 py-2 rounded-2xl text-sm leading-relaxed ${msg.role === 'user' ? 'text-white rounded-br-none' : 'bg-white text-gray-800 shadow rounded-bl-none'}`}
+                    style={msg.role === 'user' ? { background: '#6C47FF' } : {}}>
                     {msg.text}
                   </div>
                 </div>
@@ -1478,13 +1517,14 @@ export default function ParentDashboard({ supabase, profile }) {
               )}
               <div ref={chatEndRef}/>
             </div>
-            <div className="p-3 border-t flex gap-2 flex-shrink-0">
+            <div className="p-3 border-t border-gray-100 flex gap-2 flex-shrink-0">
               <input value={chatInput} onChange={e => setChatInput(e.target.value)}
                 onKeyDown={e => e.key === 'Enter' && !e.shiftKey && handleChat()}
                 placeholder="Ask anything in any language..."
-                className="flex-1 border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400"/>
+                className="input-base flex-1"/>
               <button onClick={handleChat} disabled={chatLoading || !chatInput.trim()}
-                className="btn-primary w-full">→</button>
+                className="text-white px-3 py-2 rounded-xl font-bold hover:opacity-90 disabled:opacity-50 transition"
+                style={{ background: '#6C47FF' }}>→</button>
             </div>
             <p className="text-xs text-center text-gray-400 pb-2 px-2">Not for urgent welfare issues — contact school directly</p>
           </div>
@@ -1504,7 +1544,8 @@ export default function ParentDashboard({ supabase, profile }) {
             setChatMessages([{ role: 'assistant', text: translated }])
           }
         }}
-          className={`w-14 h-14 rounded-full shadow-xl flex items-center justify-center text-2xl transition hover:scale-110 ${chatOpen ? 'bg-gray-600 hover:bg-gray-700' : 'bg-teal-600 hover:bg-teal-700'} text-white`}>
+          className={`w-14 h-14 rounded-full shadow-xl flex items-center justify-center text-2xl transition hover:scale-110 text-white`}
+          style={{ background: chatOpen ? '#4B5563' : '#6C47FF' }}>
           {chatOpen ? '✕' : '💬'}
         </button>
       </div>

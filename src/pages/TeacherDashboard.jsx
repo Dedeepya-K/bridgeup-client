@@ -314,10 +314,15 @@ export default function TeacherDashboard({ supabase, profile }) {
         {/* ── COMPOSE ── */}
         {tab === 'compose' && (
           <div className="space-y-5">
-            <div className="card p-5" style={{ background: '#4B0FA8' }}>
-              <p className="eyebrow" style={{ color: '#C4B5FD' }}>CURRICULLM AI</p>
-              <p className="text-white font-semibold mt-1">Write your lesson notes naturally — BridgeUp transforms them into parent-friendly messages with personalised at-home tips.</p>
-            </div>
+            <div className="card p-5 text-white" style={{ background: '#4B0FA8' }}>
+  <p className="eyebrow" style={{ color: '#C4B5FD' }}>CURRICULLM AI · H-AI-H FRAMEWORK</p>
+  <p className="text-white font-semibold mt-1">Write your lesson notes naturally — CurricuLLM transforms them into parent-friendly messages.</p>
+  <div className="mt-3 rounded-xl bg-white bg-opacity-10 p-3 text-xs space-y-1" style={{ color: '#E0D7FF' }}>
+    <p>✏️ <strong>Your role:</strong> Start with your notes → review AI output → edit if needed → approve to send</p>
+    <p>⚠️ <strong>AI may hallucinate</strong> — always verify curriculum facts before sending to families</p>
+    <p>🌍 <strong>Translated messages</strong> are machine-translated — check with EAL/D families if unsure</p>
+  </div>
+</div>
             <div className="card p-6 space-y-4">
               <p className="eyebrow">New Learning Update</p>
               <div className="grid grid-cols-2 gap-4">
@@ -381,23 +386,43 @@ export default function TeacherDashboard({ supabase, profile }) {
                       </div>
                     )}
                     <div className="bg-gray-50 rounded-xl p-4 space-y-1">
-                      <p className="text-xs font-semibold text-gray-500">📚 What your child is learning</p>
-                      <p className="text-sm text-gray-700">{preview.parentSummary}</p>
-                    </div>
+  <p className="text-xs font-semibold text-gray-500">📚 What your child is learning</p>
+  <textarea
+    value={preview.parentSummary}
+    onChange={e => setPreview(p => ({ ...p, parentSummary: e.target.value }))}
+    rows={3}
+    className="input-base text-sm mt-1"
+  />
+</div>
                     <div className="bg-amber-50 rounded-xl p-4 space-y-1">
-                      <p className="text-xs font-semibold text-amber-700">💡 Why it matters</p>
-                      <p className="text-sm text-gray-700">{preview.whyItMatters}</p>
-                    </div>
+  <p className="text-xs font-semibold text-amber-700">💡 Why it matters</p>
+  <textarea
+    value={preview.whyItMatters}
+    onChange={e => setPreview(p => ({ ...p, whyItMatters: e.target.value }))}
+    rows={2}
+    className="input-base text-sm mt-1"
+  />
+</div>
                     <div className="bg-emerald-50 rounded-xl p-4">
-                      <p className="text-xs font-semibold text-emerald-700 mb-2">🏠 At-home tips</p>
-                      <ul className="space-y-1">
-                        {preview.atHomeTips.map((tip, i) => (
-                          <li key={i} className="text-sm text-gray-700 flex gap-2">
-                            <span className="font-bold text-emerald-600">{i+1}.</span>{tip}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
+  <p className="text-xs font-semibold text-emerald-700 mb-2">🏠 At-home tips <span className="font-normal text-gray-400">(click to edit)</span></p>
+  <div className="space-y-2">
+    {preview.atHomeTips.map((tip, i) => (
+      <div key={i} className="flex gap-2 items-start">
+        <span className="font-bold text-emerald-600 mt-2 flex-shrink-0">{i+1}.</span>
+        <textarea
+          value={tip}
+          onChange={e => {
+            const newTips = [...preview.atHomeTips]
+            newTips[i] = e.target.value
+            setPreview(p => ({ ...p, atHomeTips: newTips }))
+          }}
+          rows={2}
+          className="input-base text-sm flex-1"
+        />
+      </div>
+    ))}
+  </div>
+</div>
                     {preview.pedagogyNote && (
                       <div className="rounded-xl px-4 py-2.5 border" style={{ background: '#EDE9FF', borderColor: '#C4B5FD' }}>
                         <p className="text-xs" style={{ color: '#4B0FA8' }}><strong>🧠 Pedagogy note (teacher only):</strong> {preview.pedagogyNote}</p>
@@ -405,6 +430,10 @@ export default function TeacherDashboard({ supabase, profile }) {
                     )}
                   </div>
                 )}
+                <div className="rounded-xl px-4 py-3 text-xs space-y-1" style={{ background: '#EDE9FF', color: '#4B0FA8' }}>
+  <p className="font-semibold">✏️ Human review required — H-AI-H</p>
+  <p className="opacity-75">Please review and edit the AI-generated content above before sending. You are responsible for the accuracy of this message. CurricuLLM may produce inaccurate information.</p>
+</div>
                 {sent ? (
                   <div className="bg-emerald-50 border border-emerald-200 text-emerald-700 text-center py-3 rounded-xl font-semibold text-sm">✅ Sent to all parents!</div>
                 ) : (
