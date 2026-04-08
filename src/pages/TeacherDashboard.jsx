@@ -164,7 +164,10 @@ export default function TeacherDashboard({ supabase, profile }) {
   const handleSend = async () => {
     setSending(true)
     try {
-      await axios.post(`${API}/api/send-message`, { teacherId: profile.id, teacherName: profile.name, subject, rawContent, transformedData: preview })
+      await axios.post(`${API}/api/send-message`, {
+        teacherId: profile.id, teacherName: profile.name,
+        subject, rawContent, transformedData: preview
+      })
       setSent(true); setRawContent(''); setPreview(null)
       fetchMessages(); fetchEngagement()
       setTimeout(() => { setSent(false); setTab('inbox') }, 2000)
@@ -176,7 +179,10 @@ export default function TeacherDashboard({ supabase, profile }) {
     if (!dmParentId || !dmContent.trim()) return
     setDmSending(true)
     try {
-      await axios.post(`${API}/api/direct-message`, { teacherId: profile.id, teacherName: profile.name, parentId: dmParentId, subject: dmSubject || 'Message from Teacher', content: dmContent })
+      await axios.post(`${API}/api/direct-message`, {
+        teacherId: profile.id, teacherName: profile.name,
+        parentId: dmParentId, subject: dmSubject || 'Message from Teacher', content: dmContent
+      })
       setDmSent(true); setDmContent(''); setDmSubject(''); setDmParentId('')
       setTimeout(() => setDmSent(false), 3000)
     } catch(e) {}
@@ -187,7 +193,11 @@ export default function TeacherDashboard({ supabase, profile }) {
     if (!reminderTitle || !reminderDate) return
     setReminderSending(true)
     try {
-      await axios.post(`${API}/api/send-reminder`, { teacherId: profile.id, type: reminderType, title: reminderTitle, date: reminderDate, note: reminderNote, targetParentId: reminderParent || null })
+      await axios.post(`${API}/api/send-reminder`, {
+        teacherId: profile.id, type: reminderType,
+        title: reminderTitle, date: reminderDate,
+        note: reminderNote, targetParentId: reminderParent || null
+      })
       setReminderSent(true)
       setReminderTitle(''); setReminderDate(''); setReminderNote(''); setReminderParent('')
       setTimeout(() => setReminderSent(false), 3000)
@@ -199,7 +209,11 @@ export default function TeacherDashboard({ supabase, profile }) {
     if (!broadcastContent.trim()) return
     setBroadcastSending(true)
     try {
-      const res = await axios.post(`${API}/api/broadcast`, { teacherId: profile.id, teacherName: profile.name, subject: broadcastSubject || 'Important Notice', content: broadcastContent, urgent: broadcastUrgent })
+      const res = await axios.post(`${API}/api/broadcast`, {
+        teacherId: profile.id, teacherName: profile.name,
+        subject: broadcastSubject || 'Important Notice',
+        content: broadcastContent, urgent: broadcastUrgent
+      })
       if (res.data.success) {
         setBroadcastSent(true); setBroadcastCount(res.data.sentTo)
         setBroadcastContent(''); setBroadcastSubject(''); setBroadcastUrgent(false)
@@ -227,19 +241,19 @@ export default function TeacherDashboard({ supabase, profile }) {
       <div class="metric"><div class="metric-value">${Object.keys(weeklyReport.languages).length}</div><div class="metric-label">Languages</div></div>
     </div>
     <h2>Summary</h2><div class="summary">${weeklyReport.summary}</div>
-    <div class="footer"><p>BridgeUp — Powered by CurricuLLM 🎓 · Australian Privacy Act 1988 Compliant</p></div>
+    <div class="footer"><p>BridgeUp — Powered by CurricuLLM 🎓 · Australian Privacy Act 1988 Compliant · H-AI-H Human-Centered AI Principles</p></div>
     </body></html>`)
     w.document.close()
     setTimeout(() => w.print(), 500)
   }
 
   const TABS = [
-    { id: 'compose', label: '✏️ New Update' },
-    { id: 'inbox',   label: `📬 Sent (${messages.length})` },
-    { id: 'insights',label: '📊 Insights' },
-    { id: 'direct',  label: '✉️ Direct' },
-    { id: 'schedule',label: '📅 Schedule' },
-    { id: 'naplan',  label: '📈 NAPLAN' },
+    { id: 'compose',  label: '✏️ New Update' },
+    { id: 'inbox',    label: `📬 Sent (${messages.length})` },
+    { id: 'insights', label: '📊 Insights' },
+    { id: 'direct',   label: '✉️ Direct' },
+    { id: 'schedule', label: '📅 Schedule' },
+    { id: 'naplan',   label: '📈 NAPLAN' },
   ]
 
   const SUBJ_CFG = {
@@ -257,9 +271,15 @@ export default function TeacherDashboard({ supabase, profile }) {
       <p className="eyebrow">Send Reminder</p>
       <h3 className="text-base font-semibold text-gray-900">🔔 Notify Parents</h3>
       <div className="grid grid-cols-2 gap-2">
-        {[{ value: 'exam', label: '📝 Exam' }, { value: 'absent', label: '🏠 Absence' }, { value: 'assessment', label: '📊 Assessment' }, { value: 'event', label: '🎉 Event' }].map(t => (
+        {[
+          { value: 'exam',       label: '📝 Exam' },
+          { value: 'absent',     label: '🏠 Absence' },
+          { value: 'assessment', label: '📊 Assessment' },
+          { value: 'event',      label: '🎉 Event' },
+        ].map(t => (
           <button key={t.value} onClick={() => setReminderType(t.value)}
-            className={`px-3 py-2 rounded-xl text-sm font-medium border transition ${reminderType === t.value ? 'bg-violet-600 text-white border-violet-600' : 'bg-white text-gray-600 border-gray-200 hover:border-violet-300'}`}>
+            className={`px-3 py-2 rounded-xl text-sm font-medium border transition ${reminderType === t.value ? 'text-white border-violet-600' : 'bg-white text-gray-600 border-gray-200 hover:border-violet-300'}`}
+            style={reminderType === t.value ? { background: '#6C47FF' } : {}}>
             {t.label}
           </button>
         ))}
@@ -284,7 +304,7 @@ export default function TeacherDashboard({ supabase, profile }) {
   return (
     <div className="min-h-screen" style={{ background: '#F9FAFB' }}>
 
-      {/* Header */}
+      {/* ── HEADER ── */}
       <header className="bg-white border-b border-gray-100 px-6 py-4 flex justify-between items-center">
         <div className="flex items-center gap-3">
           <div className="w-9 h-9 rounded-xl flex items-center justify-center text-white text-lg font-bold" style={{ background: '#6C47FF' }}>🌉</div>
@@ -299,11 +319,15 @@ export default function TeacherDashboard({ supabase, profile }) {
         </div>
       </header>
 
-      {/* Tab bar */}
+      {/* ── TAB BAR ── */}
       <div className="bg-white border-b border-gray-100 px-6 flex gap-1 overflow-x-auto">
         {TABS.map(t => (
-          <button key={t.id} onClick={() => { setTab(t.id); if(t.id==='inbox') fetchMessages(); if(['insights','naplan','schedule'].includes(t.id)) fetchEngagement() }}
-            className={`py-4 px-3 text-sm font-medium border-b-2 transition whitespace-nowrap ${tab===t.id ? 'border-violet-600 text-violet-700' : 'border-transparent text-gray-500 hover:text-gray-700'}`}>
+          <button key={t.id} onClick={() => {
+            setTab(t.id)
+            if (t.id === 'inbox') fetchMessages()
+            if (['insights','naplan','schedule'].includes(t.id)) fetchEngagement()
+          }}
+            className={`py-4 px-3 text-sm font-medium border-b-2 transition whitespace-nowrap ${tab === t.id ? 'border-violet-600 text-violet-700' : 'border-transparent text-gray-500 hover:text-gray-700'}`}>
             {t.label}
           </button>
         ))}
@@ -314,15 +338,19 @@ export default function TeacherDashboard({ supabase, profile }) {
         {/* ── COMPOSE ── */}
         {tab === 'compose' && (
           <div className="space-y-5">
+
+            {/* H-AI-H Info Card */}
             <div className="card p-5 text-white" style={{ background: '#4B0FA8' }}>
-  <p className="eyebrow" style={{ color: '#C4B5FD' }}>CURRICULLM AI · H-AI-H FRAMEWORK</p>
-  <p className="text-white font-semibold mt-1">Write your lesson notes naturally — CurricuLLM transforms them into parent-friendly messages.</p>
-  <div className="mt-3 rounded-xl bg-white bg-opacity-10 p-3 text-xs space-y-1" style={{ color: '#E0D7FF' }}>
-    <p>✏️ <strong>Your role:</strong> Start with your notes → review AI output → edit if needed → approve to send</p>
-    <p>⚠️ <strong>AI may hallucinate</strong> — always verify curriculum facts before sending to families</p>
-    <p>🌍 <strong>Translated messages</strong> are machine-translated — check with EAL/D families if unsure</p>
-  </div>
-</div>
+              <p className="eyebrow" style={{ color: '#C4B5FD' }}>CURRICULLM AI · H-AI-H FRAMEWORK</p>
+              <p className="text-white font-semibold mt-1">Write your lesson notes naturally — CurricuLLM transforms them into parent-friendly messages.</p>
+              <div className="mt-3 rounded-xl bg-white bg-opacity-10 p-3 text-xs space-y-1" style={{ color: '#E0D7FF' }}>
+                <p>✏️ <strong>Your role:</strong> Start with your notes → review AI output → edit if needed → approve to send</p>
+                <p>⚠️ <strong>AI may hallucinate</strong> — always verify curriculum facts before sending to families</p>
+                <p>🌍 <strong>Translated messages</strong> are machine-translated — check with EAL/D families if unsure</p>
+              </div>
+            </div>
+
+            {/* Compose Form */}
             <div className="card p-6 space-y-4">
               <p className="eyebrow">New Learning Update</p>
               <div className="grid grid-cols-2 gap-4">
@@ -344,8 +372,8 @@ export default function TeacherDashboard({ supabase, profile }) {
                 <div className="flex gap-2 flex-wrap">
                   {TONE_OPTIONS.map(t => (
                     <button key={t.value} onClick={() => setTone(t.value)}
-                      className={`px-3 py-1.5 rounded-lg text-sm font-medium border transition ${tone===t.value ? 'text-white border-violet-600' : 'bg-white text-gray-600 border-gray-200 hover:border-violet-300'}`}
-                      style={tone===t.value ? { background: '#6C47FF' } : {}}>
+                      className={`px-3 py-1.5 rounded-lg text-sm font-medium border transition ${tone === t.value ? 'text-white border-violet-600' : 'bg-white text-gray-600 border-gray-200 hover:border-violet-300'}`}
+                      style={tone === t.value ? { background: '#6C47FF' } : {}}>
                       {t.label}
                     </button>
                   ))}
@@ -353,25 +381,30 @@ export default function TeacherDashboard({ supabase, profile }) {
               </div>
               <div>
                 <label className="block text-xs font-semibold text-gray-500 mb-1.5">Your lesson notes</label>
-                <textarea value={rawContent} onChange={e => setRawContent(e.target.value)} rows={5} className="input-base" placeholder="e.g. This week Year 8 Science covered bioprinting..."/>
+                <textarea value={rawContent} onChange={e => setRawContent(e.target.value)} rows={5} className="input-base"
+                  placeholder="e.g. This week Year 8 Science covered bioprinting — how scientists use 3D printers to create human tissue..."/>
               </div>
               <button onClick={handleTransform} disabled={loading || !rawContent.trim()} className="btn-primary w-full">
                 {loading ? '✨ Transforming with CurricuLLM...' : '✨ Transform for Parents'}
               </button>
             </div>
 
+            {/* Preview with editable fields */}
             {preview && (
               <div className="card p-6 space-y-4" style={{ borderColor: '#C4B5FD', borderWidth: 2 }}>
-                <div className="flex justify-between items-center">
+                <div className="flex justify-between items-center flex-wrap gap-2">
                   <div>
-                    <p className="eyebrow">Preview</p>
+                    <p className="eyebrow">Preview — Edit Before Sending</p>
                     <h3 className="text-base font-semibold text-gray-900">What parents will see</h3>
                   </div>
                   <div className="flex gap-2">
-                    <button onClick={() => setShowRaw(!showRaw)} className="btn-ghost text-xs px-3 py-1.5">{showRaw ? 'Show transformed' : '🔄 Before/After'}</button>
+                    <button onClick={() => setShowRaw(!showRaw)} className="btn-ghost text-xs px-3 py-1.5">
+                      {showRaw ? '👁️ Show transformed' : '🔄 Before/After'}
+                    </button>
                     <span className="badge" style={{ background: '#EDE9FF', color: '#6C47FF' }}>⚡ CurricuLLM</span>
                   </div>
                 </div>
+
                 {showRaw ? (
                   <div className="bg-gray-50 rounded-xl p-4 border border-gray-200">
                     <p className="eyebrow mb-2">Before — raw notes</p>
@@ -385,60 +418,74 @@ export default function TeacherDashboard({ supabase, profile }) {
                         <p className="text-xs font-semibold" style={{ color: '#6C47FF' }}>{preview.curriculumLabel}</p>
                       </div>
                     )}
+
+                    {/* Editable: What your child is learning */}
                     <div className="bg-gray-50 rounded-xl p-4 space-y-1">
-  <p className="text-xs font-semibold text-gray-500">📚 What your child is learning</p>
-  <textarea
-    value={preview.parentSummary}
-    onChange={e => setPreview(p => ({ ...p, parentSummary: e.target.value }))}
-    rows={3}
-    className="input-base text-sm mt-1"
-  />
-</div>
+                      <p className="text-xs font-semibold text-gray-500">📚 What your child is learning <span className="font-normal text-gray-400">(editable)</span></p>
+                      <textarea
+                        value={preview.parentSummary}
+                        onChange={e => setPreview(p => ({ ...p, parentSummary: e.target.value }))}
+                        rows={3}
+                        className="input-base text-sm mt-1"
+                      />
+                    </div>
+
+                    {/* Editable: Why it matters */}
                     <div className="bg-amber-50 rounded-xl p-4 space-y-1">
-  <p className="text-xs font-semibold text-amber-700">💡 Why it matters</p>
-  <textarea
-    value={preview.whyItMatters}
-    onChange={e => setPreview(p => ({ ...p, whyItMatters: e.target.value }))}
-    rows={2}
-    className="input-base text-sm mt-1"
-  />
-</div>
+                      <p className="text-xs font-semibold text-amber-700">💡 Why it matters <span className="font-normal text-gray-400">(editable)</span></p>
+                      <textarea
+                        value={preview.whyItMatters}
+                        onChange={e => setPreview(p => ({ ...p, whyItMatters: e.target.value }))}
+                        rows={2}
+                        className="input-base text-sm mt-1"
+                      />
+                    </div>
+
+                    {/* Editable: At-home tips */}
                     <div className="bg-emerald-50 rounded-xl p-4">
-  <p className="text-xs font-semibold text-emerald-700 mb-2">🏠 At-home tips <span className="font-normal text-gray-400">(click to edit)</span></p>
-  <div className="space-y-2">
-    {preview.atHomeTips.map((tip, i) => (
-      <div key={i} className="flex gap-2 items-start">
-        <span className="font-bold text-emerald-600 mt-2 flex-shrink-0">{i+1}.</span>
-        <textarea
-          value={tip}
-          onChange={e => {
-            const newTips = [...preview.atHomeTips]
-            newTips[i] = e.target.value
-            setPreview(p => ({ ...p, atHomeTips: newTips }))
-          }}
-          rows={2}
-          className="input-base text-sm flex-1"
-        />
-      </div>
-    ))}
-  </div>
-</div>
+                      <p className="text-xs font-semibold text-emerald-700 mb-2">🏠 At-home tips <span className="font-normal text-gray-400">(click each to edit)</span></p>
+                      <div className="space-y-2">
+                        {preview.atHomeTips.map((tip, i) => (
+                          <div key={i} className="flex gap-2 items-start">
+                            <span className="font-bold text-emerald-600 mt-2.5 flex-shrink-0 text-sm">{i+1}.</span>
+                            <textarea
+                              value={tip}
+                              onChange={e => {
+                                const newTips = [...preview.atHomeTips]
+                                newTips[i] = e.target.value
+                                setPreview(p => ({ ...p, atHomeTips: newTips }))
+                              }}
+                              rows={2}
+                              className="input-base text-sm flex-1"
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
                     {preview.pedagogyNote && (
                       <div className="rounded-xl px-4 py-2.5 border" style={{ background: '#EDE9FF', borderColor: '#C4B5FD' }}>
-                        <p className="text-xs" style={{ color: '#4B0FA8' }}><strong>🧠 Pedagogy note (teacher only):</strong> {preview.pedagogyNote}</p>
+                        <p className="text-xs" style={{ color: '#4B0FA8' }}>
+                          <strong>🧠 Pedagogy note (teacher only):</strong> {preview.pedagogyNote}
+                        </p>
                       </div>
                     )}
                   </div>
                 )}
+
+                {/* H-AI-H Human Review Notice */}
                 <div className="rounded-xl px-4 py-3 text-xs space-y-1" style={{ background: '#EDE9FF', color: '#4B0FA8' }}>
-  <p className="font-semibold">✏️ Human review required — H-AI-H</p>
-  <p className="opacity-75">Please review and edit the AI-generated content above before sending. You are responsible for the accuracy of this message. CurricuLLM may produce inaccurate information.</p>
-</div>
+                  <p className="font-semibold">✏️ Human review required — H-AI-H Framework</p>
+                  <p className="opacity-75">Please review and edit the AI-generated content above before sending. You are responsible for the accuracy of this message as the qualified educator. CurricuLLM may occasionally produce inaccurate information.</p>
+                </div>
+
                 {sent ? (
-                  <div className="bg-emerald-50 border border-emerald-200 text-emerald-700 text-center py-3 rounded-xl font-semibold text-sm">✅ Sent to all parents!</div>
+                  <div className="bg-emerald-50 border border-emerald-200 text-emerald-700 text-center py-3 rounded-xl font-semibold text-sm">
+                    ✅ Sent to all parents!
+                  </div>
                 ) : (
                   <button onClick={handleSend} disabled={sending || showRaw} className="btn-primary w-full">
-                    {sending ? 'Sending...' : '📤 Approve & Send to All Parents'}
+                    {sending ? 'Sending to all parents...' : '📤 Approve & Send to All Parents'}
                   </button>
                 )}
               </div>
@@ -456,6 +503,7 @@ export default function TeacherDashboard({ supabase, profile }) {
               </div>
               <button onClick={() => { fetchMessages(); fetchEngagement() }} className="btn-ghost text-xs px-3 py-1.5">🔄 Refresh</button>
             </div>
+
             {messages.length === 0 ? (
               <div className="card p-12 text-center text-gray-400">
                 <p className="text-4xl mb-3">📭</p>
@@ -468,6 +516,7 @@ export default function TeacherDashboard({ supabase, profile }) {
                 acc[subj].push(msg)
                 return acc
               }, {})
+
               return (
                 <>
                   {!expandedSubjectTeacher && (
@@ -475,7 +524,7 @@ export default function TeacherDashboard({ supabase, profile }) {
                       {Object.entries(grouped).map(([subj, msgs]) => {
                         const cfg = SUBJ_CFG[subj] || SUBJ_CFG['General']
                         const totalReplies = msgs.reduce((s, m) => s + (m.replies?.length || 0), 0)
-                        const concerns = msgs.reduce((s, m) => s + (m.replies?.filter(r => r.sentiment==='concern'||r.urgency==='high').length||0), 0)
+                        const concerns = msgs.reduce((s, m) => s + (m.replies?.filter(r => r.sentiment === 'concern' || r.urgency === 'high').length || 0), 0)
                         return (
                           <button key={subj} onClick={() => setExpandedSubjectTeacher(subj)}
                             className="card overflow-hidden text-left hover:shadow-md transition">
@@ -486,10 +535,10 @@ export default function TeacherDashboard({ supabase, profile }) {
                                 {totalReplies > 0 && concerns === 0 && <span className="badge bg-yellow-300 text-yellow-900">💬 {totalReplies}</span>}
                               </div>
                               <p className="font-semibold mt-2">{subj}</p>
-                              <p className="text-xs opacity-75">{msgs.length} update{msgs.length>1?'s':''}</p>
+                              <p className="text-xs opacity-75">{msgs.length} update{msgs.length > 1 ? 's' : ''}</p>
                             </div>
                             <div className="px-4 py-2.5 bg-white">
-                              <p className="text-xs text-gray-500">{totalReplies > 0 ? `${totalReplies} repl${totalReplies>1?'ies':'y'}` : 'No replies yet'}</p>
+                              <p className="text-xs text-gray-500">{totalReplies > 0 ? `${totalReplies} repl${totalReplies > 1 ? 'ies' : 'y'}` : 'No replies yet'}</p>
                               <p className="text-xs font-semibold mt-0.5" style={{ color: '#6C47FF' }}>View →</p>
                             </div>
                           </button>
@@ -497,6 +546,7 @@ export default function TeacherDashboard({ supabase, profile }) {
                       })}
                     </div>
                   )}
+
                   {expandedSubjectTeacher && (() => {
                     const cfg = SUBJ_CFG[expandedSubjectTeacher] || SUBJ_CFG['General']
                     const subjectMsgs = grouped[expandedSubjectTeacher] || []
@@ -507,7 +557,7 @@ export default function TeacherDashboard({ supabase, profile }) {
                             <span className="text-2xl">{cfg.icon}</span>
                             <div>
                               <p className="font-bold text-lg">{expandedSubjectTeacher}</p>
-                              <p className="text-xs opacity-75">{subjectMsgs.length} update{subjectMsgs.length>1?'s':''}</p>
+                              <p className="text-xs opacity-75">{subjectMsgs.length} update{subjectMsgs.length > 1 ? 's' : ''}</p>
                             </div>
                           </div>
                           <button onClick={() => setExpandedSubjectTeacher(null)}
@@ -518,9 +568,11 @@ export default function TeacherDashboard({ supabase, profile }) {
                         <div className="divide-y divide-gray-100">
                           {subjectMsgs.map(message => (
                             <div key={message.id} className="p-5 space-y-3">
-                              <div className="flex items-center gap-2">
+                              <div className="flex items-center gap-2 flex-wrap">
                                 <span className="badge" style={{ background: '#EDE9FF', color: '#6C47FF' }}>⚡ CurricuLLM</span>
-                                <span className="text-xs text-gray-400">{new Date(message.created_at).toLocaleDateString('en-AU', { weekday: 'short', day: 'numeric', month: 'short' })}</span>
+                                <span className="text-xs text-gray-400">
+                                  {new Date(message.created_at).toLocaleDateString('en-AU', { weekday: 'short', day: 'numeric', month: 'short' })}
+                                </span>
                               </div>
                               <p className="text-sm text-gray-700">{message.transformed_content}</p>
                               {message.replies?.length > 0 && (
@@ -528,14 +580,14 @@ export default function TeacherDashboard({ supabase, profile }) {
                                   <button onClick={() => toggleReplies(message.id)}
                                     className="text-xs font-semibold hover:opacity-70" style={{ color: '#6C47FF' }}
                                     ref={el => { if (el && !expandedReplies[message.id] && message.replies?.length > 0) toggleReplies(message.id) }}>
-                                    💬 {message.replies.length} {message.replies.length===1?'Reply':'Replies'} {expandedReplies[message.id]?'▲':'▼'}
+                                    💬 {message.replies.length} {message.replies.length === 1 ? 'Reply' : 'Replies'} {expandedReplies[message.id] ? '▲' : '▼'}
                                   </button>
                                   {expandedReplies[message.id] && message.replies.map(r => {
                                     const s = SENTIMENT_CONFIG[r.sentiment] || SENTIMENT_CONFIG.positive
                                     const u = URGENCY_CONFIG[r.urgency] || URGENCY_CONFIG.low
                                     return (
                                       <div key={r.id} className={`rounded-xl p-3 border space-y-2 ${s.color}`}>
-                                        <div className="flex justify-between items-center">
+                                        <div className="flex justify-between items-center flex-wrap gap-1">
                                           <p className="text-xs font-semibold">{r.parent_name}</p>
                                           <div className="flex gap-2 items-center">
                                             <span className="badge bg-white bg-opacity-60">{s.emoji} {s.label}</span>
@@ -543,14 +595,25 @@ export default function TeacherDashboard({ supabase, profile }) {
                                           </div>
                                         </div>
                                         <p className="text-sm">🌐 {r.translated_content || r.content}</p>
+                                        {r.translated_content && r.translated_content !== r.content && (
+                                          <p className="text-xs opacity-60 italic">Original: "{r.content}"</p>
+                                        )}
                                         {r.suggested_response && (
-                                          <div className="bg-white bg-opacity-60 rounded-lg p-2 text-xs">
-                                            <p className="font-semibold mb-0.5">💡 Suggested reply:</p>
+                                          <div className="bg-white bg-opacity-60 rounded-lg p-2 text-xs space-y-1">
+                                            <p className="font-semibold">💡 Suggested reply:</p>
                                             <p className="italic">"{r.suggested_response}"</p>
+                                            {r.non_curriculum_flag && (
+                                              <div className="bg-amber-50 border border-amber-200 rounded p-1.5 mt-1">
+                                                <p className="text-amber-700">⚠️ Mixed message: <span className="font-medium">{r.non_curriculum_flag}</span> — refer to school office.</p>
+                                              </div>
+                                            )}
                                           </div>
                                         )}
                                         {!r.parent_name?.includes('(Teacher)') && (
-                                          <TeacherReplyBox messageId={r.message_id} parentId={r.parent_id} teacherName={profile.name} suggestedResponse={r.suggested_response}/>
+                                          <TeacherReplyBox
+                                            messageId={r.message_id} parentId={r.parent_id}
+                                            teacherName={profile.name} suggestedResponse={r.suggested_response}
+                                          />
                                         )}
                                       </div>
                                     )
@@ -582,11 +645,11 @@ export default function TeacherDashboard({ supabase, profile }) {
                 <p className="eyebrow" style={{ color: '#C4B5FD' }}>BRIDGE INSIGHTS</p>
                 <div className="grid grid-cols-2 gap-3 mt-3">
                   {[
-                    { value: `${Math.round((engagement.totalMessages||0)*12.5)} mins`, label: 'Admin time saved' },
-                    { value: Math.round((engagement.totalParents||0)*847), label: 'Words translated' },
-                    { value: `${engagement.totalParents||0}`, label: 'Families reached' },
-                    { value: `${engagement.triedActivity||0}`, label: 'Activities done' },
-                  ].map((s,i) => (
+                    { value: `${Math.round((engagement.totalMessages || 0) * 12.5)} mins`, label: 'Admin time saved' },
+                    { value: Math.round((engagement.totalParents || 0) * 847), label: 'Words translated' },
+                    { value: `${engagement.totalParents || 0}`, label: 'Families reached' },
+                    { value: `${engagement.triedActivity || 0}`, label: 'Activities done' },
+                  ].map((s, i) => (
                     <div key={i} className="bg-white bg-opacity-10 rounded-xl p-3 text-center">
                       <p className="text-2xl font-bold">{s.value}</p>
                       <p className="text-xs opacity-75">{s.label}</p>
@@ -596,13 +659,15 @@ export default function TeacherDashboard({ supabase, profile }) {
               </div>
             )}
 
-            {!engagement ? <div className="card p-12 text-center text-gray-400">Loading...</div> : (
+            {!engagement ? (
+              <div className="card p-12 text-center text-gray-400">Loading...</div>
+            ) : (
               <>
                 <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
                   {[
                     { label: 'Messages Sent',    value: engagement.totalMessages,      emoji: '📤', bg: 'bg-violet-50', text: 'text-violet-700' },
                     { label: 'Parent Replies',   value: engagement.totalReplies,       emoji: '💬', bg: 'bg-blue-50',   text: 'text-blue-700' },
-                    { label: 'Families Reached', value: engagement.totalParents,       emoji: '👨‍👩‍👧', bg: 'bg-amber-50', text: 'text-amber-700' },
+                    { label: 'Families Reached', value: engagement.totalParents,       emoji: '👨‍👩‍👧', bg: 'bg-amber-50',  text: 'text-amber-700' },
                     { label: 'Activities Tried', value: engagement.triedActivity || 0, emoji: '✅', bg: 'bg-emerald-50', text: 'text-emerald-700' },
                   ].map(c => (
                     <div key={c.label} className={`card p-4 text-center ${c.bg}`}>
@@ -615,21 +680,23 @@ export default function TeacherDashboard({ supabase, profile }) {
 
                 {engagement.totalReplies > 0 && (
                   <div className="card p-5">
-                    <p className="eyebrow mb-3">Sentiment</p>
+                    <p className="eyebrow mb-3">Reply Sentiment</p>
                     <div className="space-y-2.5">
-                      {Object.entries(engagement.sentiments).filter(([key]) => ['positive','question','concern'].includes(key)).map(([key, val]) => {
-                        const s = SENTIMENT_CONFIG[key]
-                        const pct = Math.round((val / engagement.totalReplies) * 100)
-                        return (
-                          <div key={key} className="flex items-center gap-3">
-                            <span className="text-sm w-24 text-gray-600">{s?.emoji} {s?.label}</span>
-                            <div className="progress-bar flex-1">
-                              <div className="progress-fill" style={{ width: `${pct}%`, background: key==='positive'?'#10B981':key==='question'?'#F59E0B':'#EF4444' }}/>
+                      {Object.entries(engagement.sentiments)
+                        .filter(([key]) => ['positive', 'question', 'concern'].includes(key))
+                        .map(([key, val]) => {
+                          const s = SENTIMENT_CONFIG[key]
+                          const pct = Math.round((val / engagement.totalReplies) * 100)
+                          return (
+                            <div key={key} className="flex items-center gap-3">
+                              <span className="text-sm w-24 text-gray-600">{s?.emoji} {s?.label}</span>
+                              <div className="progress-bar flex-1">
+                                <div className="progress-fill" style={{ width: `${pct}%`, background: key === 'positive' ? '#10B981' : key === 'question' ? '#F59E0B' : '#EF4444' }}/>
+                              </div>
+                              <span className="text-xs text-gray-500 w-16">{val} ({pct}%)</span>
                             </div>
-                            <span className="text-xs text-gray-500 w-16">{val} ({pct}%)</span>
-                          </div>
-                        )
-                      })}
+                          )
+                        })}
                     </div>
                   </div>
                 )}
@@ -640,7 +707,7 @@ export default function TeacherDashboard({ supabase, profile }) {
                     <div className="flex flex-wrap gap-2">
                       {Object.entries(engagement.languages).map(([lang, count]) => (
                         <span key={lang} className="badge" style={{ background: '#EDE9FF', color: '#6C47FF' }}>
-                          {lang==='en'?'🇦🇺 English':lang==='hi'?'🇮🇳 Hindi':lang==='zh-Hans'?'🇨🇳 Mandarin':lang}: {count}
+                          {lang === 'en' ? '🇦🇺 English' : lang === 'hi' ? '🇮🇳 Hindi' : lang === 'zh-Hans' ? '🇨🇳 Mandarin' : lang}: {count}
                         </span>
                       ))}
                     </div>
@@ -649,21 +716,21 @@ export default function TeacherDashboard({ supabase, profile }) {
 
                 {engagement.highUrgency > 0 && (
                   <div className="card p-4 bg-red-50 border-red-200">
-                    <p className="text-sm font-semibold text-red-700">⚠️ {engagement.highUrgency} high-urgency {engagement.highUrgency===1?'reply':'replies'} — check inbox immediately.</p>
+                    <p className="text-sm font-semibold text-red-700">⚠️ {engagement.highUrgency} high-urgency {engagement.highUrgency === 1 ? 'reply' : 'replies'} — check inbox immediately.</p>
                   </div>
                 )}
 
                 {unengaged.length > 0 && (
                   <div className="card p-5 space-y-3">
                     <p className="eyebrow">Not Yet Engaged</p>
-                    <p className="text-sm font-semibold text-gray-900">📭 {unengaged.length} {unengaged.length===1?'family has':'families have'} not replied</p>
+                    <p className="text-sm font-semibold text-gray-900">📭 {unengaged.length} {unengaged.length === 1 ? 'family has' : 'families have'} not replied</p>
                     <div className="space-y-1.5">
                       {unengaged.map((p, i) => (
                         <div key={i} className="flex items-center gap-2 bg-gray-50 rounded-xl px-3 py-2">
                           <span className="text-sm">👤</span>
                           <span className="text-sm text-gray-700 flex-1">{p.name} {p.childName && <span className="text-gray-400 text-xs">({p.childName})</span>}</span>
                           <span className="badge" style={{ background: '#EDE9FF', color: '#6C47FF', fontSize: 10 }}>
-                            {p.language==='hi'?'🇮🇳':p.language==='zh-Hans'?'🇨🇳':'🇦🇺'} {p.language}
+                            {p.language === 'hi' ? '🇮🇳' : p.language === 'zh-Hans' ? '🇨🇳' : '🇦🇺'} {p.language}
                           </span>
                         </div>
                       ))}
@@ -679,7 +746,7 @@ export default function TeacherDashboard({ supabase, profile }) {
                       <div key={i} className="bg-gray-50 rounded-xl p-3 space-y-1">
                         <div className="flex justify-between items-center">
                           <p className="text-sm font-semibold text-gray-800">{f.subject}</p>
-                          <span className={`badge ${f.percentage>=40?'bg-red-100 text-red-700':'bg-amber-100 text-amber-700'}`}>{f.percentage}% struggled</span>
+                          <span className={`badge ${f.percentage >= 40 ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700'}`}>{f.percentage}% struggled</span>
                         </div>
                         <p className="text-xs text-gray-500">{f.recommendation}</p>
                       </div>
@@ -690,13 +757,15 @@ export default function TeacherDashboard({ supabase, profile }) {
                 {familyFeed.length > 0 && (
                   <div className="card p-5 space-y-3">
                     <div className="flex justify-between items-center">
-                      <p className="eyebrow">Live Feed</p>
+                      <p className="eyebrow">Live Activity Feed</p>
                       <span className="badge bg-emerald-100 text-emerald-700">{feedAverage}% engaged</span>
                     </div>
                     {familyFeed.slice(0, 5).map((f, i) => (
                       <div key={i} className="flex items-center gap-2 bg-gray-50 rounded-xl px-3 py-2">
-                        <span>{f.feedback==='tried'?'✅':'😕'}</span>
-                        <span className="text-sm text-gray-700"><strong>{f.childName||f.parentName}</strong> {f.feedback==='tried'?'completed':'struggled with'} {f.subject}</span>
+                        <span>{f.feedback === 'tried' ? '✅' : '😕'}</span>
+                        <span className="text-sm text-gray-700">
+                          <strong>{f.childName || f.parentName}</strong> {f.feedback === 'tried' ? 'completed' : 'struggled with'} {f.subject}
+                        </span>
                       </div>
                     ))}
                   </div>
@@ -708,11 +777,9 @@ export default function TeacherDashboard({ supabase, profile }) {
                     <p className="text-sm text-emerald-600 font-medium">🎉 All families are engaged!</p>
                   ) : unengaged.map((p, i) => (
                     <div key={i} className="bg-gray-50 rounded-xl p-3 space-y-2">
-                      <div className="flex justify-between items-center">
-                        <p className="text-sm font-semibold text-gray-800">{p.name} <span className="text-gray-400 font-normal text-xs">({p.childName})</span></p>
-                      </div>
+                      <p className="text-sm font-semibold text-gray-800">{p.name} <span className="text-gray-400 font-normal text-xs">({p.childName})</span></p>
                       {nudges[p.parentId] ? (
-                        <div className="space-y-2 rounded-xl p-2" style={{ background: '#EDE9FF' }}>
+                        <div className="space-y-2 rounded-xl p-3" style={{ background: '#EDE9FF' }}>
                           <p className="text-xs" style={{ color: '#4B0FA8' }}>💡 {nudges[p.parentId]}</p>
                           <button onClick={() => { setDmParentId(p.parentId); setDmContent(nudges[p.parentId]); setDmSubject('A quick note about your child'); setTab('direct') }}
                             className="btn-primary text-xs px-3 py-1.5 w-full">
@@ -723,12 +790,14 @@ export default function TeacherDashboard({ supabase, profile }) {
                         <button onClick={async () => {
                           setNudgeLoading(n => ({ ...n, [p.parentId]: true }))
                           try {
-                            const res = await axios.post(`${API}/api/engagement-nudge`, { parentName: p.name, childName: p.childName, language: p.language, availability: 'evening', confidence: 'medium', lastSubject: messages[0]?.subject || 'Mathematics' })
+                            const res = await axios.post(`${API}/api/engagement-nudge`, {
+                              parentName: p.name, childName: p.childName, language: p.language,
+                              availability: 'evening', confidence: 'medium', lastSubject: messages[0]?.subject || 'Mathematics'
+                            })
                             setNudges(n => ({ ...n, [p.parentId]: res.data.nudge }))
                           } catch(e) {}
                           setNudgeLoading(n => ({ ...n, [p.parentId]: false }))
-                        }} disabled={nudgeLoading[p.parentId]}
-                          className="btn-ghost text-xs px-3 py-1.5">
+                        }} disabled={nudgeLoading[p.parentId]} className="btn-ghost text-xs px-3 py-1.5">
                           {nudgeLoading[p.parentId] ? '✨ Generating...' : '✨ Generate Nudge'}
                         </button>
                       )}
@@ -739,8 +808,11 @@ export default function TeacherDashboard({ supabase, profile }) {
                 <div className="card p-5 space-y-3">
                   <div className="flex justify-between items-center">
                     <p className="eyebrow">Weekly Report</p>
-                    <button onClick={async () => { setReportLoading(true); try { const res = await axios.get(`${API}/api/weekly-report/${profile.id}`); if(res.data.success) setWeeklyReport(res.data.data) } catch(e) {} setReportLoading(false) }}
-                      disabled={reportLoading} className="btn-ghost text-xs px-3 py-1.5">
+                    <button onClick={async () => {
+                      setReportLoading(true)
+                      try { const res = await axios.get(`${API}/api/weekly-report/${profile.id}`); if (res.data.success) setWeeklyReport(res.data.data) } catch(e) {}
+                      setReportLoading(false)
+                    }} disabled={reportLoading} className="btn-ghost text-xs px-3 py-1.5">
                       {reportLoading ? '⏳ Generating...' : '📊 Generate'}
                     </button>
                   </div>
@@ -761,7 +833,7 @@ export default function TeacherDashboard({ supabase, profile }) {
 
                 {emojiInsights.length > 0 && (
                   <div className="card p-5 space-y-3">
-                    <p className="eyebrow">Parent Feedback</p>
+                    <p className="eyebrow">Parent Feedback Insights</p>
                     {emojiInsights.map((e, i) => (
                       <div key={i} className="bg-gray-50 rounded-xl p-3 space-y-1.5">
                         <div className="flex justify-between items-center">
@@ -783,19 +855,21 @@ export default function TeacherDashboard({ supabase, profile }) {
                 {engagementScores.length > 0 && (
                   <div className="card p-5 space-y-3">
                     <p className="eyebrow">Engagement Scores</p>
-                    <p className="text-sm text-gray-500">Based on activities, reads and replies</p>
+                    <p className="text-xs text-gray-500">Based on activities tried, messages read and replies sent</p>
                     {engagementScores.map((p, i) => (
                       <div key={i} className="flex items-center gap-3 bg-gray-50 rounded-xl p-3">
                         <span className="text-lg">{p.emoji}</span>
                         <div className="flex-1">
                           <div className="flex justify-between items-center">
                             <p className="text-sm font-semibold text-gray-800">{p.name} <span className="text-gray-400 font-normal text-xs">({p.childName})</span></p>
-                            <span className={`badge font-bold ${p.level==='High'?'bg-emerald-100 text-emerald-700':p.level==='Medium'?'bg-amber-100 text-amber-700':'bg-red-100 text-red-700'}`}>{p.score}/100</span>
+                            <span className={`badge font-bold ${p.level === 'High' ? 'bg-emerald-100 text-emerald-700' : p.level === 'Medium' ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-700'}`}>{p.score}/100</span>
                           </div>
                           <div className="progress-bar mt-1.5">
-                            <div className="progress-fill" style={{ width: `${p.score}%`, background: p.level==='High'?'#10B981':p.level==='Medium'?'#F59E0B':'#EF4444' }}/>
+                            <div className="progress-fill" style={{ width: `${p.score}%`, background: p.level === 'High' ? '#10B981' : p.level === 'Medium' ? '#F59E0B' : '#EF4444' }}/>
                           </div>
-                          <p className="text-xs text-gray-400 mt-1">✅ {p.tried} · 💬 {p.replies} · 👁 {p.read} · {p.language==='hi'?'🇮🇳':p.language==='zh-Hans'?'🇨🇳':'🇦🇺'}</p>
+                          <p className="text-xs text-gray-400 mt-1">
+                            ✅ {p.tried} · 💬 {p.replies} · 👁 {p.read} · {p.language === 'hi' ? '🇮🇳' : p.language === 'zh-Hans' ? '🇨🇳' : '🇦🇺'} {p.language}
+                          </p>
                         </div>
                       </div>
                     ))}
@@ -805,21 +879,31 @@ export default function TeacherDashboard({ supabase, profile }) {
                 {parentActivity.length > 0 && (
                   <div className="card p-5 space-y-3">
                     <div className="flex justify-between items-center">
-                      <p className="eyebrow">Family Tracker</p>
+                      <p className="eyebrow">Family Engagement Tracker</p>
                       <span className="text-xs text-gray-400">Support tool — not surveillance</span>
                     </div>
                     {parentActivity.map((p, i) => (
                       <div key={i} className="flex items-center gap-3 bg-gray-50 rounded-xl p-3">
-                        <div className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${p.statusColor==='green'?'bg-emerald-500 animate-pulse':p.statusColor==='yellow'?'bg-amber-400':p.statusColor==='orange'?'bg-orange-400':p.statusColor==='red'?'bg-red-400':'bg-gray-300'}`}/>
+                        <div className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${
+                          p.statusColor === 'green' ? 'bg-emerald-500 animate-pulse' :
+                          p.statusColor === 'yellow' ? 'bg-amber-400' :
+                          p.statusColor === 'orange' ? 'bg-orange-400' :
+                          p.statusColor === 'red' ? 'bg-red-400' : 'bg-gray-300'
+                        }`}/>
                         <div className="flex-1">
                           <div className="flex justify-between items-center">
                             <p className="text-sm font-semibold text-gray-800">{p.name} <span className="text-gray-400 font-normal text-xs">({p.childName})</span></p>
-                            <span className={`badge text-xs ${p.statusColor==='green'?'bg-emerald-100 text-emerald-700':p.statusColor==='yellow'?'bg-amber-100 text-amber-700':p.statusColor==='orange'?'bg-orange-100 text-orange-700':p.statusColor==='red'?'bg-red-100 text-red-700':'bg-gray-100 text-gray-500'}`}>{p.status}</span>
+                            <span className={`badge text-xs ${
+                              p.statusColor === 'green' ? 'bg-emerald-100 text-emerald-700' :
+                              p.statusColor === 'yellow' ? 'bg-amber-100 text-amber-700' :
+                              p.statusColor === 'orange' ? 'bg-orange-100 text-orange-700' :
+                              p.statusColor === 'red' ? 'bg-red-100 text-red-700' : 'bg-gray-100 text-gray-500'
+                            }`}>{p.status}</span>
                           </div>
                           <p className="text-xs text-gray-400 mt-0.5">
-                            {p.language==='hi'?'🇮🇳':p.language==='zh-Hans'?'🇨🇳':'🇦🇺'} {p.language}
-                            {p.loginCount > 0 && ` · ${p.loginCount} login${p.loginCount>1?'s':''}`}
-                            {p.lastSeen && ` · ${new Date(p.lastSeen).toLocaleDateString('en-AU', { day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' })}`}
+                            {p.language === 'hi' ? '🇮🇳' : p.language === 'zh-Hans' ? '🇨🇳' : '🇦🇺'} {p.language}
+                            {p.loginCount > 0 && ` · ${p.loginCount} login${p.loginCount > 1 ? 's' : ''}`}
+                            {p.lastSeen && ` · ${new Date(p.lastSeen).toLocaleDateString('en-AU', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}`}
                           </p>
                         </div>
                       </div>
@@ -830,7 +914,7 @@ export default function TeacherDashboard({ supabase, profile }) {
 
                 <div className="card p-4 bg-gray-50">
                   <p className="eyebrow mb-1">About Insights</p>
-                  <p className="text-xs text-gray-500">Sentiment auto-detected from parent replies via CurricuLLM. Always apply professional judgement when following up.</p>
+                  <p className="text-xs text-gray-500">Sentiment auto-detected from parent replies via CurricuLLM. Always apply professional judgement when following up. Compliant with H-AI-H Human-Centered AI Principles.</p>
                 </div>
               </>
             )}
@@ -845,13 +929,16 @@ export default function TeacherDashboard({ supabase, profile }) {
               <h2 className="text-lg font-semibold text-gray-900">Direct & Broadcast</h2>
             </div>
 
+            {/* Direct Message */}
             <div className="card p-6 space-y-4">
               <p className="eyebrow">Direct Message</p>
               <p className="text-sm text-gray-500">Send a private message to one parent — auto-translated to their language.</p>
               <select value={dmParentId} onChange={e => setDmParentId(e.target.value)} className="input-base">
                 <option value="">— Select a parent —</option>
                 {allParents.map(p => (
-                  <option key={p.id} value={p.id}>{p.name} {p.child_name?`(${p.child_name})`:''} — {p.language==='hi'?'🇮🇳 Hindi':p.language==='zh-Hans'?'🇨🇳 Mandarin':'🇦🇺 English'}</option>
+                  <option key={p.id} value={p.id}>
+                    {p.name} {p.child_name ? `(${p.child_name})` : ''} — {p.language === 'hi' ? '🇮🇳 Hindi' : p.language === 'zh-Hans' ? '🇨🇳 Mandarin' : '🇦🇺 English'}
+                  </option>
                 ))}
               </select>
               <input value={dmSubject} onChange={e => setDmSubject(e.target.value)} className="input-base" placeholder="Subject"/>
@@ -868,6 +955,7 @@ export default function TeacherDashboard({ supabase, profile }) {
               )}
             </div>
 
+            {/* Broadcast */}
             <div className="card p-6 space-y-4">
               <div className="flex items-center gap-3">
                 <div className="w-9 h-9 rounded-xl bg-red-100 flex items-center justify-center text-xl">📢</div>
@@ -889,14 +977,14 @@ export default function TeacherDashboard({ supabase, profile }) {
               <input value={broadcastSubject} onChange={e => setBroadcastSubject(e.target.value)} className="input-base" placeholder="Subject — e.g. School closure tomorrow"/>
               <textarea value={broadcastContent} onChange={e => setBroadcastContent(e.target.value)} rows={4} className="input-base" placeholder="Your message — sent exactly as written, auto-translated per family"/>
               <div className="rounded-xl px-4 py-2.5 text-xs bg-amber-50 border border-amber-200 text-amber-700">
-                ⚡ Sent immediately to all {allParents.length} families. No CurricuLLM transform.
+                ⚡ Sent immediately to all {allParents.length} families. No CurricuLLM transform — exactly as written.
               </div>
               {broadcastSent ? (
                 <div className="bg-emerald-50 border border-emerald-200 text-emerald-700 text-center py-3 rounded-xl font-semibold text-sm">✅ Sent to {broadcastCount} families!</div>
               ) : (
                 <button onClick={handleBroadcast} disabled={broadcastSending || !broadcastContent.trim()}
                   className={`w-full py-3 rounded-xl font-semibold text-sm text-white transition disabled:opacity-50 ${broadcastUrgent ? 'bg-red-600 hover:bg-red-700' : 'bg-orange-500 hover:bg-orange-600'}`}>
-                  {broadcastSending ? 'Sending...' : `📢 ${broadcastUrgent ? '🚨 Urgent Broadcast' : 'Send Broadcast'}`}
+                  {broadcastSending ? 'Sending to all families...' : `📢 ${broadcastUrgent ? '🚨 Urgent Broadcast' : 'Send Broadcast'} to All ${allParents.length} Families`}
                 </button>
               )}
             </div>
@@ -915,7 +1003,7 @@ export default function TeacherDashboard({ supabase, profile }) {
             {ptmRequests.length > 0 && (
               <div className="card p-5 space-y-3">
                 <p className="eyebrow">Meeting Requests</p>
-                <p className="text-sm font-semibold text-gray-900">📅 {ptmRequests.length} Pending Request{ptmRequests.length>1?'s':''}</p>
+                <p className="text-sm font-semibold text-gray-900">📅 {ptmRequests.length} Pending Request{ptmRequests.length > 1 ? 's' : ''}</p>
                 {ptmRequests.map((r, i) => (
                   <div key={i} className="bg-gray-50 rounded-xl p-3 flex justify-between items-start">
                     <div>
@@ -938,19 +1026,25 @@ export default function TeacherDashboard({ supabase, profile }) {
                       <div>
                         <p className="text-sm font-semibold text-gray-800">{a.parent_name} <span className="text-gray-400 font-normal text-xs">({a.child_name})</span></p>
                         <p className="text-xs text-gray-500">📋 {a.appointment_type}</p>
-                        <p className="text-xs text-gray-500">📅 {new Date(a.preferred_date).toLocaleDateString('en-AU', { weekday:'long', day:'numeric', month:'long' })} at {a.preferred_time}</p>
+                        <p className="text-xs text-gray-500">📅 {new Date(a.preferred_date).toLocaleDateString('en-AU', { weekday: 'long', day: 'numeric', month: 'long' })} at {a.preferred_time}</p>
                         {a.note && <p className="text-xs text-gray-400 italic">"{a.note}"</p>}
                       </div>
-                      <span className={`badge ${a.status==='confirmed'?'bg-emerald-100 text-emerald-700':a.status==='cancelled'?'bg-red-100 text-red-700':'bg-amber-100 text-amber-700'}`}>
-                        {a.status==='confirmed'?'✅ Confirmed':a.status==='cancelled'?'❌ Cancelled':'⏳ Pending'}
+                      <span className={`badge ${a.status === 'confirmed' ? 'bg-emerald-100 text-emerald-700' : a.status === 'cancelled' ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700'}`}>
+                        {a.status === 'confirmed' ? '✅ Confirmed' : a.status === 'cancelled' ? '❌ Cancelled' : '⏳ Pending'}
                       </span>
                     </div>
-                    {a.status==='pending' && (
+                    {a.status === 'pending' && (
                       <div className="flex gap-2">
-                        <button onClick={async () => { await axios.post(`${API}/api/update-appointment-status`, { appointmentId: a.id, status: 'confirmed' }); const res = await axios.get(`${API}/api/appointments/teacher/${profile.id}`); if(res.data.success) setAppointments(res.data.data) }}
-                          className="flex-1 text-xs btn-primary py-1.5">✅ Confirm</button>
-                        <button onClick={async () => { await axios.post(`${API}/api/update-appointment-status`, { appointmentId: a.id, status: 'cancelled' }); const res = await axios.get(`${API}/api/appointments/teacher/${profile.id}`); if(res.data.success) setAppointments(res.data.data) }}
-                          className="flex-1 text-xs btn-danger py-1.5">❌ Decline</button>
+                        <button onClick={async () => {
+                          await axios.post(`${API}/api/update-appointment-status`, { appointmentId: a.id, status: 'confirmed' })
+                          const res = await axios.get(`${API}/api/appointments/teacher/${profile.id}`)
+                          if (res.data.success) setAppointments(res.data.data)
+                        }} className="flex-1 text-xs btn-primary py-1.5">✅ Confirm</button>
+                        <button onClick={async () => {
+                          await axios.post(`${API}/api/update-appointment-status`, { appointmentId: a.id, status: 'cancelled' })
+                          const res = await axios.get(`${API}/api/appointments/teacher/${profile.id}`)
+                          if (res.data.success) setAppointments(res.data.data)
+                        }} className="flex-1 text-xs btn-danger py-1.5">❌ Decline</button>
                       </div>
                     )}
                   </div>
@@ -990,8 +1084,15 @@ export default function TeacherDashboard({ supabase, profile }) {
               </div>
               <textarea value={naplanNote} onChange={e => setNaplanNote(e.target.value)} rows={3} className="input-base"
                 placeholder="e.g. Year 3 reading improving — strong comprehension but needs work on vocabulary..."/>
-              <button onClick={async () => { if(!naplanNote.trim()) return; setNaplanLoading(true); try { const res = await axios.post(`${API}/api/naplan-snapshot`, { teacherNote: naplanNote, yearLevel: naplanYear, subject: naplanSubject }); setNaplanResult(res.data.message) } catch(e) {} setNaplanLoading(false) }}
-                disabled={naplanLoading || !naplanNote.trim()} className="btn-primary w-full">
+              <button onClick={async () => {
+                if (!naplanNote.trim()) return
+                setNaplanLoading(true)
+                try {
+                  const res = await axios.post(`${API}/api/naplan-snapshot`, { teacherNote: naplanNote, yearLevel: naplanYear, subject: naplanSubject })
+                  setNaplanResult(res.data.message)
+                } catch(e) {}
+                setNaplanLoading(false)
+              }} disabled={naplanLoading || !naplanNote.trim()} className="btn-primary w-full">
                 {naplanLoading ? '✨ Generating with CurricuLLM...' : '📊 Generate NAPLAN Update'}
               </button>
               {naplanResult && (
