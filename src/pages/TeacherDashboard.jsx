@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useMemo, useCallback } from 'react'
 import axios from 'axios'
 
 const API = 'https://bridgeup-server-production.up.railway.app'
@@ -21,6 +21,24 @@ const TONE_OPTIONS = [
   { value: 'supportive', label: '🤗 Supportive' },
   { value: 'concise',    label: '⚡ Concise' },
 ]
+
+const SUBJ_CFG = {
+  'Science':     { icon: '🔬', color: 'bg-emerald-600' },
+  'English':     { icon: '📖', color: 'bg-blue-600' },
+  'Mathematics': { icon: '🔢', color: 'bg-violet-600' },
+  'History':     { icon: '🏛️', color: 'bg-amber-600' },
+  'Geography':   { icon: '🌍', color: 'bg-teal-600' },
+  'PDHPE':       { icon: '⚽', color: 'bg-red-600' },
+  'General':     { icon: '📚', color: 'bg-gray-600' },
+}
+
+const SUBJECT_COLORS = {
+  'English':     '#3B82F6',
+  'Mathematics': '#6C47FF',
+  'Science':     '#10B981',
+}
+
+// ── All sub-components defined OUTSIDE the main component ──
 
 function TeacherReplyBox({ messageId, parentId, teacherName, suggestedResponse }) {
   const [open, setOpen] = useState(false)
@@ -52,7 +70,7 @@ function TeacherReplyBox({ messageId, parentId, teacherName, suggestedResponse }
         <div className="space-y-2 mt-1">
           <textarea value={text} onChange={e => setText(e.target.value)} rows={2}
             className="input-base text-xs"
-            placeholder="Reply — auto-translated to parent's language..."/>
+            placeholder="Reply - auto-translated to parent's language..."/>
           <div className="flex gap-2">
             <button onClick={handleSend} disabled={sending || !text.trim()} className="btn-primary text-xs px-4 py-1.5">
               {sending ? 'Sending...' : '📤 Send'}
@@ -66,6 +84,198 @@ function TeacherReplyBox({ messageId, parentId, teacherName, suggestedResponse }
     </div>
   )
 }
+
+function ReminderForm({
+  reminderType, setReminderType,
+  reminderTitle, setReminderTitle,
+  reminderDate, setReminderDate,
+  reminderNote, setReminderNote,
+  reminderParent, setReminderParent,
+  reminderSending, reminderSent,
+  allParents, handleSendReminder
+}) {
+  return (
+    <div className="card p-6 space-y-4">
+      <p className="eyebrow">Send Reminder</p>
+      <h3 className="text-base font-semibold text-gray-900">🔔 Notify Parents</h3>
+      <div className="grid grid-cols-2 gap-2">
+        {[
+          { value: 'exam',       label: '📝 Exam' },
+          { value: 'absent',     label: '🏠 Absence' },
+          { value: 'assessment', label: '📊 Assessment' },
+          { value: 'event',      label: '🎉 Event' },
+        ].map(t => (
+          <button key={t.value} onClick={() => setReminderType(t.value)}
+            className={`px-3 py-2 rounded-xl text-sm font-medium border transition ${reminderType === t.value ? 'text-white border-violet-600' : 'bg-white text-gray-600 border-gray-200 hover:border-violet-300'}`}
+            style={reminderType === t.value ? { background: '#6C47FF' } : {}}>
+            {t.label}
+          </button>
+        ))}
+      </div>
+      <input
+        value={reminderTitle}
+        onChange={e => setReminderTitle(e.target.value)}
+        className="input-base"
+        placeholder="e.g. Year 8 Maths Exam next Tuesday"
+      />
+      <input
+        type="date"
+        value={reminderDate}
+        onChange={e => setReminderDate(e.target.value)}
+        min={new Date().toISOString().split('T')[0]}
+        className="input-base"
+      />
+      <textarea
+        value={reminderNote}
+        onChange={e => setReminderNote(e.target.value)}
+        rows={2}
+        className="input-base"
+        placeholder="Additional details (optional)"
+      />
+      <select value={reminderParent} onChange={e => setReminderParent(e.target.value)} className="input-base">
+        <option value="">📢 All parents</option>
+        {allParents.map(p => <option key={p.id} value={p.id}>{p.name} ({p.child_name})</option>)}
+      </select>
+      {reminderSent ? (
+        <div className="bg-emerald-50 border border-emerald-200 text-emerald-700 text-center py-3 rounded-xl font-semibold text-sm">✅ Reminder sent!</div>
+      ) : (
+        <button onClick={handleSendReminder} disabled={reminderSending || !reminderTitle || !reminderDate} className="btn-primary w-full">
+          {reminderSending ? 'Sending...' : '📤 Send Reminder'}
+        </button>
+      )}
+    </div>
+  )
+}
+
+function NaplanProgressChart({ naplanProgress, selectedNaplanStudent, setSelectedNaplanStudent }) {
+  const byStudent = useMemo(() => {
+    return naplanProgress.reduce((acc, entry) => {
+      if (!acc[entry.student_name]) acc[entry.student_name] = {}
+      if (!acc[entry.student_name][entry.subject]) acc[entry.student_name][entry.subject] = []
+      acc[entry.student_name][entry.subject].push(entry)
+      return acc
+    }, {})
+  }, [naplanProgress])
+
+  const allStudents = Object.keys(byStudent)
+  const activeStudent = selectedNaplanStudent || allStudents[0]
+  const studentSubjects = byStudent[activeStudent] || {}
+
+  if (allStudents.length === 0) return (
+    <div className="text-center py-6">
+      <p className="text-4xl mb-2">📭</p>
+      <p className="text-xs text-gray-400">No bands recorded yet - use the tracker above to add your first entry.</p>
+    </div>
+  )
+
+  return (
+    <div className="space-y-4">
+      <div className="flex gap-2 flex-wrap">
+        {allStudents.map(student => (
+          <button key={student} onClick={() => setSelectedNaplanStudent(student)}
+            className={`px-3 py-1.5 rounded-xl text-sm font-medium border transition ${activeStudent === student ? 'text-white border-violet-600' : 'bg-white text-gray-600 border-gray-200 hover:border-violet-300'}`}
+            style={activeStudent === student ? { background: '#6C47FF' } : {}}>
+            👤 {student}
+          </button>
+        ))}
+      </div>
+      <div className="rounded-xl p-4" style={{ background: '#4B0FA8' }}>
+        <p className="text-white font-semibold text-sm">{activeStudent}</p>
+        <div className="flex gap-3 mt-2 flex-wrap">
+          {Object.entries(studentSubjects).map(([subj, entries]) => {
+            const latest = entries[entries.length - 1]?.band || 0
+            const first = entries[0]?.band || 0
+            const imp = latest - first
+            return (
+              <div key={subj} className="bg-white bg-opacity-15 rounded-xl px-3 py-2 text-center min-w-16">
+                <p className="text-white text-xs font-semibold">{subj}</p>
+                <p className="text-white text-xl font-bold">{latest}</p>
+                <p className="text-xs opacity-75 text-white">{imp > 0 ? `+${imp} ↑` : imp < 0 ? `${imp} ↓` : '→'}</p>
+              </div>
+            )
+          })}
+        </div>
+      </div>
+      {Object.entries(studentSubjects).map(([subj, entries]) => {
+        const latestBand = entries[entries.length - 1]?.band || 0
+        const firstBand = entries[0]?.band || 0
+        const improvement = latestBand - firstBand
+        const subjColor = SUBJECT_COLORS[subj] || '#6C47FF'
+        return (
+          <div key={subj} className="bg-gray-50 rounded-xl p-4 space-y-3">
+            <div className="flex justify-between items-center">
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded-full" style={{ background: subjColor }}/>
+                <p className="text-sm font-semibold text-gray-800">{subj}</p>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="badge font-bold text-white" style={{ background: subjColor }}>Band {latestBand}</span>
+                {improvement > 0 && <span className="badge bg-emerald-100 text-emerald-700 font-bold">+{improvement} ↑</span>}
+                {improvement < 0 && <span className="badge bg-red-100 text-red-700 font-bold">{improvement} ↓</span>}
+                {improvement === 0 && entries.length > 1 && <span className="badge bg-gray-200 text-gray-500">→ Stable</span>}
+              </div>
+            </div>
+            <div>
+              <div className="progress-bar">
+                <div className="progress-fill transition-all duration-700" style={{ width: `${(latestBand / 10) * 100}%`, background: subjColor }}/>
+              </div>
+              <div className="flex justify-between text-xs text-gray-400 mt-1">
+                <span>Band 1</span><span>Band 5</span><span>Band 10</span>
+              </div>
+            </div>
+            <div className="flex gap-3 flex-wrap items-end">
+              {entries.map((e, i) => {
+                const isLatest = i === entries.length - 1
+                const prev = i > 0 ? entries[i-1].band : null
+                const changed = prev !== null ? e.band - prev : 0
+                return (
+                  <div key={i} className="flex flex-col items-center gap-1">
+                    {prev !== null && (
+                      <p className={`text-xs font-bold ${changed > 0 ? 'text-emerald-600' : changed < 0 ? 'text-red-500' : 'text-gray-400'}`}>
+                        {changed > 0 ? `+${changed}` : changed < 0 ? `${changed}` : '-'}
+                      </p>
+                    )}
+                    <div className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold text-white shadow ${isLatest ? 'ring-2 ring-offset-1' : 'opacity-75'}`}
+                      style={{ background: subjColor }}>
+                      {e.band}
+                    </div>
+                    <p className="text-xs text-gray-400 whitespace-nowrap">
+                      {new Date(e.recorded_date).toLocaleDateString('en-AU', { day: 'numeric', month: 'short' })}
+                    </p>
+                    {isLatest && <p className="text-xs font-semibold" style={{ color: subjColor }}>Now</p>}
+                  </div>
+                )
+              })}
+            </div>
+            <div className="rounded-lg px-3 py-2 text-xs" style={{ background: '#F5F3FF', color: '#4B0FA8' }}>
+              {improvement > 1 ? `🚀 ${improvement} band improvement - celebrate this with the family!` :
+               improvement === 1 ? `📈 1 band improvement - keep encouraging home practice.` :
+               improvement < 0 ? `⚠️ Dropped ${Math.abs(improvement)} - consider a parent conversation.` :
+               entries.length === 1 ? `📋 First entry. Add more over time to track progress.` :
+               `➡️ Stable at Band ${latestBand} - consistent performance.`}
+            </div>
+            {entries.length > 1 && (
+              <details className="text-xs">
+                <summary className="text-gray-400 cursor-pointer hover:text-gray-600">View all {entries.length} entries</summary>
+                <div className="mt-2 space-y-1">
+                  {[...entries].reverse().map((e, i) => (
+                    <div key={i} className="flex justify-between items-center bg-white rounded-lg px-3 py-1.5">
+                      <span className="text-gray-600">{new Date(e.recorded_date).toLocaleDateString('en-AU', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })}</span>
+                      <span className="font-bold" style={{ color: subjColor }}>Band {e.band}</span>
+                      {e.note && <span className="text-gray-400 italic truncate max-w-24">"{e.note}"</span>}
+                    </div>
+                  ))}
+                </div>
+              </details>
+            )}
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
+// ── MAIN COMPONENT ──
 
 export default function TeacherDashboard({ supabase, profile }) {
   const [teacherConsentGiven, setTeacherConsentGiven] = useState(
@@ -135,7 +345,8 @@ export default function TeacherDashboard({ supabase, profile }) {
   const [broadcastCount, setBroadcastCount] = useState(0)
 
   useEffect(() => {
-    fetchMessages(); fetchEngagement()
+    fetchMessages()
+    fetchEngagement()
     axios.get(`${API}/api/all-parents`).then(r => setAllParents(r.data.data || [])).catch(() => {})
     axios.get(`${API}/api/naplan-progress/${profile.id}`)
       .then(r => {
@@ -211,7 +422,7 @@ export default function TeacherDashboard({ supabase, profile }) {
     setDmSending(false)
   }
 
-  const handleSendReminder = async () => {
+  const handleSendReminder = useCallback(async () => {
     if (!reminderTitle || !reminderDate) return
     setReminderSending(true)
     try {
@@ -225,7 +436,7 @@ export default function TeacherDashboard({ supabase, profile }) {
       setTimeout(() => setReminderSent(false), 3000)
     } catch(e) {}
     setReminderSending(false)
-  }
+  }, [reminderTitle, reminderDate, reminderNote, reminderParent, reminderType, profile.id])
 
   const handleBroadcast = async () => {
     if (!broadcastContent.trim()) return
@@ -263,7 +474,7 @@ export default function TeacherDashboard({ supabase, profile }) {
       <div class="metric"><div class="metric-value">${Object.keys(weeklyReport.languages).length}</div><div class="metric-label">Languages</div></div>
     </div>
     <h2>Summary</h2><div class="summary">${weeklyReport.summary}</div>
-    <div class="footer"><p>BridgeUp — Powered by CurricuLLM 🎓 · Australian Privacy Act 1988 Compliant · H-AI-H Human-Centered AI Principles</p></div>
+    <div class="footer"><p>BridgeUp - Powered by CurricuLLM 🎓 · Australian Privacy Act 1988 Compliant · H-AI-H Human-Centered AI Principles</p></div>
     </body></html>`)
     w.document.close()
     setTimeout(() => w.print(), 500)
@@ -278,69 +489,18 @@ export default function TeacherDashboard({ supabase, profile }) {
     { id: 'naplan',   label: '📈 NAPLAN' },
   ]
 
-  const SUBJ_CFG = {
-    'Science':     { icon: '🔬', color: 'bg-emerald-600' },
-    'English':     { icon: '📖', color: 'bg-blue-600' },
-    'Mathematics': { icon: '🔢', color: 'bg-violet-600' },
-    'History':     { icon: '🏛️', color: 'bg-amber-600' },
-    'Geography':   { icon: '🌍', color: 'bg-teal-600' },
-    'PDHPE':       { icon: '⚽', color: 'bg-red-600' },
-    'General':     { icon: '📚', color: 'bg-gray-600' },
-  }
-
-  const SUBJECT_COLORS = {
-    'English':     '#3B82F6',
-    'Mathematics': '#6C47FF',
-    'Science':     '#10B981',
-  }
-
-  const ReminderForm = () => (
-    <div className="card p-6 space-y-4">
-      <p className="eyebrow">Send Reminder</p>
-      <h3 className="text-base font-semibold text-gray-900">🔔 Notify Parents</h3>
-      <div className="grid grid-cols-2 gap-2">
-        {[
-          { value: 'exam',       label: '📝 Exam' },
-          { value: 'absent',     label: '🏠 Absence' },
-          { value: 'assessment', label: '📊 Assessment' },
-          { value: 'event',      label: '🎉 Event' },
-        ].map(t => (
-          <button key={t.value} onClick={() => setReminderType(t.value)}
-            className={`px-3 py-2 rounded-xl text-sm font-medium border transition ${reminderType === t.value ? 'text-white border-violet-600' : 'bg-white text-gray-600 border-gray-200 hover:border-violet-300'}`}
-            style={reminderType === t.value ? { background: '#6C47FF' } : {}}>
-            {t.label}
-          </button>
-        ))}
-      </div>
-      <input value={reminderTitle} onChange={e => setReminderTitle(e.target.value)} className="input-base" placeholder="e.g. Year 8 Maths Exam next Tuesday"/>
-      <input type="date" value={reminderDate} onChange={e => setReminderDate(e.target.value)} min={new Date().toISOString().split('T')[0]} className="input-base"/>
-      <textarea value={reminderNote} onChange={e => setReminderNote(e.target.value)} rows={2} className="input-base" placeholder="Additional details (optional)"/>
-      <select value={reminderParent} onChange={e => setReminderParent(e.target.value)} className="input-base">
-        <option value="">📢 All parents</option>
-        {allParents.map(p => <option key={p.id} value={p.id}>{p.name} ({p.child_name})</option>)}
-      </select>
-      {reminderSent ? (
-        <div className="bg-emerald-50 border border-emerald-200 text-emerald-700 text-center py-3 rounded-xl font-semibold text-sm">✅ Reminder sent!</div>
-      ) : (
-        <button onClick={handleSendReminder} disabled={reminderSending || !reminderTitle || !reminderDate} className="btn-primary w-full">
-          {reminderSending ? 'Sending...' : '📤 Send Reminder'}
-        </button>
-      )}
-    </div>
-  )
-
   if (!teacherConsentGiven) {
     return (
       <div className="min-h-screen flex items-center justify-center p-4" style={{ background: '#F5F3FF' }}>
         <div className="bg-white rounded-2xl shadow-xl p-8 max-w-lg w-full space-y-5">
           <div className="text-center">
             <div className="w-16 h-16 rounded-2xl flex items-center justify-center text-3xl mx-auto mb-3" style={{ background: '#6C47FF' }}>🌉</div>
-            <h1 className="text-2xl font-bold text-gray-900">BridgeUp — Teacher Portal</h1>
+            <h1 className="text-2xl font-bold text-gray-900">BridgeUp - Teacher Portal</h1>
             <p className="text-gray-500 text-sm mt-1">Before you continue, please read your responsibilities</p>
           </div>
           <div className="rounded-xl p-4 space-y-3 text-sm text-gray-700" style={{ background: '#F5F3FF' }}>
             <p className="font-semibold" style={{ color: '#4B0FA8' }}>📋 Your responsibilities under H-AI-H</p>
-            <p><strong>Human oversight:</strong> All AI-generated content must be reviewed and edited by you before sending to families. You are the qualified educator — AI assists, never replaces.</p>
+            <p><strong>Human oversight:</strong> All AI-generated content must be reviewed and edited by you before sending to families. You are the qualified educator - AI assists, never replaces.</p>
             <p><strong>Accuracy:</strong> CurricuLLM may produce inaccurate or biased content. Always verify curriculum facts and check cultural appropriateness before approving messages.</p>
             <p><strong>Machine translation:</strong> Parent messages are machine-translated. For critical communications, verify with EAL/D families directly.</p>
             <p><strong>Data controller:</strong> You are the data controller for student and family information processed through BridgeUp. Handle all data in accordance with your school's privacy policy.</p>
@@ -351,7 +511,7 @@ export default function TeacherDashboard({ supabase, profile }) {
             localStorage.setItem(`teacher_consent_${profile.id}`, 'true')
             setTeacherConsentGiven(true)
           }} className="btn-primary w-full py-3">
-            I understand my responsibilities — Continue to BridgeUp
+            I understand my responsibilities - Continue to BridgeUp
           </button>
         </div>
       </div>
@@ -361,7 +521,6 @@ export default function TeacherDashboard({ supabase, profile }) {
   return (
     <div className="min-h-screen" style={{ background: '#F9FAFB' }}>
 
-      {/* ── HEADER ── */}
       <header className="bg-white border-b border-gray-100 px-6 py-4 flex justify-between items-center">
         <div className="flex items-center gap-3">
           <div className="w-9 h-9 rounded-xl flex items-center justify-center text-white text-lg font-bold" style={{ background: '#6C47FF' }}>🌉</div>
@@ -376,7 +535,6 @@ export default function TeacherDashboard({ supabase, profile }) {
         </div>
       </header>
 
-      {/* ── TAB BAR ── */}
       <div className="bg-white border-b border-gray-100 px-6 flex gap-1 overflow-x-auto">
         {TABS.map(t => (
           <button key={t.id} onClick={() => {
@@ -397,15 +555,14 @@ export default function TeacherDashboard({ supabase, profile }) {
           <div className="space-y-5">
             <div className="card p-5 text-white" style={{ background: '#4B0FA8' }}>
               <p className="eyebrow" style={{ color: '#C4B5FD' }}>CURRICULLM AI · H-AI-H FRAMEWORK</p>
-              <p className="text-white font-semibold mt-1">Write your lesson notes naturally — CurricuLLM transforms them into parent-friendly messages.</p>
+              <p className="text-white font-semibold mt-1">Write your lesson notes naturally - CurricuLLM transforms them into parent-friendly messages.</p>
               <div className="mt-3 rounded-xl bg-white bg-opacity-10 p-3 text-xs space-y-1" style={{ color: '#E0D7FF' }}>
                 <p>✏️ <strong>Your role:</strong> Start with your notes → review AI output → edit if needed → approve to send</p>
-                <p>⚠️ <strong>AI may hallucinate</strong> — always verify curriculum facts before sending to families</p>
-                <p>⚖️ <strong>AI may reflect bias</strong> — review tips for cultural appropriateness for all families</p>
-                <p>🌍 <strong>Translated messages</strong> are machine-translated — check with EAL/D families if unsure</p>
+                <p>⚠️ <strong>AI may hallucinate</strong> - always verify curriculum facts before sending to families</p>
+                <p>⚖️ <strong>AI may reflect bias</strong> - review tips for cultural appropriateness for all families</p>
+                <p>🌍 <strong>Translated messages</strong> are machine-translated - check with EAL/D families if unsure</p>
               </div>
             </div>
-
             <div className="card p-6 space-y-4">
               <p className="eyebrow">New Learning Update</p>
               <div className="grid grid-cols-2 gap-4">
@@ -437,18 +594,17 @@ export default function TeacherDashboard({ supabase, profile }) {
               <div>
                 <label className="block text-xs font-semibold text-gray-500 mb-1.5">Your lesson notes</label>
                 <textarea value={rawContent} onChange={e => setRawContent(e.target.value)} rows={5} className="input-base"
-                  placeholder="e.g. This week Year 8 Science covered bioprinting — how scientists use 3D printers to create human tissue..."/>
+                  placeholder="e.g. This week Year 8 Science covered bioprinting - how scientists use 3D printers to create human tissue..."/>
               </div>
               <button onClick={handleTransform} disabled={loading || !rawContent.trim()} className="btn-primary w-full">
                 {loading ? '✨ Transforming with CurricuLLM...' : '✨ Transform for Parents'}
               </button>
             </div>
-
             {preview && (
               <div className="card p-6 space-y-4" style={{ borderColor: '#C4B5FD', borderWidth: 2 }}>
                 <div className="flex justify-between items-center flex-wrap gap-2">
                   <div>
-                    <p className="eyebrow">Preview — Edit Before Sending</p>
+                    <p className="eyebrow">Preview - Edit Before Sending</p>
                     <h3 className="text-base font-semibold text-gray-900">What parents will see</h3>
                   </div>
                   <div className="flex gap-2">
@@ -460,7 +616,7 @@ export default function TeacherDashboard({ supabase, profile }) {
                 </div>
                 {showRaw ? (
                   <div className="bg-gray-50 rounded-xl p-4 border border-gray-200">
-                    <p className="eyebrow mb-2">Before — raw notes</p>
+                    <p className="eyebrow mb-2">Before - raw notes</p>
                     <p className="text-sm text-gray-600 italic">"{rawContent}"</p>
                   </div>
                 ) : (
@@ -506,8 +662,8 @@ export default function TeacherDashboard({ supabase, profile }) {
                   </div>
                 )}
                 <div className="rounded-xl px-4 py-3 text-xs space-y-1" style={{ background: '#EDE9FF', color: '#4B0FA8' }}>
-                  <p className="font-semibold">✏️ Human review required — H-AI-H Framework</p>
-                  <p className="opacity-75">Please review and edit the AI-generated content above before sending. You are responsible for the accuracy of this message as the qualified educator. CurricuLLM may occasionally produce inaccurate information.</p>
+                  <p className="font-semibold">✏️ Human review required - H-AI-H Framework</p>
+                  <p className="opacity-75">Please review and edit the AI-generated content above before sending. You are responsible for the accuracy of this message as the qualified educator.</p>
                 </div>
                 {sent ? (
                   <div className="bg-emerald-50 border border-emerald-200 text-emerald-700 text-center py-3 rounded-xl font-semibold text-sm">✅ Sent to all parents!</div>
@@ -623,7 +779,7 @@ export default function TeacherDashboard({ supabase, profile }) {
                                             <p className="italic">"{r.suggested_response}"</p>
                                             {r.non_curriculum_flag && (
                                               <div className="bg-amber-50 border border-amber-200 rounded p-1.5 mt-1">
-                                                <p className="text-amber-700">⚠️ Mixed message: <span className="font-medium">{r.non_curriculum_flag}</span> — refer to school office.</p>
+                                                <p className="text-amber-700">⚠️ Mixed message: <span className="font-medium">{r.non_curriculum_flag}</span> - refer to school office.</p>
                                               </div>
                                             )}
                                           </div>
@@ -725,7 +881,7 @@ export default function TeacherDashboard({ supabase, profile }) {
                 )}
                 {engagement.highUrgency > 0 && (
                   <div className="card p-4 bg-red-50 border-red-200">
-                    <p className="text-sm font-semibold text-red-700">⚠️ {engagement.highUrgency} high-urgency {engagement.highUrgency===1?'reply':'replies'} — check inbox immediately.</p>
+                    <p className="text-sm font-semibold text-red-700">⚠️ {engagement.highUrgency} high-urgency {engagement.highUrgency===1?'reply':'replies'} - check inbox immediately.</p>
                   </div>
                 )}
                 {unengaged.length > 0 && (
@@ -865,7 +1021,7 @@ export default function TeacherDashboard({ supabase, profile }) {
                   <div className="card p-5 space-y-3">
                     <div className="flex justify-between items-center">
                       <p className="eyebrow">Family Engagement Tracker</p>
-                      <span className="text-xs text-gray-400">Support tool — not surveillance</span>
+                      <span className="text-xs text-gray-400">Support tool - not surveillance</span>
                     </div>
                     {parentActivity.map((p,i) => (
                       <div key={i} className="flex items-center gap-3 bg-gray-50 rounded-xl p-3">
@@ -904,15 +1060,15 @@ export default function TeacherDashboard({ supabase, profile }) {
             </div>
             <div className="card p-6 space-y-4">
               <p className="eyebrow">Direct Message</p>
-              <p className="text-sm text-gray-500">Send a private message to one parent — auto-translated to their language.</p>
+              <p className="text-sm text-gray-500">Send a private message to one parent - auto-translated to their language.</p>
               <select value={dmParentId} onChange={e => setDmParentId(e.target.value)} className="input-base">
-                <option value="">— Select a parent —</option>
+                <option value="">- Select a parent -</option>
                 {allParents.map(p => (
-                  <option key={p.id} value={p.id}>{p.name} {p.child_name?`(${p.child_name})`:''} — {p.language==='hi'?'🇮🇳 Hindi':p.language==='zh-Hans'?'🇨🇳 Mandarin':'🇦🇺 English'}</option>
+                  <option key={p.id} value={p.id}>{p.name} {p.child_name?`(${p.child_name})`:''} - {p.language==='hi'?'🇮🇳 Hindi':p.language==='zh-Hans'?'🇨🇳 Mandarin':'🇦🇺 English'}</option>
                 ))}
               </select>
               <input value={dmSubject} onChange={e => setDmSubject(e.target.value)} className="input-base" placeholder="Subject"/>
-              <textarea value={dmContent} onChange={e => setDmContent(e.target.value)} rows={4} className="input-base" placeholder="Message — will be auto-translated..."/>
+              <textarea value={dmContent} onChange={e => setDmContent(e.target.value)} rows={4} className="input-base" placeholder="Message - will be auto-translated..."/>
               <div className="rounded-xl px-4 py-2.5 text-xs" style={{ background: '#EDE9FF', color: '#4B0FA8' }}>
                 🌍 Auto-translated into the parent's language before delivery.
               </div>
@@ -942,10 +1098,10 @@ export default function TeacherDashboard({ supabase, profile }) {
                   <p className="text-xs text-red-400">Adds urgent prefix in parent's language</p>
                 </div>
               </div>
-              <input value={broadcastSubject} onChange={e => setBroadcastSubject(e.target.value)} className="input-base" placeholder="Subject — e.g. School closure tomorrow"/>
-              <textarea value={broadcastContent} onChange={e => setBroadcastContent(e.target.value)} rows={4} className="input-base" placeholder="Your message — sent exactly as written, auto-translated per family"/>
+              <input value={broadcastSubject} onChange={e => setBroadcastSubject(e.target.value)} className="input-base" placeholder="Subject - e.g. School closure tomorrow"/>
+              <textarea value={broadcastContent} onChange={e => setBroadcastContent(e.target.value)} rows={4} className="input-base" placeholder="Your message - sent exactly as written, auto-translated per family"/>
               <div className="rounded-xl px-4 py-2.5 text-xs bg-amber-50 border border-amber-200 text-amber-700">
-                ⚡ Sent immediately to all {allParents.length} families. No CurricuLLM transform — exactly as written.
+                ⚡ Sent immediately to all {allParents.length} families. No CurricuLLM transform - exactly as written.
               </div>
               {broadcastSent ? (
                 <div className="bg-emerald-50 border border-emerald-200 text-emerald-700 text-center py-3 rounded-xl font-semibold text-sm">✅ Sent to {broadcastCount} families!</div>
@@ -966,7 +1122,15 @@ export default function TeacherDashboard({ supabase, profile }) {
               <p className="eyebrow">Scheduling</p>
               <h2 className="text-lg font-semibold text-gray-900">Reminders & Appointments</h2>
             </div>
-            <ReminderForm />
+            <ReminderForm
+              reminderType={reminderType} setReminderType={setReminderType}
+              reminderTitle={reminderTitle} setReminderTitle={setReminderTitle}
+              reminderDate={reminderDate} setReminderDate={setReminderDate}
+              reminderNote={reminderNote} setReminderNote={setReminderNote}
+              reminderParent={reminderParent} setReminderParent={setReminderParent}
+              reminderSending={reminderSending} reminderSent={reminderSent}
+              allParents={allParents} handleSendReminder={handleSendReminder}
+            />
             {ptmRequests.length > 0 && (
               <div className="card p-5 space-y-3">
                 <p className="eyebrow">Meeting Requests</p>
@@ -1024,8 +1188,6 @@ export default function TeacherDashboard({ supabase, profile }) {
               <p className="eyebrow">Assessment</p>
               <h2 className="text-lg font-semibold text-gray-900">NAPLAN Progress Snapshot</h2>
             </div>
-
-            {/* Message Generator */}
             <div className="card p-5 space-y-4">
               <p className="eyebrow">Message Generator</p>
               <p className="text-sm text-gray-500">Turn your progress notes into parent-friendly NAPLAN updates with targeted home tips.</p>
@@ -1044,7 +1206,7 @@ export default function TeacherDashboard({ supabase, profile }) {
                 </div>
               </div>
               <textarea value={naplanNote} onChange={e => setNaplanNote(e.target.value)} rows={3} className="input-base"
-                placeholder="e.g. Year 3 reading improving — strong comprehension but needs work on vocabulary..."/>
+                placeholder="e.g. Year 3 reading improving - strong comprehension but needs work on vocabulary..."/>
               <button onClick={async () => {
                 if (!naplanNote.trim()) return
                 setNaplanLoading(true)
@@ -1068,8 +1230,6 @@ export default function TeacherDashboard({ supabase, profile }) {
                 </div>
               )}
             </div>
-
-            {/* Band Tracker */}
             <div className="card p-5 space-y-4">
               <p className="eyebrow">Band Tracker</p>
               <h3 className="text-sm font-semibold text-gray-900">📈 Record Student NAPLAN Band</h3>
@@ -1078,18 +1238,16 @@ export default function TeacherDashboard({ supabase, profile }) {
                 <div>
                   <label className="block text-xs font-semibold text-gray-500 mb-1.5">Student name</label>
                   <select value={naplanBandStudent} onChange={e => setNaplanBandStudent(e.target.value)} className="input-base">
-  <option value="">— Select a student —</option>
-  {allParents.flatMap(p => {
-    if (!p.child_name) return [<option key={p.id} value={p.name}>{p.name}</option>]
-    const names = p.child_name.split(/[,&]/).map(n => n.trim()).filter(Boolean)
-    if (names.length <= 1) {
-      return [<option key={p.id} value={p.child_name}>{p.child_name} (parent: {p.name})</option>]
-    }
-    return names.map((name, i) => (
-      <option key={`${p.id}-${i}`} value={name}>{name} (parent: {p.name})</option>
-    ))
-  })}
-</select>
+                    <option value="">- Select a student -</option>
+                    {allParents.flatMap(p => {
+                      if (!p.child_name) return [<option key={p.id} value={p.name}>{p.name}</option>]
+                      const names = p.child_name.split(/[,&]/).map(n => n.trim()).filter(Boolean)
+                      if (names.length <= 1) return [<option key={p.id} value={p.child_name}>{p.child_name} (parent: {p.name})</option>]
+                      return names.map((name, idx) => (
+                        <option key={`${p.id}-${idx}`} value={name}>{name} (parent: {p.name})</option>
+                      ))
+                    })}
+                  </select>
                 </div>
                 <div>
                   <label className="block text-xs font-semibold text-gray-500 mb-1.5">Subject</label>
@@ -1142,8 +1300,6 @@ export default function TeacherDashboard({ supabase, profile }) {
                 </button>
               )}
             </div>
-
-            {/* Progress Chart */}
             <div className="card p-5 space-y-4">
               <div className="flex justify-between items-center">
                 <p className="eyebrow">Progress Over Time</p>
@@ -1160,140 +1316,18 @@ export default function TeacherDashboard({ supabase, profile }) {
                   } catch(e) { alert('Load error: ' + e.message) }
                 }} className="btn-ghost text-xs px-3 py-1.5">🔄 Load</button>
               </div>
-
               {!naplanProgressLoaded ? (
                 <div className="text-center py-6">
                   <p className="text-4xl mb-2">📊</p>
                   <p className="text-xs text-gray-400">Click Load to view student bands over time.</p>
                 </div>
-              ) : naplanProgress.length === 0 ? (
-                <div className="text-center py-6">
-                  <p className="text-4xl mb-2">📭</p>
-                  <p className="text-xs text-gray-400">No bands recorded yet — use the tracker above to add your first entry.</p>
-                </div>
-              ) : (() => {
-                const byStudent = naplanProgress.reduce((acc, entry) => {
-                  if (!acc[entry.student_name]) acc[entry.student_name] = {}
-                  if (!acc[entry.student_name][entry.subject]) acc[entry.student_name][entry.subject] = []
-                  acc[entry.student_name][entry.subject].push(entry)
-                  return acc
-                }, {})
-
-                const allStudents = Object.keys(byStudent)
-                const activeStudent = selectedNaplanStudent || allStudents[0]
-                const studentSubjects = byStudent[activeStudent] || {}
-
-                return (
-                  <div className="space-y-4">
-                    {/* Student selector tabs */}
-                    <div className="flex gap-2 flex-wrap">
-                      {allStudents.map(student => (
-                        <button key={student} onClick={() => setSelectedNaplanStudent(student)}
-                          className={`px-3 py-1.5 rounded-xl text-sm font-medium border transition ${activeStudent === student ? 'text-white border-violet-600' : 'bg-white text-gray-600 border-gray-200 hover:border-violet-300'}`}
-                          style={activeStudent === student ? { background: '#6C47FF' } : {}}>
-                          👤 {student}
-                        </button>
-                      ))}
-                    </div>
-
-                    {/* Student overview */}
-                    <div className="rounded-xl p-4" style={{ background: '#4B0FA8' }}>
-                      <p className="text-white font-semibold text-sm">{activeStudent}</p>
-                      <div className="flex gap-3 mt-2 flex-wrap">
-                        {Object.entries(studentSubjects).map(([subj, entries]) => {
-                          const latest = entries[entries.length - 1]?.band || 0
-                          const first = entries[0]?.band || 0
-                          const imp = latest - first
-                          return (
-                            <div key={subj} className="bg-white bg-opacity-15 rounded-xl px-3 py-2 text-center min-w-16">
-                              <p className="text-white text-xs font-semibold">{subj}</p>
-                              <p className="text-white text-xl font-bold">{latest}</p>
-                              <p className="text-xs opacity-75 text-white">{imp > 0 ? `+${imp} ↑` : imp < 0 ? `${imp} ↓` : '→'}</p>
-                            </div>
-                          )
-                        })}
-                      </div>
-                    </div>
-
-                    {/* Per-subject breakdown */}
-                    {Object.entries(studentSubjects).map(([subj, entries]) => {
-                      const latestBand = entries[entries.length - 1]?.band || 0
-                      const firstBand = entries[0]?.band || 0
-                      const improvement = latestBand - firstBand
-                      const subjColor = SUBJECT_COLORS[subj] || '#6C47FF'
-                      return (
-                        <div key={subj} className="bg-gray-50 rounded-xl p-4 space-y-3">
-                          <div className="flex justify-between items-center">
-                            <div className="flex items-center gap-2">
-                              <div className="w-3 h-3 rounded-full" style={{ background: subjColor }}/>
-                              <p className="text-sm font-semibold text-gray-800">{subj}</p>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <span className="badge font-bold text-white" style={{ background: subjColor }}>Band {latestBand}</span>
-                              {improvement > 0 && <span className="badge bg-emerald-100 text-emerald-700 font-bold">+{improvement} ↑</span>}
-                              {improvement < 0 && <span className="badge bg-red-100 text-red-700 font-bold">{improvement} ↓</span>}
-                              {improvement === 0 && entries.length > 1 && <span className="badge bg-gray-200 text-gray-500">→ Stable</span>}
-                            </div>
-                          </div>
-                          <div>
-                            <div className="progress-bar">
-                              <div className="progress-fill transition-all duration-700" style={{ width: `${(latestBand / 10) * 100}%`, background: subjColor }}/>
-                            </div>
-                            <div className="flex justify-between text-xs text-gray-400 mt-1">
-                              <span>Band 1</span><span>Band 5</span><span>Band 10</span>
-                            </div>
-                          </div>
-                          <div className="flex gap-3 flex-wrap items-end">
-                            {entries.map((e, i) => {
-                              const isLatest = i === entries.length - 1
-                              const prev = i > 0 ? entries[i-1].band : null
-                              const changed = prev !== null ? e.band - prev : 0
-                              return (
-                                <div key={i} className="flex flex-col items-center gap-1">
-                                  {prev !== null && (
-                                    <p className={`text-xs font-bold ${changed > 0 ? 'text-emerald-600' : changed < 0 ? 'text-red-500' : 'text-gray-400'}`}>
-                                      {changed > 0 ? `+${changed}` : changed < 0 ? `${changed}` : '—'}
-                                    </p>
-                                  )}
-                                  <div className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold text-white shadow ${isLatest ? 'ring-2 ring-offset-1' : 'opacity-75'}`}
-                                    style={{ background: subjColor }}>
-                                    {e.band}
-                                  </div>
-                                  <p className="text-xs text-gray-400 whitespace-nowrap">
-                                    {new Date(e.recorded_date).toLocaleDateString('en-AU', { day: 'numeric', month: 'short' })}
-                                  </p>
-                                  {isLatest && <p className="text-xs font-semibold" style={{ color: subjColor }}>Now</p>}
-                                </div>
-                              )
-                            })}
-                          </div>
-                          <div className="rounded-lg px-3 py-2 text-xs" style={{ background: '#F5F3FF', color: '#4B0FA8' }}>
-                            {improvement > 1 ? `🚀 ${improvement} band improvement — celebrate this with the family!` :
-                             improvement === 1 ? `📈 1 band improvement — keep encouraging home practice.` :
-                             improvement < 0 ? `⚠️ Dropped ${Math.abs(improvement)} — consider a parent conversation.` :
-                             entries.length === 1 ? `📋 First entry. Add more over time to track progress.` :
-                             `➡️ Stable at Band ${latestBand} — consistent performance.`}
-                          </div>
-                          {entries.length > 1 && (
-                            <details className="text-xs">
-                              <summary className="text-gray-400 cursor-pointer hover:text-gray-600">View all {entries.length} entries</summary>
-                              <div className="mt-2 space-y-1">
-                                {[...entries].reverse().map((e, i) => (
-                                  <div key={i} className="flex justify-between items-center bg-white rounded-lg px-3 py-1.5">
-                                    <span className="text-gray-600">{new Date(e.recorded_date).toLocaleDateString('en-AU', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })}</span>
-                                    <span className="font-bold" style={{ color: subjColor }}>Band {e.band}</span>
-                                    {e.note && <span className="text-gray-400 italic truncate max-w-24">"{e.note}"</span>}
-                                  </div>
-                                ))}
-                              </div>
-                            </details>
-                          )}
-                        </div>
-                      )
-                    })}
-                  </div>
-                )
-              })()}
+              ) : (
+                <NaplanProgressChart
+                  naplanProgress={naplanProgress}
+                  selectedNaplanStudent={selectedNaplanStudent}
+                  setSelectedNaplanStudent={setSelectedNaplanStudent}
+                />
+              )}
             </div>
           </div>
         )}

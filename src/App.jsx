@@ -18,30 +18,36 @@ export default function App() {
       setSession(session)
       if (session) fetchProfile(session.user.id)
     })
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session)
-      if (session) fetchProfile(session.user.id)
-      else setProfile(null)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_OUT') {
+        setSession(null)
+        setProfile(null)
+        return
+      }
+      if (event === 'SIGNED_IN' || event === 'INITIAL_SESSION') {
+        setSession(session)
+        if (session) fetchProfile(session.user.id)
+      }
     })
     return () => subscription.unsubscribe()
   }, [])
 
   useEffect(() => {
-  if (profile?.role === 'parent') {
-    const checkUnread = async () => {
-      const { data } = await supabase
-        .from('message_recipients')
-        .select('id')
-        .eq('parent_id', profile.id)
-        .eq('is_read', false)
-      const count = data?.length || 0
-      document.title = count > 0 ? `(${count}) BridgeUp` : 'BridgeUp'
+    if (profile?.role === 'parent') {
+      const checkUnread = async () => {
+        const { data } = await supabase
+          .from('message_recipients')
+          .select('id')
+          .eq('parent_id', profile.id)
+          .eq('is_read', false)
+        const count = data?.length || 0
+        document.title = count > 0 ? `(${count}) BridgeUp` : 'BridgeUp'
+      }
+      checkUnread()
+      const interval = setInterval(checkUnread, 30000)
+      return () => clearInterval(interval)
     }
-    checkUnread()
-    const interval = setInterval(checkUnread, 30000)
-    return () => clearInterval(interval)
-  }
-}, [profile])  
+  }, [profile])
 
   const fetchProfile = async (userId) => {
     const { data } = await supabase.from('profiles').select('*').eq('id', userId).single()
