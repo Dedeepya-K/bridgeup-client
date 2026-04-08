@@ -87,7 +87,7 @@ function WelcomeBanner({ profile, currentChild, language }) {
       .catch(() => setText(english))
   }, [currentChild])
   return (
-    <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 text-sm text-blue-800">
+    <div className="btn-primary w-full">
       {text || `Hi ${profile.name}!`}
     </div>
   )
@@ -193,7 +193,7 @@ function CustomFAQ({ language }) {
   }
 
   return (
-    <div className="bg-white rounded-xl shadow p-5 space-y-3">
+    <div className="card p-5 space-y-3">
       <p className="text-sm font-semibold text-gray-700">Ask your own question:</p>
       <div className="flex gap-2">
         <input value={question} onChange={e => setQuestion(e.target.value)}
@@ -1110,7 +1110,7 @@ export default function ParentDashboard({ supabase, profile }) {
                     <p className="text-green-600 text-sm font-medium">✅ Reply sent!</p>
                   ) : (
                     <button onClick={() => handleReply(item.message_id)} disabled={sending[item.message_id]}
-                      className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition disabled:opacity-50">
+                      className="btn-primary">
                       {sending[item.message_id] ? 'Sending...' : 'Send Reply'}
                     </button>
                   )}
@@ -1151,12 +1151,12 @@ export default function ParentDashboard({ supabase, profile }) {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <header className="bg-blue-700 text-white px-6 py-4 flex justify-between items-center shadow">
+      <header className="bg-white border-b border-gray-100 px-6 py-4 flex justify-between items-center">
         <div className="flex items-center gap-3">
           <span className="text-2xl">🌉</span>
           <div>
-            <h1 className="text-xl font-bold">BridgeUp</h1>
-            <p className="text-blue-200 text-xs">Family Portal</p>
+            <h1 className="text-base font-bold text-gray-900">BridgeUp</h1>
+<p className="eyebrow" style={{ marginTop: 0 }}>Family Portal</p>
           </div>
         </div>
         <div className="flex items-center gap-3">
@@ -1176,8 +1176,8 @@ export default function ParentDashboard({ supabase, profile }) {
             </select>
             <span className="absolute right-1.5 top-1.5 text-white text-xs pointer-events-none">▼</span>
           </div>
-          <span className="text-sm">👋 {profile.name}</span>
-          <button onClick={handleLogout} className="text-blue-200 hover:text-white text-sm">Sign out</button>
+          <span className="text-sm text-gray-600 font-medium">👋 {profile.name}</span>
+<button onClick={handleLogout} className="text-sm text-gray-400 hover:text-gray-600 transition">Sign out</button>
         </div>
       </header>
 
@@ -1186,17 +1186,18 @@ export default function ParentDashboard({ supabase, profile }) {
           <span className="text-sm text-gray-500 font-medium whitespace-nowrap">Viewing:</span>
           {children.map((child, idx) => (
             <button key={child.id} onClick={() => setSelectedChildIdx(idx)}
-              className={`px-4 py-1.5 rounded-full text-sm font-medium transition whitespace-nowrap ${selectedChildIdx === idx ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}>
+  className={`px-4 py-1.5 rounded-full text-sm font-medium transition whitespace-nowrap ${selectedChildIdx === idx ? 'text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
+  style={selectedChildIdx === idx ? { background: '#6C47FF' } : {}}>
               👤 {child.name} — Yr {child.year_level}
             </button>
           ))}
         </div>
       )}
 
-      <div className="bg-white border-b px-6 flex gap-4 overflow-x-auto">
+      <div className="bg-white border-b border-gray-100 px-6 flex gap-1 overflow-x-auto">
         {['updates', 'faq', 'schedule', 'profile'].map(t => (
           <button key={t} onClick={() => setTab(t)}
-            className={`py-4 text-sm font-medium border-b-2 transition whitespace-nowrap ${tab === t ? 'border-blue-600 text-blue-700' : 'border-transparent text-gray-500 hover:text-gray-700'}`}>
+            className={`py-4 px-3 text-sm font-medium border-b-2 transition whitespace-nowrap ${tab === t ? 'border-violet-600 text-violet-700' : 'border-transparent text-gray-500 hover:text-gray-700'}`}>
             {t === 'updates' ? `📬 Learning Updates (${messages.length})` : t === 'faq' ? '❓ FAQ' : t === 'schedule' ? '📅 Schedule' : `👤 ${currentChild?.name || profile.child_name || 'Child'}'s Profile`}
           </button>
         ))}
@@ -1341,7 +1342,7 @@ export default function ParentDashboard({ supabase, profile }) {
               <strong>🌟 Personalise {currentChild?.name || profile.child_name || "your child"}'s tips!</strong>
               <p className="mt-1">BridgeUp uses this to generate at-home tips tailored to your child — not generic advice.</p>
             </div>
-            <div className="bg-white rounded-xl shadow p-6 space-y-5">
+            <div className="card p-6 space-y-5">
               <h2 className="text-lg font-semibold text-gray-800">👤 {currentChild?.name || profile.child_name || "Your Child"}'s Learning Profile</h2>
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-1">🎮 What do they love?</label>
@@ -1471,7 +1472,7 @@ export default function ParentDashboard({ supabase, profile }) {
                 placeholder="Ask anything in any language..."
                 className="flex-1 border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400"/>
               <button onClick={handleChat} disabled={chatLoading || !chatInput.trim()}
-                className="bg-teal-600 text-white px-3 py-2 rounded-lg hover:bg-teal-700 transition disabled:opacity-50 font-bold">→</button>
+                className="btn-primary w-full">→</button>
             </div>
             <p className="text-xs text-center text-gray-400 pb-2 px-2">Not for urgent welfare issues — contact school directly</p>
           </div>
